@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -78,9 +79,21 @@ fun MainScreen(
                             indicatorColor = Color.Transparent
                         )
                     )
+
                     NavigationBarItem(
                         selected = selectedItem == 1,
                         onClick = { selectedItem = 1 },
+                        icon = { Icon(Icons.Default.Add, contentDescription = "add") },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.secondary,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
+
+                    NavigationBarItem(
+                        selected = selectedItem == 2,
+                        onClick = { selectedItem = 2 },
                         icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Messages") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -89,8 +102,8 @@ fun MainScreen(
                         )
                     )
                     NavigationBarItem(
-                        selected = selectedItem == 2,
-                        onClick = { selectedItem = 2 },
+                        selected = selectedItem == 3,
+                        onClick = { selectedItem = 3 },
                         icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -162,7 +175,7 @@ fun MainContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Community Feed",
+                text = "Your Feed",
                 color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
