@@ -1,15 +1,34 @@
+# Built objects
+bin/
+gen/
+out/
+build/
+
+# Gradle
+.gradle/
+
+# Kotlin
+.kotlin/
+
+# IntelliJ IDEA
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+*.iws
+*.ipr
+
+# Android Studio
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Local configuration
 local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets (if any)
+secrets.properties
+google-services.json
