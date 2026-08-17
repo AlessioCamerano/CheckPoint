@@ -44,7 +44,7 @@ fun BottomNavBar(
 
             NavigationBarItem(
                 selected = currentRoute == "add",
-                onClick = { /* TODO */ },
+                onClick = { onNavigate("add") },
                 icon = { Icon(Icons.Default.Add, contentDescription = "Add") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,

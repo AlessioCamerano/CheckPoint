@@ -98,7 +98,9 @@ fun MainScreen(
                     composable("search") {
                         SearchScreen()
                     }
-                    composable("add") { /* TODO */ }
+                    composable("add") {
+                        CreatePostScreen()
+                    }
                     composable("messages") { /* TODO */ }
                     composable("profile") { /* TODO */ }
                 }
