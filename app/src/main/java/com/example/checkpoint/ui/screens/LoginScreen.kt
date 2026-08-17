@@ -124,7 +124,7 @@ fun LoginScreen(
             OutlinedButton(
                 onClick = { "TODO" },
                 modifier = Modifier.fillMaxWidth(),
-                border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

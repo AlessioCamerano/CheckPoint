@@ -3,15 +3,19 @@ package com.example.checkpoint.ui.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.checkpoint.ui.components.MainContainer
 import com.example.checkpoint.ui.screens.LoginScreen
-import com.example.checkpoint.ui.screens.MainScreen
+import com.example.checkpoint.ui.screens.MainViewModel
 import com.example.checkpoint.ui.screens.SignupScreen
 
 /**
- * Routes definitions for the application navigation.
+ * Definizioni delle rotte per la navigazione dell'applicazione.
  */
 object Screen {
     const val Login = "login"
@@ -58,7 +62,10 @@ fun AppNavigation() {
         }
 
         composable(Screen.Home) {
-            MainScreen()
+            val viewModel: MainViewModel = viewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            MainContainer(uiState = uiState)
         }
     }
 }

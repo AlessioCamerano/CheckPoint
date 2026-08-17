@@ -66,7 +66,7 @@ fun BottomNavBar(
 
             NavigationBarItem(
                 selected = currentRoute == "messages",
-                onClick = { /* TODO */ },
+                onClick = { onNavigate("messages") },
                 icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Messages") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -77,7 +77,7 @@ fun BottomNavBar(
 
             NavigationBarItem(
                 selected = currentRoute == "profile",
-                onClick = { /* TODO */ },
+                onClick = { onNavigate("profile") },
                 icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
