@@ -1,6 +1,8 @@
-package com.example.checkpoint.ui.screens
+package com.example.checkpoint.ui.components
 
 import androidx.compose.ui.graphics.Color
+
+import com.example.checkpoint.data.model.Post
 
 enum class UserStatus(val color: Color, val label: String) {
     Online(Color.Green, "Online"),
@@ -12,5 +14,6 @@ data class MainUiState(
     val data: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val userStatus: UserStatus = UserStatus.Online
+    val userStatus: UserStatus = UserStatus.Online,
+    val posts: List<Post> = emptyList()
 )

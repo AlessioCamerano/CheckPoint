@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.checkpoint.data.MainRepository
 import com.example.checkpoint.data.MainRepositoryImpl
+import com.example.checkpoint.ui.components.MainUiState
+import com.example.checkpoint.ui.components.UserStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

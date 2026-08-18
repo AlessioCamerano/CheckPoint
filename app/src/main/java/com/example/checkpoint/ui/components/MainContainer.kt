@@ -12,8 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.checkpoint.ui.screens.MainUiState
-import com.example.checkpoint.ui.screens.UserStatus
 import kotlinx.coroutines.launch
 
 /**
