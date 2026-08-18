@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.components.MainContainer
 import com.example.checkpoint.ui.screens.LoginScreen
 import com.example.checkpoint.ui.screens.MainViewModel
+import com.example.checkpoint.ui.screens.NotificationsScreen
 import com.example.checkpoint.ui.screens.SignupScreen
 
 /**
@@ -21,6 +22,7 @@ object Screen {
     const val Login = "login"
     const val Signup = "signup"
     const val Home = "home"
+    const val Notifications = "notifications"
 }
 
 @Composable
@@ -65,7 +67,18 @@ fun AppNavigation() {
             val viewModel: MainViewModel = viewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            MainContainer(uiState = uiState)
+            MainContainer(
+                uiState = uiState,
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.Notifications)
+                }
+            )
+        }
+
+        composable(Screen.Notifications) {
+            NotificationsScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

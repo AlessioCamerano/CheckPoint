@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,7 +40,8 @@ import androidx.compose.ui.unit.sp
  */
 @Composable
 fun MainScreen(
-    state: MainUiState
+    state: MainUiState,
+    onNavigateToNotifications: () -> Unit
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
 
@@ -47,8 +50,23 @@ fun MainScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
+        // notifiche
+        Box(modifier = Modifier.fillMaxWidth()) {
+            IconButton(
+                onClick = onNavigateToNotifications,
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.NotificationsNone,
+                    contentDescription = "Notifications",
+                    tint = Color.White
+                )
+            }
+        }
         
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Titolo
         Text(
             text = "CheckPoint",
             color = MaterialTheme.colorScheme.primary,

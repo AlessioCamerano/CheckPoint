@@ -20,7 +20,8 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun MainContainer(
-    uiState: MainUiState
+    uiState: MainUiState,
+    onNavigateToNotifications: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     
@@ -66,7 +67,8 @@ fun MainContainer(
                 MainTabPager(
                     pagerState = pagerState,
                     tabs = tabs,
-                    uiState = uiState
+                    uiState = uiState,
+                    onNavigateToNotifications = onNavigateToNotifications
                 )
             }
         }

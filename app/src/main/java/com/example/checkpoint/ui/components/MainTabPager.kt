@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import com.example.checkpoint.ui.screens.CreatePostScreen
 import com.example.checkpoint.ui.screens.MainScreen
 import com.example.checkpoint.ui.screens.MainUiState
+import com.example.checkpoint.ui.screens.MessagesScreen
 import com.example.checkpoint.ui.screens.SearchScreen
 
 /**
@@ -21,7 +22,8 @@ import com.example.checkpoint.ui.screens.SearchScreen
 fun MainTabPager(
     pagerState: PagerState,
     tabs: List<String>,
-    uiState: MainUiState
+    uiState: MainUiState,
+    onNavigateToNotifications: () -> Unit
 ) {
     HorizontalPager(
         state = pagerState,
@@ -31,10 +33,11 @@ fun MainTabPager(
         when (tabs[page]) {
             "search" -> SearchScreen()
             "add" -> CreatePostScreen()
-            "home_feed" -> MainScreen(state = uiState)
-            "messages" -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Messages Screen", color = MaterialTheme.colorScheme.secondary)
-            }
+            "home_feed" -> MainScreen(
+                state = uiState,
+                onNavigateToNotifications = onNavigateToNotifications
+            )
+            "messages" -> MessagesScreen()
             "profile" -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Profile Screen", color = MaterialTheme.colorScheme.secondary)
             }
