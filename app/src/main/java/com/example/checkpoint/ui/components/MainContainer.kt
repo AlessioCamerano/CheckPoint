@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.checkpoint.ui.screens.MainUiState
+import com.example.checkpoint.ui.screens.UserStatus
 import kotlinx.coroutines.launch
 
 /**
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainContainer(
     uiState: MainUiState,
+    onStatusChange: (UserStatus) -> Unit,
     onNavigateToNotifications: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -42,6 +44,7 @@ fun MainContainer(
         bottomBar = {
             BottomNavBar(
                 currentRoute = tabs[pagerState.currentPage],
+                userStatus = uiState.userStatus,
                 onNavigate = { route ->
                     val index = tabs.indexOf(route)
                     if (index != -1) {
@@ -68,6 +71,7 @@ fun MainContainer(
                     pagerState = pagerState,
                     tabs = tabs,
                     uiState = uiState,
+                    onStatusChange = onStatusChange,
                     onNavigateToNotifications = onNavigateToNotifications
                 )
             }

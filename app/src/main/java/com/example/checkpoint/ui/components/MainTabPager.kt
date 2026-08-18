@@ -13,7 +13,9 @@ import com.example.checkpoint.ui.screens.CreatePostScreen
 import com.example.checkpoint.ui.screens.MainScreen
 import com.example.checkpoint.ui.screens.MainUiState
 import com.example.checkpoint.ui.screens.MessagesScreen
+import com.example.checkpoint.ui.screens.ProfileScreen
 import com.example.checkpoint.ui.screens.SearchScreen
+import com.example.checkpoint.ui.screens.UserStatus
 
 /**
  * Swipe tra le sezioni principali dell'applicazione.
@@ -23,6 +25,7 @@ fun MainTabPager(
     pagerState: PagerState,
     tabs: List<String>,
     uiState: MainUiState,
+    onStatusChange: (UserStatus) -> Unit,
     onNavigateToNotifications: () -> Unit
 ) {
     HorizontalPager(
@@ -38,9 +41,10 @@ fun MainTabPager(
                 onNavigateToNotifications = onNavigateToNotifications
             )
             "messages" -> MessagesScreen()
-            "profile" -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Profile Screen", color = MaterialTheme.colorScheme.secondary)
-            }
+            "profile" -> ProfileScreen(
+                userStatus = uiState.userStatus,
+                onStatusChange = onStatusChange
+            )
         }
     }
 }

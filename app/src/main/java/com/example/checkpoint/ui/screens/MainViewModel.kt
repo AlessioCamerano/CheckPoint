@@ -38,4 +38,8 @@ class MainViewModel(
     fun onActionTriggered() {
         _uiState.update { it.copy(data = "Action Processed: ${it.data}") }
     }
+
+    fun onStatusChange(newStatus: UserStatus) {
+        _uiState.update { it.copy(userStatus = newStatus) }
+    }
 }

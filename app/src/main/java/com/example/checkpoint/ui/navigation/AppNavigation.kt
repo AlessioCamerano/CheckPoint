@@ -69,6 +69,7 @@ fun AppNavigation() {
 
             MainContainer(
                 uiState = uiState,
+                onStatusChange = { viewModel.onStatusChange(it) },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
                 }
