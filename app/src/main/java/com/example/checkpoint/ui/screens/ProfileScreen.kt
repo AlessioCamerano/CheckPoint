@@ -22,7 +22,8 @@ import com.example.checkpoint.ui.components.UserStatus
 @Composable
 fun ProfileScreen(
     userStatus: UserStatus = UserStatus.Online,
-    onStatusChange: (UserStatus) -> Unit = {}
+    onStatusChange: (UserStatus) -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -54,7 +55,7 @@ fun ProfileScreen(
 
             item {
                 Spacer(modifier = Modifier.height(40.dp))
-                LogoutMenuItem()
+                LogoutMenuItem(onLogout)
             }
         }
     }
@@ -196,11 +197,11 @@ fun ProfileMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title
 }
 
 @Composable
-fun LogoutMenuItem() {
+fun LogoutMenuItem(onLogout: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Logout */ }
+            .clickable { onLogout() }
     ) {
         HorizontalDivider(
             color = Color.White.copy(alpha = 0.12f),

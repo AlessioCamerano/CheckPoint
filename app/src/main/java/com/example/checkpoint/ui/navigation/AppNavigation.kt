@@ -72,6 +72,11 @@ fun AppNavigation() {
                 onStatusChange = { viewModel.onStatusChange(it) },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
+                },
+                onLogout = {
+                    navController.navigate(Screen.Login) {
+                        popUpTo(Screen.Home) { inclusive = true }
+                    }
                 }
             )
         }

@@ -21,7 +21,8 @@ import kotlinx.coroutines.launch
 fun MainContainer(
     uiState: MainUiState,
     onStatusChange: (UserStatus) -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     
@@ -70,7 +71,8 @@ fun MainContainer(
                     tabs = tabs,
                     uiState = uiState,
                     onStatusChange = onStatusChange,
-                    onNavigateToNotifications = onNavigateToNotifications
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onLogout = onLogout
                 )
             }
         }

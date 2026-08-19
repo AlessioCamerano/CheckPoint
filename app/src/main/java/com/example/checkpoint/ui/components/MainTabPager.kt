@@ -20,7 +20,8 @@ fun MainTabPager(
     tabs: List<String>,
     uiState: MainUiState,
     onStatusChange: (UserStatus) -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onLogout: () -> Unit
 ) {
     HorizontalPager(
         state = pagerState,
@@ -37,7 +38,8 @@ fun MainTabPager(
             "messages" -> MessagesScreen()
             "profile" -> ProfileScreen(
                 userStatus = uiState.userStatus,
-                onStatusChange = onStatusChange
+                onStatusChange = onStatusChange,
+                onLogout = onLogout
             )
         }
     }
