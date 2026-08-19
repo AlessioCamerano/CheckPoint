@@ -2,8 +2,13 @@ package com.example.checkpoint.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -28,10 +33,24 @@ object Screen {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
+    val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
+    val isSessionLoaded by viewModel.isSessionLoaded.collectAsStateWithLifecycle()
+
+    if (!isSessionLoaded) {
+        // Schermata di caricamento iniziale mentre DataStore legge i dati
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login,
+        startDestination = if (isLoggedIn) Screen.Home else Screen.Login,
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
@@ -64,7 +83,6 @@ fun AppNavigation() {
         }
 
         composable(Screen.Home) {
-            val viewModel: MainViewModel = viewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             MainContainer(
@@ -74,6 +92,7 @@ fun AppNavigation() {
                     navController.navigate(Screen.Notifications)
                 },
                 onLogout = {
+                    viewModel.onLogout()
                     navController.navigate(Screen.Login) {
                         popUpTo(Screen.Home) { inclusive = true }
                     }

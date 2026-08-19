@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.checkpoint.data.AuthRepository
 import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.preferences.SessionManager
 import com.example.checkpoint.ui.components.AuthUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +27,8 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val database = AppDatabase.getDatabase(application)
-                val repository = AuthRepository(database.userDao())
+                val sessionManager = com.example.checkpoint.data.preferences.SessionManager(application)
+                val repository = AuthRepository(database.userDao(), sessionManager)
                 return AuthViewModel(repository) as T
             }
         }
@@ -76,6 +78,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
                 val newUser = UserEntity(email, username, password)
                 repository.registerUser(newUser)
+                repository.saveSession(email) // Salva la sessione dopo il signup
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
@@ -89,6 +92,7 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
             try {
                 val user = repository.loginUser(identifier)
                 if (user != null && user.password == password) {
+                    repository.saveSession(user.email) // Salva la sessione dopo il login
                     _uiState.update { it.copy(isLoading = false, isSuccess = true) }
                 } else {
                     _uiState.update { it.copy(isLoading = false, errorMessage = "Invalid credentials") }
