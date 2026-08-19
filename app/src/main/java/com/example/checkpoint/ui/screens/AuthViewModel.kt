@@ -36,6 +36,12 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
+            // 0. Controllo campi obbligatori
+            if (email.isBlank() || username.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "All fields are required") }
+                return@launch
+            }
+
             // 1. Controllo corrispondenza password
             if (password != confirmPassword) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Passwords do not match") }

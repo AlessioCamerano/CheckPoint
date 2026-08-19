@@ -145,7 +145,7 @@ fun SignupScreen(
                     onClick = { viewModel.onSignup(email, username, password, confirmPassword) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    enabled = !uiState.isLoading && email.isNotBlank() && username.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
+                    enabled = !uiState.isLoading
                 ) {
                     Text(text = "SIGN UP", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
