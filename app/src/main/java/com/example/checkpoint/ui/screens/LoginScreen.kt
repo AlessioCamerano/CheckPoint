@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.checkpoint.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.checkpoint.ui.components.SupportDialog
 
 @Composable
 fun LoginScreen(
@@ -34,6 +35,7 @@ fun LoginScreen(
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var showSupportDialog by remember { mutableStateOf(false) }
 
     // successo del login
     LaunchedEffect(uiState.isSuccess) {
@@ -41,6 +43,10 @@ fun LoginScreen(
             onLoginSuccess()
             viewModel.resetState()
         }
+    }
+
+    if (showSupportDialog) {
+        SupportDialog(onDismiss = { showSupportDialog = false })
     }
 
     Surface(
@@ -128,6 +134,17 @@ fun LoginScreen(
                     modifier = Modifier.clickable(enabled = !uiState.isLoading) { onNavigateToSignup() },
                     fontSize = 14.sp
                 )
+
+                if (uiState.errorMessage != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Forgot password?",
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { showSupportDialog = true },
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
 

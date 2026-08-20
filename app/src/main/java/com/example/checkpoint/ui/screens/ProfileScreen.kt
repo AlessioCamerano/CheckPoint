@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.components.UserStatus
 
 @Composable
@@ -25,6 +26,12 @@ fun ProfileScreen(
     onStatusChange: (UserStatus) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
+    var showSupportDialog by remember { mutableStateOf(false) }
+
+    if (showSupportDialog) {
+        SupportDialog(onDismiss = { showSupportDialog = false })
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -44,6 +51,9 @@ fun ProfileScreen(
             item {
                 SectionLabel("Account Settings")
                 ProfileMenuItem(Icons.Default.Person, "Edit Profile")
+                ProfileMenuItem(Icons.Default.Lock, "Change Password") {
+                    showSupportDialog = true
+                }
                 ProfileMenuItem(Icons.Default.Group, "Friends")
             }
 
@@ -158,11 +168,15 @@ fun SectionLabel(text: String) {
 }
 
 @Composable
-fun ProfileMenuItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
+fun ProfileMenuItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    onClick: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Azione */ }
+            .clickable { onClick() }
     ) {
         HorizontalDivider(
             color = Color.White.copy(alpha = 0.12f),
