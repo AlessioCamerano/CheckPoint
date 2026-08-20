@@ -8,6 +8,13 @@ val SurfaceDark = Color(0xFF111318)
 val TextPrimary = Color(0xFFE8EAF2)
 val TextSecondary = Color(0xFF8891B0)
 
+// Palette Tema Chiaro
+val CyanDark = Color(0xFF007A87)
+val IceWhite = Color(0xFFF0F4F8)
+val LightBlueGray = Color(0xFFEDF2F4)
+val DeepNavy = Color(0xFF0A1118)
+val ErrorRed = Color(0xFFEF5350)
+
 // Standard Compose colors (keeping for compatibility)
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)

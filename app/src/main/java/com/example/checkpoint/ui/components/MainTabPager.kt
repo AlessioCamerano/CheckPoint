@@ -10,6 +10,8 @@ import com.example.checkpoint.ui.screens.MainScreen
 import com.example.checkpoint.ui.screens.MessagesScreen
 import com.example.checkpoint.ui.screens.ProfileScreen
 import com.example.checkpoint.ui.screens.SearchScreen
+import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.UserStatus
 
 /**
  * Swipe tra le sezioni principali dell'applicazione.
@@ -20,6 +22,7 @@ fun MainTabPager(
     tabs: List<String>,
     uiState: MainUiState,
     onStatusChange: (UserStatus) -> Unit,
+    onThemeChange: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -37,8 +40,10 @@ fun MainTabPager(
             )
             "messages" -> MessagesScreen()
             "profile" -> ProfileScreen(
+                isDarkTheme = uiState.isDarkTheme,
                 userStatus = uiState.userStatus,
                 onStatusChange = onStatusChange,
+                onThemeChange = onThemeChange,
                 onLogout = onLogout
             )
         }

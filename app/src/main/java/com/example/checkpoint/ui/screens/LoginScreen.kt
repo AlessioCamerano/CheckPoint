@@ -123,7 +123,7 @@ fun LoginScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !uiState.isLoading && identifier.isNotBlank() && password.isNotBlank()
                 ) {
-                    Text(text = "LOGIN", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(text = "LOGIN", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

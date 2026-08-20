@@ -147,7 +147,7 @@ fun SignupScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !uiState.isLoading
                 ) {
-                    Text(text = "SIGN UP", color = Color.Black, fontWeight = FontWeight.Bold)
+                    Text(text = "SIGN UP", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))

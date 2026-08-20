@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.checkpoint.ui.state.UserStatus
 
 @Composable
 fun BottomNavBar(
@@ -33,7 +34,7 @@ fun BottomNavBar(
 ) {
     Column {
         HorizontalDivider(
-            color = Color.White.copy(alpha = 0.12f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
             thickness = 0.5.dp
         )
         NavigationBar(

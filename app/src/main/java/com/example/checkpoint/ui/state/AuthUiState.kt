@@ -1,4 +1,4 @@
-package com.example.checkpoint.ui.components
+package com.example.checkpoint.ui.state
 
 /**
  * Stato della UI durante i flussi di Login e Signup.

@@ -19,6 +19,7 @@ import com.example.checkpoint.ui.screens.LoginScreen
 import com.example.checkpoint.ui.screens.MainViewModel
 import com.example.checkpoint.ui.screens.NotificationsScreen
 import com.example.checkpoint.ui.screens.SignupScreen
+import com.example.checkpoint.ui.state.MainUiState
 
 /**
  * Definizioni delle rotte per la navigazione dell'applicazione.
@@ -31,9 +32,10 @@ object Screen {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    viewModel: MainViewModel
+) {
     val navController = rememberNavController()
-    val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val isSessionLoaded by viewModel.isSessionLoaded.collectAsStateWithLifecycle()
 
@@ -88,6 +90,7 @@ fun AppNavigation() {
             MainContainer(
                 uiState = uiState,
                 onStatusChange = { viewModel.onStatusChange(it) },
+                onThemeChange = { viewModel.onThemeChange(it) },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
                 },

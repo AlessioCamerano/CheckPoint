@@ -65,7 +65,7 @@ fun MessagesScreen() {
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             placeholder = { Text("Search users...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
             shape = RoundedCornerShape(24.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,

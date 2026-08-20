@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.UserStatus
 import kotlinx.coroutines.launch
 
 /**
@@ -21,6 +23,7 @@ import kotlinx.coroutines.launch
 fun MainContainer(
     uiState: MainUiState,
     onStatusChange: (UserStatus) -> Unit,
+    onThemeChange: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onLogout: () -> Unit
 ) {
@@ -71,6 +74,7 @@ fun MainContainer(
                     tabs = tabs,
                     uiState = uiState,
                     onStatusChange = onStatusChange,
+                    onThemeChange = onThemeChange,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onLogout = onLogout
                 )

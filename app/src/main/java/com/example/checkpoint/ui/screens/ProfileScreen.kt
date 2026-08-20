@@ -18,12 +18,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.checkpoint.ui.components.SupportDialog
-import com.example.checkpoint.ui.components.UserStatus
+import com.example.checkpoint.ui.state.UserStatus
 
 @Composable
 fun ProfileScreen(
+    isDarkTheme: Boolean = true,
     userStatus: UserStatus = UserStatus.Online,
     onStatusChange: (UserStatus) -> Unit = {},
+    onThemeChange: (Boolean) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showSupportDialog by remember { mutableStateOf(false) }
@@ -60,13 +62,62 @@ fun ProfileScreen(
             item {
                 Spacer(modifier = Modifier.height(24.dp))
                 SectionLabel("App Settings")
-                // Sezione vuota per ora
+                ThemeSwitchMenuItem(isDarkTheme, onThemeChange)
             }
 
             item {
                 Spacer(modifier = Modifier.height(40.dp))
                 LogoutMenuItem(onLogout)
             }
+        }
+    }
+}
+
+@Composable
+fun ThemeSwitchMenuItem(
+    isDark: Boolean,
+    onThemeChange: (Boolean) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(
+            color = Color.White.copy(alpha = 0.12f),
+            thickness = 0.5.dp
+        )
+        Row(
+            modifier = Modifier
+                .padding(vertical = 12.dp, horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Dark Mode",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Switch(
+                checked = isDark,
+                onCheckedChange = onThemeChange,
+                thumbContent = {
+                    Icon(
+                        imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                        contentDescription = null,
+                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                    )
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    uncheckedThumbColor = MaterialTheme.colorScheme.secondary,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                )
+            )
         }
     }
 }
@@ -218,7 +269,7 @@ fun LogoutMenuItem(onLogout: () -> Unit) {
             .clickable { onLogout() }
     ) {
         HorizontalDivider(
-            color = Color.White.copy(alpha = 0.12f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
             thickness = 0.5.dp
         )
         Row(
@@ -230,20 +281,20 @@ fun LogoutMenuItem(onLogout: () -> Unit) {
             Icon(
                 Icons.AutoMirrored.Filled.Logout,
                 null,
-                tint = Color(0xFFEF5350),
+                tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 "Log Out",
-                color = Color(0xFFEF5350),
+                color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
             Spacer(modifier = Modifier.weight(1f))
         }
         HorizontalDivider(
-            color = Color.White.copy(alpha = 0.12f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
             thickness = 0.5.dp
         )
     }

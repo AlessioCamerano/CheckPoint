@@ -17,13 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.checkpoint.ui.components.MainUiState
+import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.components.PostItem
 
 /**
@@ -50,7 +49,7 @@ fun MainScreen(
                 Icon(
                     imageVector = Icons.Default.NotificationsNone,
                     contentDescription = "Notifications",
-                    tint = Color.White
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         }

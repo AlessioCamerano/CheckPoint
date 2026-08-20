@@ -103,7 +103,7 @@ fun SearchScreen() {
                 Icon(
                     Icons.Default.Search,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             },
             shape = RoundedCornerShape(24.dp),
