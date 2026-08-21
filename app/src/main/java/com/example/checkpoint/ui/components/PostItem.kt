@@ -13,9 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.checkpoint.data.model.Post
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @Composable
 fun PostItem(
@@ -114,6 +116,46 @@ fun PostItem(
                     color = MaterialTheme.colorScheme.secondary
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Post Item Dark")
+@Composable
+fun PostItemDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            PostItem(
+                post = Post(
+                    id = "1",
+                    authorName = "Alessio",
+                    title = "My first checkpoint!",
+                    initialMessage = "This is a sample message for the preview.",
+                    favoriteCount = 12,
+                    isFavorite = true,
+                    timeAgo = "2h ago"
+                )
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "Post Item Light")
+@Composable
+fun PostItemLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            PostItem(
+                post = Post(
+                    id = "1",
+                    authorName = "Alessio",
+                    title = "My first checkpoint!",
+                    initialMessage = "This is a sample message for the preview.",
+                    favoriteCount = 12,
+                    isFavorite = false,
+                    timeAgo = "5m ago"
+                )
+            )
         }
     }
 }

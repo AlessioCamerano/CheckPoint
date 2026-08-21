@@ -6,29 +6,29 @@ import com.example.checkpoint.data.local.entity.UserEntity
 /**
  * Repository dedicato all'autenticazione tramite Database Room.
  */
-class AuthRepository(private val userDao: UserDao) {
+open class AuthRepository(private val userDao: UserDao?) {
     
-    suspend fun registerUser(user: UserEntity) {
-        userDao.insertUser(user)
+    open suspend fun registerUser(user: UserEntity) {
+        userDao?.insertUser(user)
     }
 
-    suspend fun updateUser(user: UserEntity) {
-        userDao.updateUser(user)
+    open suspend fun updateUser(user: UserEntity) {
+        userDao?.updateUser(user)
     }
 
-    suspend fun getUser(email: String): UserEntity? {
-        return userDao.getUserByEmail(email)
+    open suspend fun getUser(email: String): UserEntity? {
+        return userDao?.getUserByEmail(email)
     }
 
-    suspend fun isEmailTaken(email: String): Boolean {
-        return userDao.getUserByEmail(email) != null
+    open suspend fun isEmailTaken(email: String): Boolean {
+        return userDao?.getUserByEmail(email) != null
     }
 
-    suspend fun isUsernameTaken(username: String): Boolean {
-        return userDao.getUserByUsername(username) != null
+    open suspend fun isUsernameTaken(username: String): Boolean {
+        return userDao?.getUserByUsername(username) != null
     }
 
-    suspend fun loginUser(identifier: String): UserEntity? {
-        return userDao.getUserByIdentifier(identifier)
+    open suspend fun loginUser(identifier: String): UserEntity? {
+        return userDao?.getUserByIdentifier(identifier)
     }
 }

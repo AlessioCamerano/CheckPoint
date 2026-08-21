@@ -13,13 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -113,3 +115,19 @@ fun NotificationRow(notification: NotificationItem) {
 }
 
 data class NotificationItem(val content: String, val time: String)
+
+@Preview(showSystemUi = true, name = "Notifications Dark")
+@Composable
+fun NotificationsScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        NotificationsScreen()
+    }
+}
+
+@Preview(showSystemUi = true, name = "Notifications Light")
+@Composable
+fun NotificationsScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        NotificationsScreen()
+    }
+}

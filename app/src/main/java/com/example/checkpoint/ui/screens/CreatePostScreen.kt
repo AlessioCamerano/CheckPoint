@@ -12,122 +12,150 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.checkpoint.ui.components.MediaUploadButton
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @Composable
 fun CreatePostScreen() {
+    CreatePostScreenContent()
+}
+
+@Composable
+fun CreatePostScreenContent() {
     var title by remember { mutableStateOf("") }
     var initialMessage by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "New Post",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "New Post",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
 
-            Text(
-                text = "Share your thoughts with the community",
-                color = MaterialTheme.colorScheme.secondary,
-                fontSize = 14.sp,
-                fontStyle = FontStyle.Italic,
-                modifier = Modifier.padding(top = 8.dp),
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = "Share your thoughts with the community",
+                    color = MaterialTheme.colorScheme.secondary,
+                    fontSize = 14.sp,
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier.padding(top = 8.dp),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Campo per il Titolo
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                    placeholder = { Text("What's on your mind?", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Campo per il Messaggio
+                OutlinedTextField(
+                    value = initialMessage,
+                    onValueChange = { initialMessage = it },
+                    label = { Text("Initial chat message", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                    placeholder = { Text("Start the conversation...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Text(
+                    text = "Do you want to show something in the post?",
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    MediaUploadButton(
+                        icon = Icons.Default.Image,
+                        label = "Image",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* Caricamento immagine */ }
+                    )
+                    MediaUploadButton(
+                        icon = Icons.Default.Videocam,
+                        label = "Video",
+                        modifier = Modifier.weight(1f),
+                        onClick = { /* Caricamento video */ }
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Campo per il Titolo
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Title", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
-                placeholder = { Text("What's on your mind?", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                    cursorColor = MaterialTheme.colorScheme.primary
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Campo per il Messaggio
-            OutlinedTextField(
-                value = initialMessage,
-                onValueChange = { initialMessage = it },
-                label = { Text("Initial chat message", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
-                placeholder = { Text("Start the conversation...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+            // Tasto Post
+            Button(
+                onClick = { /* Pubblica post */ },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(130.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                    cursorColor = MaterialTheme.colorScheme.primary
-                )
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Do you want to show something in the post?",
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                shape = RoundedCornerShape(24.dp)
             ) {
-                MediaUploadButton(
-                    icon = Icons.Default.Image,
-                    label = "Image",
-                    modifier = Modifier.weight(1f),
-                    onClick = { /* Caricamento immagine */ }
-                )
-                MediaUploadButton(
-                    icon = Icons.Default.Videocam,
-                    label = "Video",
-                    modifier = Modifier.weight(1f),
-                    onClick = { /* Caricamento video */ }
-                )
+                Text("Post", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(24.dp))
+@Preview(showSystemUi = true, name = "Create Post Dark")
+@Composable
+fun CreatePostScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        CreatePostScreenContent()
+    }
+}
 
-        // Tasto Post
-        Button(
-            onClick = { /* Pubblica post */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-            shape = RoundedCornerShape(24.dp)
-        ) {
-            Text("Post", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-        }
+@Preview(showSystemUi = true, name = "Create Post Light")
+@Composable
+fun CreatePostScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        CreatePostScreenContent()
     }
 }

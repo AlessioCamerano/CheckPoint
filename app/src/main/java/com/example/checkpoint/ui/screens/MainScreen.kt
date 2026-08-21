@@ -20,10 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.checkpoint.data.model.Post
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.components.PostItem
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 /**
  * Contenuto della Homepage (Feed).
@@ -31,7 +34,7 @@ import com.example.checkpoint.ui.components.PostItem
 @Composable
 fun MainScreen(
     state: MainUiState,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
 
@@ -150,6 +153,42 @@ fun MainScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Home Feed Dark")
+@Composable
+fun MainScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            MainScreen(
+                state = MainUiState(
+                    posts = listOf(
+                        Post("1", "Alessio", "Hello!", "Welcome to the dark side.", true, 10, "1h ago"),
+                        Post("2", "Bob", "Morning", "Coffee is ready.", false, 5, "10m ago")
+                    ),
+                    isDarkTheme = true
+                )
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Home Feed Light")
+@Composable
+fun MainScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            MainScreen(
+                state = MainUiState(
+                    posts = listOf(
+                        Post("1", "Alessio", "Hello!", "Welcome to the light side.", true, 10, "1h ago"),
+                        Post("2", "Bob", "Morning", "Coffee is ready.", false, 5, "10m ago")
+                    ),
+                    isDarkTheme = false
+                )
+            )
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
@@ -15,7 +16,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 /**
  * Repository dedicato alla gestione delle preferenze utente tramite DataStore.
  */
-class UserPreferencesRepository(private val context: Context) {
+open class UserPreferencesRepository(private val context: Context?) {
 
     private object PreferencesKeys {
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
@@ -23,33 +24,33 @@ class UserPreferencesRepository(private val context: Context) {
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
     }
 
-    val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { preferences ->
+    open val isLoggedIn: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.IS_LOGGED_IN] ?: false
-    }
+    } ?: emptyFlow()
 
-    val userEmail: Flow<String?> = context.dataStore.data.map { preferences ->
+    open val userEmail: Flow<String?> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.USER_EMAIL]
-    }
+    } ?: emptyFlow()
 
-    val isDarkTheme: Flow<Boolean?> = context.dataStore.data.map { preferences ->
+    open val isDarkTheme: Flow<Boolean?> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.IS_DARK_THEME]
-    }
+    } ?: emptyFlow()
 
-    suspend fun saveSession(email: String) {
-        context.dataStore.edit { preferences ->
+    open suspend fun saveSession(email: String) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = true
             preferences[PreferencesKeys.USER_EMAIL] = email
         }
     }
 
-    suspend fun setTheme(isDark: Boolean) {
-        context.dataStore.edit { preferences ->
+    open suspend fun setTheme(isDark: Boolean) {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_DARK_THEME] = isDark
         }
     }
 
-    suspend fun clearSession() {
-        context.dataStore.edit { preferences ->
+    open suspend fun clearSession() {
+        context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = false
             preferences[PreferencesKeys.USER_EMAIL] = ""
         }

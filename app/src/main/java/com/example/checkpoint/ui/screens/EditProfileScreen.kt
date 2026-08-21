@@ -20,18 +20,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.ImageStorageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     state: MainUiState,
-    onBack: () -> Unit,
-    onSave: (String, String, String?) -> Unit
+    onBack: () -> Unit = {},
+    onSave: (String, String, String?) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
     var username by remember { mutableStateOf(state.username) }
@@ -40,12 +42,10 @@ fun EditProfileScreen(
     
     val bioCharLimit = 300
 
-    // Launcher per selezionare un'immagine dalla galleria
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                // Copia l'immagine nella memoria interna dell'app
                 val savedUri = ImageStorageManager.saveImageToInternalStorage(context, it)
                 if (savedUri != null) {
                     profilePictureUri = savedUri.toString()
@@ -76,7 +76,6 @@ fun EditProfileScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Sezione Foto Profilo
             Box(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier.clickable { 
@@ -109,7 +108,6 @@ fun EditProfileScreen(
                     }
                 }
                 
-                // Overlay pulsante modifica foto
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -129,7 +127,6 @@ fun EditProfileScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Nome Utente
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
@@ -142,7 +139,6 @@ fun EditProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Bio
             OutlinedTextField(
                 value = bio,
                 onValueChange = { if (it.length <= bioCharLimit) bio = it },
@@ -162,7 +158,6 @@ fun EditProfileScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Pulsante Salva
             Button(
                 onClick = { onSave(username, bio, profilePictureUri) },
                 modifier = Modifier
@@ -181,5 +176,33 @@ fun EditProfileScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Edit Profile Dark")
+@Composable
+fun EditProfileScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        EditProfileScreen(
+            state = MainUiState(
+                username = "Alessio",
+                bio = "Developer & Gamer",
+                isDarkTheme = true
+            )
+        )
+    }
+}
+
+@Preview(showSystemUi = true, name = "Edit Profile Light")
+@Composable
+fun EditProfileScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        EditProfileScreen(
+            state = MainUiState(
+                username = "Alessio",
+                bio = "Developer & Gamer",
+                isDarkTheme = false
+            )
+        )
     }
 }

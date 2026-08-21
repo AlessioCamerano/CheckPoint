@@ -16,11 +16,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.UserStatus
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @Composable
 fun ProfileScreen(
@@ -87,7 +89,7 @@ fun ThemeSwitchMenuItem(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         HorizontalDivider(
-            color = Color.White.copy(alpha = 0.12f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
             thickness = 0.5.dp
         )
         Row(
@@ -248,7 +250,7 @@ fun ProfileMenuItem(
             .clickable { onClick() }
     ) {
         HorizontalDivider(
-            color = Color.White.copy(alpha = 0.12f),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
             thickness = 0.5.dp
         )
         Row(
@@ -315,5 +317,33 @@ fun LogoutMenuItem(onLogout: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
             thickness = 0.5.dp
         )
+    }
+}
+
+@Preview(showSystemUi = true, name = "Profile Dark")
+@Composable
+fun ProfileScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ProfileScreen(
+                isDarkTheme = true,
+                userStatus = UserStatus.Online,
+                username = "Alessio Camerano"
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Profile Light")
+@Composable
+fun ProfileScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ProfileScreen(
+                isDarkTheme = false,
+                userStatus = UserStatus.Busy,
+                username = "Alessio Camerano"
+            )
+        }
     }
 }

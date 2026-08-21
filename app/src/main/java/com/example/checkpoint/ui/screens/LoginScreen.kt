@@ -18,12 +18,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.checkpoint.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.components.SupportDialog
+import com.example.checkpoint.ui.state.AuthUiState
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @Composable
 fun LoginScreen(
@@ -32,18 +35,32 @@ fun LoginScreen(
     viewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var identifier by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    var showSupportDialog by remember { mutableStateOf(false) }
 
-    // successo del login
+    // Successo del login
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             onLoginSuccess()
             viewModel.resetState()
         }
     }
+
+    LoginScreenContent(
+        uiState = uiState,
+        onLogin = { id, pass -> viewModel.onLogin(id, pass) },
+        onNavigateToSignup = onNavigateToSignup
+    )
+}
+
+@Composable
+fun LoginScreenContent(
+    uiState: AuthUiState,
+    onLogin: (String, String) -> Unit,
+    onNavigateToSignup: () -> Unit
+) {
+    var identifier by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var showSupportDialog by remember { mutableStateOf(false) }
 
     if (showSupportDialog) {
         SupportDialog(onDismiss = { showSupportDialog = false })
@@ -77,7 +94,7 @@ fun LoginScreen(
 
                 if (uiState.errorMessage != null) {
                     Text(
-                        text = uiState.errorMessage!!,
+                        text = uiState.errorMessage,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -118,7 +135,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
-                    onClick = { viewModel.onLogin(identifier, password) },
+                    onClick = { onLogin(identifier, password) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !uiState.isLoading && identifier.isNotBlank() && password.isNotBlank()
@@ -187,5 +204,29 @@ fun LoginScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Login Dark")
+@Composable
+fun LoginScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        LoginScreenContent(
+            uiState = AuthUiState(),
+            onLogin = { _, _ -> },
+            onNavigateToSignup = {}
+        )
+    }
+}
+
+@Preview(showSystemUi = true, name = "Login Light")
+@Composable
+fun LoginScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        LoginScreenContent(
+            uiState = AuthUiState(),
+            onLogin = { _, _ -> },
+            onNavigateToSignup = {}
+        )
     }
 }

@@ -17,8 +17,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,62 +28,66 @@ fun MessagesScreen() {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Messages", "Posts")
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Selettore delle Tab
-        SecondaryTabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary,
-            divider = {}
-        ) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = {
-                        Text(
-                            text = title,
-                            fontSize = 16.sp,
-                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Barra di ricerca utenti
-        OutlinedTextField(
-            value = "",
-            onValueChange = {},
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            placeholder = { Text("Search users...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
-            shape = RoundedCornerShape(24.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-            ),
-            singleLine = true
-        )
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
+            SecondaryTabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = {}
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = {
+                            Text(
+                                text = title,
+                                fontSize = 16.sp,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    )
+                }
+            }
 
-        when (selectedTab) {
-            0 -> ChatList(emptyList()) // Lista per i messaggi privati
-            1 -> ChatList(emptyList()) // Lista per i post
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = "",
+                onValueChange = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                placeholder = { Text("Search users...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
+                shape = RoundedCornerShape(24.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                ),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            when (selectedTab) {
+                0 -> ChatList(emptyList())
+                1 -> ChatList(emptyList())
+            }
         }
     }
 }
+
 @Composable
 fun ChatList(chats: List<ChatPreview>) {
     if (chats.isEmpty()) {
@@ -116,7 +122,6 @@ fun ChatItem(chat: ChatPreview) {
             .clickable { /* Apri chat */ },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar Placeholder
         Box(
             modifier = Modifier
                 .size(56.dp)
@@ -159,3 +164,19 @@ fun ChatItem(chat: ChatPreview) {
 }
 
 data class ChatPreview(val name: String, val lastMessage: String, val time: String)
+
+@Preview(showSystemUi = true, name = "Messages Dark")
+@Composable
+fun MessagesScreenDarkPreview() {
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        MessagesScreen()
+    }
+}
+
+@Preview(showSystemUi = true, name = "Messages Light")
+@Composable
+fun MessagesScreenLightPreview() {
+    CheckPointTheme(darkTheme = false, dynamicColor = false) {
+        MessagesScreen()
+    }
+}
