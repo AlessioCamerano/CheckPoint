@@ -14,5 +14,7 @@ import androidx.room.PrimaryKey
 data class UserEntity(
     @PrimaryKey val email: String, // chiave primaria
     val username: String,
-    val password: String
+    val password: String,
+    val bio: String = "",
+    val profilePictureUri: String? = null
 )

@@ -13,8 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.components.MainContainer
+import com.example.checkpoint.ui.screens.EditProfileScreen
 import com.example.checkpoint.ui.screens.LoginScreen
 import com.example.checkpoint.ui.screens.MainViewModel
 import com.example.checkpoint.ui.screens.NotificationsScreen
@@ -29,6 +29,7 @@ object Screen {
     const val Signup = "signup"
     const val Home = "home"
     const val Notifications = "notifications"
+    const val EditProfile = "edit_profile"
 }
 
 @Composable
@@ -94,11 +95,26 @@ fun AppNavigation(
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
                 },
+                onNavigateToEditProfile = {
+                    navController.navigate(Screen.EditProfile)
+                },
                 onLogout = {
                     viewModel.onLogout()
                     navController.navigate(Screen.Login) {
                         popUpTo(Screen.Home) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        composable(Screen.EditProfile) {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            EditProfileScreen(
+                state = uiState,
+                onBack = { navController.popBackStack() },
+                onSave = { username, bio, uri ->
+                    viewModel.onUpdateProfile(username, bio, uri)
+                    navController.popBackStack()
                 }
             )
         }

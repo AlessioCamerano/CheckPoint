@@ -25,6 +25,7 @@ fun MainContainer(
     onStatusChange: (UserStatus) -> Unit,
     onThemeChange: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -47,6 +48,7 @@ fun MainContainer(
             BottomNavBar(
                 currentRoute = tabs[pagerState.currentPage],
                 userStatus = uiState.userStatus,
+                profilePictureUri = uiState.profilePictureUri,
                 onNavigate = { route ->
                     val index = tabs.indexOf(route)
                     if (index != -1) {
@@ -76,6 +78,7 @@ fun MainContainer(
                     onStatusChange = onStatusChange,
                     onThemeChange = onThemeChange,
                     onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToEditProfile = onNavigateToEditProfile,
                     onLogout = onLogout
                 )
             }

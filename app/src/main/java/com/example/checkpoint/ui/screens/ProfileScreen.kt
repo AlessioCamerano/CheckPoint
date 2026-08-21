@@ -14,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.UserStatus
 
@@ -24,8 +26,11 @@ import com.example.checkpoint.ui.state.UserStatus
 fun ProfileScreen(
     isDarkTheme: Boolean = true,
     userStatus: UserStatus = UserStatus.Online,
+    username: String = "Username",
+    profilePictureUri: String? = null,
     onStatusChange: (UserStatus) -> Unit = {},
     onThemeChange: (Boolean) -> Unit = {},
+    onNavigateToEditProfile: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showSupportDialog by remember { mutableStateOf(false) }
@@ -42,7 +47,7 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(48.dp))
 
         // Header con Avatar e Status
-        ProfileHeader(userStatus, onStatusChange)
+        ProfileHeader(userStatus, username, profilePictureUri, onStatusChange)
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -52,7 +57,9 @@ fun ProfileScreen(
         ) {
             item {
                 SectionLabel("Account Settings")
-                ProfileMenuItem(Icons.Default.Person, "Edit Profile")
+                ProfileMenuItem(Icons.Default.Person, "Edit Profile") {
+                    onNavigateToEditProfile()
+                }
                 ProfileMenuItem(Icons.Default.Lock, "Change Password") {
                     showSupportDialog = true
                 }
@@ -125,6 +132,8 @@ fun ThemeSwitchMenuItem(
 @Composable
 fun ProfileHeader(
     userStatus: UserStatus,
+    username: String,
+    profilePictureUri: String?,
     onStatusChange: (UserStatus) -> Unit
 ) {
     var showStatusMenu by remember { mutableStateOf(false) }
@@ -142,12 +151,21 @@ fun ProfileHeader(
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    modifier = Modifier.size(65.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                if (profilePictureUri != null) {
+                    AsyncImage(
+                        model = profilePictureUri,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(65.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
             
             // Pallino status
@@ -199,7 +217,7 @@ fun ProfileHeader(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Username",
+            text = username,
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground

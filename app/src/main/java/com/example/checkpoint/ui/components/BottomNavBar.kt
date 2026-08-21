@@ -20,16 +20,20 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.checkpoint.ui.state.UserStatus
 
 @Composable
 fun BottomNavBar(
     currentRoute: String?,
     userStatus: UserStatus = UserStatus.Online,
+    profilePictureUri: String? = null,
     onNavigate: (String) -> Unit
 ) {
     Column {
@@ -90,7 +94,32 @@ fun BottomNavBar(
                 onClick = { onNavigate("profile") },
                 icon = { 
                     Box {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (profilePictureUri != null) {
+                                AsyncImage(
+                                    model = profilePictureUri,
+                                    contentDescription = "Profile",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile",
+                                    modifier = Modifier.size(20.dp),
+                                    tint = if (currentRoute == "profile") 
+                                        MaterialTheme.colorScheme.primary 
+                                    else 
+                                        MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
                         // Pallino stato in tempo reale
                         Box(
                             modifier = Modifier

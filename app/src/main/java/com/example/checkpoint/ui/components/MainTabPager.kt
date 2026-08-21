@@ -24,6 +24,7 @@ fun MainTabPager(
     onStatusChange: (UserStatus) -> Unit,
     onThemeChange: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToEditProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     HorizontalPager(
@@ -42,8 +43,11 @@ fun MainTabPager(
             "profile" -> ProfileScreen(
                 isDarkTheme = uiState.isDarkTheme,
                 userStatus = uiState.userStatus,
+                username = uiState.username,
+                profilePictureUri = uiState.profilePictureUri,
                 onStatusChange = onStatusChange,
                 onThemeChange = onThemeChange,
+                onNavigateToEditProfile = onNavigateToEditProfile,
                 onLogout = onLogout
             )
         }

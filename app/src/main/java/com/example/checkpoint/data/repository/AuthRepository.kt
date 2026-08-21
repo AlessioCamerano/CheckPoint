@@ -12,6 +12,10 @@ class AuthRepository(private val userDao: UserDao) {
         userDao.insertUser(user)
     }
 
+    suspend fun updateUser(user: UserEntity) {
+        userDao.updateUser(user)
+    }
+
     suspend fun getUser(email: String): UserEntity? {
         return userDao.getUserByEmail(email)
     }

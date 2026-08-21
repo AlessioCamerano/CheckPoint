@@ -10,6 +10,9 @@ enum class UserStatus(val color: Color, val label: String) {
 }
 
 data class MainUiState(
+    val username: String = "Username",
+    val bio: String = "",
+    val profilePictureUri: String? = null,
     val data: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,

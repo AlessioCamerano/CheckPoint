@@ -70,9 +70,44 @@ class MainViewModel(
                     // Controllo una tantum all'avvio o al cambio email
                     val user = authRepository.getUser(email)
                     if (user != null) {
-                        _uiState.update { it.copy(data = "Welcome back, ${user.username}!") }
+                        _uiState.update { 
+                            it.copy(
+                                username = user.username,
+                                bio = user.bio,
+                                profilePictureUri = user.profilePictureUri,
+                                data = "Welcome back, ${user.username}!"
+                            ) 
+                        }
                     } else {
                         onLogout()
+                    }
+                }
+            }
+        }
+    }
+
+    fun onUpdateProfile(newUsername: String, newBio: String, newProfilePictureUri: String?) {
+        viewModelScope.launch {
+            val email = preferencesRepository.userEmail.first()
+            if (email != null) {
+                val currentUser = authRepository.getUser(email)
+                if (currentUser != null) {
+                    val updatedUser = currentUser.copy(
+                        username = newUsername,
+                        bio = newBio,
+                        profilePictureUri = newProfilePictureUri
+                    )
+                    try {
+                        authRepository.updateUser(updatedUser)
+                        _uiState.update { 
+                            it.copy(
+                                username = newUsername,
+                                bio = newBio,
+                                profilePictureUri = newProfilePictureUri
+                            ) 
+                        }
+                    } catch (e: Exception) {
+                        // Gestione errore (es. username già preso)
                     }
                 }
             }
