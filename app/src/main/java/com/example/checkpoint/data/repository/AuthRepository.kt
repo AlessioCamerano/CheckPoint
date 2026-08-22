@@ -4,31 +4,43 @@ import com.example.checkpoint.data.local.dao.UserDao
 import com.example.checkpoint.data.local.entity.UserEntity
 
 /**
- * Repository dedicato all'autenticazione tramite Database Room.
+ * Interfaccia che definisce le operazioni di autenticazione.
  */
-open class AuthRepository(private val userDao: UserDao?) {
+interface AuthRepository {
+    suspend fun registerUser(user: UserEntity)
+    suspend fun updateUser(user: UserEntity)
+    suspend fun getUser(email: String): UserEntity?
+    suspend fun isEmailTaken(email: String): Boolean
+    suspend fun isUsernameTaken(username: String): Boolean
+    suspend fun loginUser(identifier: String): UserEntity?
+}
+
+/**
+ * Implementazione concreta dell'autenticazione con Database Room.
+ */
+class AuthRepositoryImpl(private val userDao: UserDao) : AuthRepository {
     
-    open suspend fun registerUser(user: UserEntity) {
-        userDao?.insertUser(user)
+    override suspend fun registerUser(user: UserEntity) {
+        userDao.insertUser(user)
     }
 
-    open suspend fun updateUser(user: UserEntity) {
-        userDao?.updateUser(user)
+    override suspend fun updateUser(user: UserEntity) {
+        userDao.updateUser(user)
     }
 
-    open suspend fun getUser(email: String): UserEntity? {
-        return userDao?.getUserByEmail(email)
+    override suspend fun getUser(email: String): UserEntity? {
+        return userDao.getUserByEmail(email)
     }
 
-    open suspend fun isEmailTaken(email: String): Boolean {
-        return userDao?.getUserByEmail(email) != null
+    override suspend fun isEmailTaken(email: String): Boolean {
+        return userDao.getUserByEmail(email) != null
     }
 
-    open suspend fun isUsernameTaken(username: String): Boolean {
-        return userDao?.getUserByUsername(username) != null
+    override suspend fun isUsernameTaken(username: String): Boolean {
+        return userDao.getUserByUsername(username) != null
     }
 
-    open suspend fun loginUser(identifier: String): UserEntity? {
-        return userDao?.getUserByIdentifier(identifier)
+    override suspend fun loginUser(identifier: String): UserEntity? {
+        return userDao.getUserByIdentifier(identifier)
     }
 }

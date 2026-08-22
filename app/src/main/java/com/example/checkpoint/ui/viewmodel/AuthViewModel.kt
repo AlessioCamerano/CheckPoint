@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.checkpoint.data.repository.AuthRepository
+import com.example.checkpoint.data.repository.AuthRepositoryImpl
 import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
 import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.state.AuthUiState
@@ -33,8 +35,8 @@ class AuthViewModel(
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val database = AppDatabase.getDatabase(application)
                 
-                val authRepository = AuthRepository(database.userDao())
-                val preferencesRepository = UserPreferencesRepository(application)
+                val authRepository = AuthRepositoryImpl(database.userDao())
+                val preferencesRepository = UserPreferencesRepositoryImpl(application)
                 
                 return AuthViewModel(authRepository, preferencesRepository) as T
             }
