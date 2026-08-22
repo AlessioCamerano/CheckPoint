@@ -16,10 +16,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.checkpoint.ui.components.MainContainer
 import com.example.checkpoint.ui.screens.EditProfileScreen
 import com.example.checkpoint.ui.screens.LoginScreen
-import com.example.checkpoint.ui.screens.MainViewModel
 import com.example.checkpoint.ui.screens.NotificationsScreen
 import com.example.checkpoint.ui.screens.SignupScreen
 import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.viewmodel.MainViewModel
 
 /**
  * Definizioni delle rotte per la navigazione dell'applicazione.

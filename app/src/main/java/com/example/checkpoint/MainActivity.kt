@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.navigation.AppNavigation
-import com.example.checkpoint.ui.screens.MainViewModel
+import com.example.checkpoint.ui.viewmodel.MainViewModel
 import com.example.checkpoint.ui.theme.CheckPointTheme
 
 class MainActivity : ComponentActivity() {

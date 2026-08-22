@@ -27,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.AuthUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(

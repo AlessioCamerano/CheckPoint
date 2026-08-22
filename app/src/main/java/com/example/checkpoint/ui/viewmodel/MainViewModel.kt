@@ -1,4 +1,4 @@
-package com.example.checkpoint.ui.screens
+package com.example.checkpoint.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
