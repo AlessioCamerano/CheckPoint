@@ -107,7 +107,14 @@ class AuthViewModel(
     }
 
     fun onLogout() {
-        _uiState.update { it.copy(isSuccess = false) }
+        viewModelScope.launch {
+            try {
+                preferencesRepository.clearSession()
+                _uiState.update { it.copy(isSuccess = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error logging out: ${e.message}") }
+            }
+        }
     }
 
     fun resetState() {

@@ -45,90 +45,105 @@ class MainViewModel(
 
     private fun observeTheme() {
         viewModelScope.launch {
-            preferencesRepository.isDarkTheme.collectLatest { isDark ->
-                if (isDark != null) {
-                    _uiState.update { it.copy(isDarkTheme = isDark) }
+            try {
+                preferencesRepository.isDarkTheme.collectLatest { isDark ->
+                    if (isDark != null) {
+                        _uiState.update { it.copy(isDarkTheme = isDark) }
+                    }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error loading theme: ${e.message}") }
             }
         }
     }
 
     private fun checkSession() {
         viewModelScope.launch {
-            preferencesRepository.isLoggedIn.collectLatest { loggedIn ->
-                _isLoggedIn.value = loggedIn
-                _isSessionLoaded.value = true
-                if (loggedIn) {
-                    loadUserProfile()
+            try {
+                preferencesRepository.isLoggedIn.collectLatest { loggedIn ->
+                    _isLoggedIn.value = loggedIn
+                    _isSessionLoaded.value = true
+                    if (loggedIn) {
+                        loadUserProfile()
+                    }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error checking session: ${e.message}") }
             }
         }
     }
 
     private fun loadUserProfile() {
         viewModelScope.launch {
-            preferencesRepository.userEmail.collectLatest { email ->
-                if (!email.isNullOrBlank()) {
-                    // Controllo una tantum all'avvio o al cambio email
-                    val user = authRepository.getUser(email)
-                    if (user != null) {
-                        _uiState.update { 
-                            it.copy(
-                                username = user.username,
-                                bio = user.bio,
-                                profilePictureUri = user.profilePictureUri,
-                                data = "Welcome back, ${user.username}!"
-                            ) 
+            try {
+                preferencesRepository.userEmail.collectLatest { email ->
+                    if (!email.isNullOrBlank()) {
+                        val user = authRepository.getUser(email)
+                        if (user != null) {
+                            _uiState.update { 
+                                it.copy(
+                                    username = user.username,
+                                    bio = user.bio,
+                                    profilePictureUri = user.profilePictureUri,
+                                    data = "Welcome back, ${user.username}!"
+                                ) 
+                            }
+                        } else {
+                            onLogout()
                         }
-                    } else {
-                        onLogout()
                     }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error loading profile: ${e.message}") }
             }
         }
     }
 
     fun onUpdateProfile(newUsername: String, newBio: String, newProfilePictureUri: String?) {
         viewModelScope.launch {
-            val email = preferencesRepository.userEmail.first()
-            if (email != null) {
-                val currentUser = authRepository.getUser(email)
-                if (currentUser != null) {
-                    val updatedUser = currentUser.copy(
-                        username = newUsername,
-                        bio = newBio,
-                        profilePictureUri = newProfilePictureUri
-                    )
-                    try {
+            try {
+                val email = preferencesRepository.userEmail.first()
+                if (email != null) {
+                    val currentUser = authRepository.getUser(email)
+                    if (currentUser != null) {
+                        val updatedUser = currentUser.copy(
+                            username = newUsername,
+                            bio = newBio,
+                            profilePictureUri = newProfilePictureUri
+                        )
                         authRepository.updateUser(updatedUser)
                         _uiState.update { 
                             it.copy(
                                 username = newUsername,
                                 bio = newBio,
-                                profilePictureUri = newProfilePictureUri
+                                profilePictureUri = newProfilePictureUri,
+                                errorMessage = null
                             ) 
                         }
-                    } catch (e: Exception) {
-                        // Gestione errore (es. username già preso)
                     }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error updating profile: ${e.message}") }
             }
         }
     }
 
     private fun loadData() {
         viewModelScope.launch {
-            // Prima di caricare i dati, verifica se l'utente esiste ancora
-            if (ensureUserExists()) {
-                _uiState.update { it.copy(isLoading = true) }
-                mainRepository.getStreamData().collect { result ->
-                    _uiState.update {
-                        it.copy(
-                            data = result,
-                            isLoading = false
-                        )
+            try {
+                if (ensureUserExists()) {
+                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                    mainRepository.getStreamData().collect { result ->
+                        _uiState.update {
+                            it.copy(
+                                data = result,
+                                isLoading = false
+                            )
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Error loading data: ${e.message}") }
             }
         }
     }
@@ -152,7 +167,11 @@ class MainViewModel(
 
     fun onLogout() {
         viewModelScope.launch {
-            preferencesRepository.clearSession()
+            try {
+                preferencesRepository.clearSession()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error logging out: ${e.message}") }
+            }
         }
     }
 
@@ -162,7 +181,11 @@ class MainViewModel(
 
     fun onThemeChange(isDark: Boolean) {
         viewModelScope.launch {
-            preferencesRepository.setTheme(isDark)
+            try {
+                preferencesRepository.setTheme(isDark)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error changing theme: ${e.message}") }
+            }
         }
     }
 
