@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.checkpoint.data.model.Post
+import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.theme.CheckPointTheme
@@ -165,8 +165,8 @@ fun MainScreenDarkPreview() {
             MainScreen(
                 state = MainUiState(
                     posts = listOf(
-                        Post("1", "Alessio", "Hello!", "Welcome to the dark side.", true, 10, "1h ago"),
-                        Post("2", "Bob", "Morning", "Coffee is ready.", false, 5, "10m ago")
+                        Post("1", "User Test 1", "user1@gmail.com", "Hello!", "Welcome to the dark side.", true, 10, System.currentTimeMillis(), "1h ago"),
+                        Post("2", "User Test 2", "user2@gmail.com", "Morning", "Coffee is ready.", false, 5, System.currentTimeMillis(), "10m ago")
                     ),
                     isDarkTheme = true
                 )
@@ -183,8 +183,8 @@ fun MainScreenLightPreview() {
             MainScreen(
                 state = MainUiState(
                     posts = listOf(
-                        Post("1", "Alessio", "Hello!", "Welcome to the light side.", true, 10, "1h ago"),
-                        Post("2", "Bob", "Morning", "Coffee is ready.", false, 5, "10m ago")
+                        Post("1", "User Test 1", "user1@gmail.com", "Hello!", "Welcome to the light side.", true, 10, System.currentTimeMillis(), "1h ago"),
+                        Post("2", "User Test 2", "user2@gmail.com", "Morning", "Coffee is ready.", false, 5, System.currentTimeMillis(), "10m ago")
                     ),
                     isDarkTheme = false
                 )

@@ -19,12 +19,16 @@ import com.example.checkpoint.ui.components.MediaUploadButton
 import com.example.checkpoint.ui.theme.CheckPointTheme
 
 @Composable
-fun CreatePostScreen() {
-    CreatePostScreenContent()
+fun CreatePostScreen(
+    onCreatePost: (String, String) -> Unit = { _, _ -> }
+) {
+    CreatePostScreenContent(onCreatePost = onCreatePost)
 }
 
 @Composable
-fun CreatePostScreenContent() {
+fun CreatePostScreenContent(
+    onCreatePost: (String, String) -> Unit = { _, _ -> }
+) {
     var title by remember { mutableStateOf("") }
     var initialMessage by remember { mutableStateOf("") }
 
@@ -44,7 +48,7 @@ fun CreatePostScreenContent() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "New Post",
+                    text = "New Checkpoint",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -131,12 +135,17 @@ fun CreatePostScreenContent() {
 
             // Tasto Post
             Button(
-                onClick = { /* Pubblica post */ },
+                onClick = { 
+                    if (title.isNotBlank() && initialMessage.isNotBlank()) {
+                        onCreatePost(title, initialMessage)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                enabled = title.isNotBlank() && initialMessage.isNotBlank()
             ) {
                 Text("Post", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }

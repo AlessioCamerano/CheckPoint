@@ -328,7 +328,7 @@ fun ProfileScreenDarkPreview() {
             ProfileScreen(
                 isDarkTheme = true,
                 userStatus = UserStatus.Online,
-                username = "Alessio Camerano"
+                username = "User Test 1"
             )
         }
     }
@@ -342,7 +342,7 @@ fun ProfileScreenLightPreview() {
             ProfileScreen(
                 isDarkTheme = false,
                 userStatus = UserStatus.Busy,
-                username = "Alessio Camerano"
+                username = "User Test 1"
             )
         }
     }

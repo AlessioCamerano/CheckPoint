@@ -98,6 +98,9 @@ fun AppNavigation(
                 onNavigateToEditProfile = {
                     navController.navigate(Screen.EditProfile)
                 },
+                onCreatePost = { title, message ->
+                    viewModel.onCreatePost(title, message)
+                },
                 onLogout = {
                     viewModel.onLogout()
                     navController.navigate(Screen.Login) {

@@ -1,4 +1,4 @@
-package com.example.checkpoint.ui.screens
+package com.example.checkpoint.ui.viewmodel
 
 import com.example.checkpoint.data.repository.AuthRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepository
@@ -65,7 +65,7 @@ class AuthViewModelTest {
         override suspend fun isUsernameTaken(username: String) = users.any { it.username == username }
         override suspend fun registerUser(user: UserEntity) { users.add(user) }
         override suspend fun loginUser(identifier: String) = users.find { it.email == identifier || it.username == identifier }
-        override suspend fun updateUser(user: UserEntity) { /* Not needed for these tests */ }
+        override suspend fun updateUser(user: UserEntity) { /* */ }
         override suspend fun getUser(email: String) = users.find { it.email == email }
     }
 

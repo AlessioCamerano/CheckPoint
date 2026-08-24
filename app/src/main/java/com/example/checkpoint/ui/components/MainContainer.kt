@@ -26,6 +26,7 @@ fun MainContainer(
     onThemeChange: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
+    onCreatePost: (String, String) -> Unit,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -79,6 +80,7 @@ fun MainContainer(
                     onThemeChange = onThemeChange,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToEditProfile = onNavigateToEditProfile,
+                    onCreatePost = onCreatePost,
                     onLogout = onLogout
                 )
             }

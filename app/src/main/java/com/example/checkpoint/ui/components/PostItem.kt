@@ -16,14 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.checkpoint.data.model.Post
+import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.util.TimeUtils
 
 @Composable
 fun PostItem(
     post: Post,
     onFavoriteClick: () -> Unit = {}
 ) {
+    val timeAgo = TimeUtils.getTimeAgo(post.timestamp)
+    
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -65,7 +68,7 @@ fun PostItem(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = post.timeAgo,
+                        text = timeAgo,
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -128,12 +131,13 @@ fun PostItemDarkPreview() {
             PostItem(
                 post = Post(
                     id = "1",
-                    authorName = "Alessio",
+                    authorName = "User Test 1",
+                    authorEmail = "user1@gmail.com",
                     title = "My first checkpoint!",
                     initialMessage = "This is a sample message for the preview.",
                     favoriteCount = 12,
                     isFavorite = true,
-                    timeAgo = "2h ago"
+                    timestamp = System.currentTimeMillis() - 7200000 // 2h ago
                 )
             )
         }
@@ -148,12 +152,13 @@ fun PostItemLightPreview() {
             PostItem(
                 post = Post(
                     id = "1",
-                    authorName = "Alessio",
+                    authorName = "User Test 1",
+                    authorEmail = "user1@gmail.com",
                     title = "My first checkpoint!",
                     initialMessage = "This is a sample message for the preview.",
                     favoriteCount = 12,
                     isFavorite = false,
-                    timeAgo = "5m ago"
+                    timestamp = System.currentTimeMillis() - 300000 // 5m ago
                 )
             )
         }

@@ -25,6 +25,7 @@ fun MainTabPager(
     onThemeChange: (Boolean) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
+    onCreatePost: (String, String) -> Unit,
     onLogout: () -> Unit
 ) {
     HorizontalPager(
@@ -34,7 +35,7 @@ fun MainTabPager(
     ) { page ->
         when (tabs[page]) {
             "search" -> SearchScreen()
-            "add" -> CreatePostScreen()
+            "add" -> CreatePostScreen(onCreatePost = onCreatePost)
             "home_feed" -> MainScreen(
                 state = uiState,
                 onNavigateToNotifications = onNavigateToNotifications

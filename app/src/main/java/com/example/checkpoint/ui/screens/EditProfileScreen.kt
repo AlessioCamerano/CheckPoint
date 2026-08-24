@@ -185,7 +185,7 @@ fun EditProfileScreenDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         EditProfileScreen(
             state = MainUiState(
-                username = "Alessio",
+                username = "User Test 1",
                 bio = "Developer & Gamer",
                 isDarkTheme = true
             )
@@ -199,7 +199,7 @@ fun EditProfileScreenLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
         EditProfileScreen(
             state = MainUiState(
-                username = "Alessio",
+                username = "User Test 1",
                 bio = "Developer & Gamer",
                 isDarkTheme = false
             )

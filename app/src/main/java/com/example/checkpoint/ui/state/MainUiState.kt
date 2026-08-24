@@ -1,7 +1,7 @@
 package com.example.checkpoint.ui.state
 
 import androidx.compose.ui.graphics.Color
-import com.example.checkpoint.data.model.Post
+import com.example.checkpoint.data.local.entity.Post
 
 enum class UserStatus(val color: Color, val label: String) {
     Online(Color.Green, "Online"),

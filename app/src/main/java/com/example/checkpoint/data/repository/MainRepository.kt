@@ -1,23 +1,23 @@
 package com.example.checkpoint.data.repository
 
-import kotlinx.coroutines.delay
+import com.example.checkpoint.data.local.dao.PostDao
+import com.example.checkpoint.data.local.entity.Post
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 
 /**
  * Repository per la gestione dei post e dei dati principali.
  */
 interface MainRepository {
-    fun getStreamData(): Flow<String>
+    fun getAllPosts(): Flow<List<Post>>
+    suspend fun createPost(post: Post)
 }
 
-class MainRepositoryImpl : MainRepository {
-    override fun getStreamData(): Flow<String> = flow {
-        var count = 0
-        while (true) {
-            emit("Checkpoint Data #$count")
-            delay(2000)
-            count++
-        }
+class MainRepositoryImpl(private val postDao: PostDao) : MainRepository {
+    override fun getAllPosts(): Flow<List<Post>> {
+        return postDao.getAllPosts()
+    }
+
+    override suspend fun createPost(post: Post) {
+        postDao.insertPost(post)
     }
 }
