@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.checkpoint.data.local.AppDatabase
+import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -41,14 +42,20 @@ class PostDaoTest {
             authorEmail = "user1@gmail.com",
             title = "Title 1",
             initialMessage = "Message 1",
-            timestamp = 1000L
+            timestamp = 1000L,
+            mediaUri = "content://img1",
+            mediaType = MediaType.IMAGE,
+            isMuted = false
         )
         val post2 = Post(
             authorName = "User2",
             authorEmail = "user2@gmail.com",
             title = "Title 2",
             initialMessage = "Message 2",
-            timestamp = 2000L
+            timestamp = 2000L,
+            mediaUri = "content://vid1",
+            mediaType = MediaType.VIDEO,
+            isMuted = true
         )
 
         postDao.insertPost(post1)

@@ -3,6 +3,7 @@ package com.example.checkpoint.ui.viewmodel
 import com.example.checkpoint.data.repository.AuthRepository
 import com.example.checkpoint.data.repository.MainRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
 import kotlinx.coroutines.Dispatchers
@@ -42,10 +43,11 @@ class MainViewModelTest {
 
     @Test
     fun `onCreatePost should call repository`() = runTest {
-        viewModel.onCreatePost("Test Title", "Test Message")
+        viewModel.onCreatePost("Test Title", "Test Message", "uri", MediaType.IMAGE, false)
         
         assertEquals(1, fakeMainRepository.posts.size)
         assertEquals("Test Title", fakeMainRepository.posts[0].title)
+        assertEquals(MediaType.IMAGE, fakeMainRepository.posts[0].mediaType)
     }
 
     @Test

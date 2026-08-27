@@ -5,6 +5,13 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
+ * Tipi di media supportati nei post.
+ */
+enum class MediaType {
+    IMAGE, VIDEO, NONE
+}
+
+/**
  * Entità Post
  */
 @Entity(tableName = "posts")
@@ -16,5 +23,8 @@ data class Post(
     val initialMessage: String,
     val isFavorite: Boolean = false,
     val favoriteCount: Int = 0,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val mediaUri: String? = null,
+    val mediaType: MediaType = MediaType.NONE,
+    val isMuted: Boolean = false // Flag per disattivare l'audio dei video
 )

@@ -92,15 +92,17 @@ fun AppNavigation(
                 uiState = uiState,
                 onStatusChange = { viewModel.onStatusChange(it) },
                 onThemeChange = { viewModel.onThemeChange(it) },
+                onRefresh = { viewModel.onRefresh() },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
                 },
                 onNavigateToEditProfile = {
                     navController.navigate(Screen.EditProfile)
                 },
-                onCreatePost = { title, message ->
-                    viewModel.onCreatePost(title, message)
+                onCreatePost = { title, message, uri, type, muted ->
+                    viewModel.onCreatePost(title, message, uri, type, muted)
                 },
+                onPostSuccessReset = { viewModel.resetPostSuccess() },
                 onLogout = {
                     viewModel.onLogout()
                     navController.navigate(Screen.Login) {

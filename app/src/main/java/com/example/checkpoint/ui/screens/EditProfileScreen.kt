@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
-import com.example.checkpoint.util.ImageStorageManager
+import com.example.checkpoint.util.MediaStorageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +46,7 @@ fun EditProfileScreen(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                val savedUri = ImageStorageManager.saveImageToInternalStorage(context, it)
+                val savedUri = MediaStorageManager.saveMediaToInternalStorage(context, it)
                 if (savedUri != null) {
                     profilePictureUri = savedUri.toString()
                 }

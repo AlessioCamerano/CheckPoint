@@ -12,7 +12,7 @@ import com.example.checkpoint.data.local.entity.UserEntity
 /**
  * Punto cdi accesso a Room
  */
-@Database(entities = [UserEntity::class, Post::class], version = 3, exportSchema = false)
+@Database(entities = [UserEntity::class, Post::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun postDao(): PostDao

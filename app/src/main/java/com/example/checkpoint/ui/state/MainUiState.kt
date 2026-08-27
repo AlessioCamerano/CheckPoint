@@ -15,6 +15,8 @@ data class MainUiState(
     val profilePictureUri: String? = null,
     val data: String = "",
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
+    val postSuccess: Boolean = false,
     val errorMessage: String? = null,
     val userStatus: UserStatus = UserStatus.Online,
     val posts: List<Post> = emptyList(),

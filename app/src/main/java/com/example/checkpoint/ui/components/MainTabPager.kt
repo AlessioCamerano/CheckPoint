@@ -10,6 +10,7 @@ import com.example.checkpoint.ui.screens.MainScreen
 import com.example.checkpoint.ui.screens.MessagesScreen
 import com.example.checkpoint.ui.screens.ProfileScreen
 import com.example.checkpoint.ui.screens.SearchScreen
+import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.UserStatus
 
@@ -23,9 +24,10 @@ fun MainTabPager(
     uiState: MainUiState,
     onStatusChange: (UserStatus) -> Unit,
     onThemeChange: (Boolean) -> Unit,
+    onRefresh: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
-    onCreatePost: (String, String) -> Unit,
+    onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit,
     onLogout: () -> Unit
 ) {
     HorizontalPager(
@@ -38,6 +40,7 @@ fun MainTabPager(
             "add" -> CreatePostScreen(onCreatePost = onCreatePost)
             "home_feed" -> MainScreen(
                 state = uiState,
+                onRefresh = onRefresh,
                 onNavigateToNotifications = onNavigateToNotifications
             )
             "messages" -> MessagesScreen()

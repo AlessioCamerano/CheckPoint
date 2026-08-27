@@ -14,8 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.TimeUtils
@@ -77,7 +80,7 @@ fun PostItem(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Corpo: Titolo e Messaggio
+            // Corpo: Titolo
             Text(
                 text = post.title,
                 fontSize = 18.sp,
@@ -85,8 +88,34 @@ fun PostItem(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            // MEDIA SECTION
+            if (post.mediaUri != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                when (post.mediaType) {
+                    MediaType.IMAGE -> {
+                        AsyncImage(
+                            model = post.mediaUri,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(250.dp)
+                                .clip(RoundedCornerShape(16.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                    MediaType.VIDEO -> {
+                        VideoPlayer(
+                            videoUri = post.mediaUri,
+                            isMuted = post.isMuted
+                        )
+                    }
+                    else -> {}
+                }
+            }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Messaggio
             Text(
                 text = post.initialMessage,
                 fontSize = 14.sp,
@@ -137,7 +166,9 @@ fun PostItemDarkPreview() {
                     initialMessage = "This is a sample message for the preview.",
                     favoriteCount = 12,
                     isFavorite = true,
-                    timestamp = System.currentTimeMillis() - 7200000 // 2h ago
+                    timestamp = System.currentTimeMillis() - 7200000,
+                    mediaUri = "https://example.com/image.jpg",
+                    mediaType = MediaType.IMAGE
                 )
             )
         }

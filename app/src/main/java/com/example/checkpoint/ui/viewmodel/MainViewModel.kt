@@ -11,6 +11,7 @@ import com.example.checkpoint.data.repository.MainRepositoryImpl
 import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
 import com.example.checkpoint.data.local.AppDatabase
+import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.UserStatus
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(
     private val mainRepository: MainRepository,
@@ -62,7 +64,7 @@ class MainViewModel(
     init {
         checkSession()
         observeTheme()
-        loadData()
+        observePosts()
     }
 
     private fun observeTheme() {
@@ -150,9 +152,16 @@ class MainViewModel(
         }
     }
 
-    fun onCreatePost(title: String, message: String) {
+    fun onCreatePost(
+        title: String, 
+        message: String, 
+        mediaUri: String? = null, 
+        mediaType: MediaType = MediaType.NONE,
+        isMuted: Boolean = false
+    ) {
         viewModelScope.launch {
             try {
+                _uiState.update { it.copy(isLoading = true) }
                 val email = preferencesRepository.userEmail.first()
                 val currentUsername = _uiState.value.username
                 if (email != null) {
@@ -160,33 +169,47 @@ class MainViewModel(
                         authorName = currentUsername,
                         authorEmail = email,
                         title = title,
-                        initialMessage = message
+                        initialMessage = message,
+                        mediaUri = mediaUri,
+                        mediaType = mediaType,
+                        isMuted = isMuted
                     )
                     mainRepository.createPost(newPost)
+                    _uiState.update { it.copy(isLoading = false, postSuccess = true) }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error creating post: ${e.message}") }
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Error creating post: ${e.message}") }
             }
         }
     }
 
-    private fun loadData() {
+    fun resetPostSuccess() {
+        _uiState.update { it.copy(postSuccess = false) }
+    }
+
+    private fun observePosts() {
         viewModelScope.launch {
             try {
-                if (ensureUserExists()) {
-                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-                    mainRepository.getAllPosts().collect { result ->
-                        _uiState.update {
-                            it.copy(
-                                posts = result,
-                                isLoading = false
-                            )
-                        }
+                mainRepository.getAllPosts().collectLatest { result ->
+                    _uiState.update {
+                        it.copy(
+                            posts = result,
+                            isLoading = false,
+                            isRefreshing = false
+                        )
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Error loading data: ${e.message}") }
+                _uiState.update { it.copy(isLoading = false, isRefreshing = false, errorMessage = "Error loading data: ${e.message}") }
             }
+        }
+    }
+
+    fun onRefresh() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            kotlinx.coroutines.delay(1000.milliseconds)
+            _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 
