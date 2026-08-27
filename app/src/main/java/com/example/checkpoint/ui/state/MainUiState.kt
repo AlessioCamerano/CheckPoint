@@ -26,6 +26,11 @@ data class MainUiState(
     val userStatus: UserStatus = UserStatus.Online,
     val posts: List<PostWithAuthor> = emptyList(),
     val availableTags: List<String> = emptyList(),
+    val trendingTags: List<String> = emptyList(),
+    val searchHistory: List<String> = emptyList(),
+    val searchResultsUsers: List<com.example.checkpoint.data.local.entity.UserEntity> = emptyList(),
+    val searchResultsPosts: List<PostWithAuthor> = emptyList(),
+    val searchResultsTags: List<PostWithAuthor> = emptyList(),
     val sortOrder: PostSortOrder = PostSortOrder.NEWEST,
     val isDarkTheme: Boolean = true
 )

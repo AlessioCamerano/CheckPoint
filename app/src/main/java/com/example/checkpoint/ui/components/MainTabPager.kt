@@ -28,6 +28,9 @@ fun MainTabPager(
     onRefresh: () -> Unit,
     onSortOrderChange: (PostSortOrder) -> Unit,
     onToggleLike: (String) -> Unit,
+    onSearch: (String) -> Unit,
+    onSaveSearch: (String) -> Unit,
+    onClearHistory: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
@@ -39,7 +42,13 @@ fun MainTabPager(
         beyondViewportPageCount = 1
     ) { page ->
         when (tabs[page]) {
-            "search" -> SearchScreen()
+            "search" -> SearchScreen(
+                state = uiState,
+                onSearch = onSearch,
+                onSaveSearch = onSaveSearch,
+                onClearHistory = onClearHistory,
+                onToggleLike = onToggleLike
+            )
             "add" -> CreatePostScreen(
                 state = uiState,
                 onCreatePost = onCreatePost

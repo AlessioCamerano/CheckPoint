@@ -26,7 +26,7 @@ import com.example.checkpoint.ui.theme.CheckPointTheme
 @Composable
 fun MessagesScreen() {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Messages", "Posts")
+    val tabs = listOf("Messages", "Checkpoints")
 
     Surface(
         modifier = Modifier.fillMaxSize(),

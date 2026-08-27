@@ -95,6 +95,9 @@ fun AppNavigation(
                 onRefresh = { viewModel.onRefresh() },
                 onSortOrderChange = { viewModel.onSortOrderChange(it) },
                 onToggleLike = { viewModel.onToggleLike(it) },
+                onSearch = { viewModel.onSearchQueryChange(it) },
+                onSaveSearch = { viewModel.onSaveSearchQuery(it) },
+                onClearHistory = { viewModel.clearSearchHistory() },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
                 },

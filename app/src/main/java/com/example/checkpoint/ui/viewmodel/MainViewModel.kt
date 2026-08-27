@@ -38,6 +38,8 @@ class MainViewModel(
 
     private val _sortOrder = MutableStateFlow(PostSortOrder.NEWEST)
 
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
     val isSessionLoaded: StateFlow<Boolean> = _isSessionLoaded.asStateFlow()
@@ -55,7 +57,7 @@ class MainViewModel(
 
                 val authRepository = AuthRepositoryImpl(database.userDao())
                 val preferencesRepository = UserPreferencesRepositoryImpl(application)
-                val mainRepository = MainRepositoryImpl(database.postDao())
+                val mainRepository = MainRepositoryImpl(database.postDao(), database.userDao())
 
                 return MainViewModel(
                     mainRepository = mainRepository,
@@ -71,6 +73,75 @@ class MainViewModel(
         observeTheme()
         observePosts()
         observeTags()
+        observeTrendingTags()
+        observeSearchHistory()
+    }
+
+    private fun observeSearchHistory() {
+        viewModelScope.launch {
+            try {
+                preferencesRepository.searchHistory.collectLatest { history ->
+                    _uiState.update { it.copy(searchHistory = history) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error loading search history: ${e.message}") }
+            }
+        }
+    }
+
+    private fun observeTrendingTags() {
+        viewModelScope.launch {
+            try {
+                mainRepository.getTrendingTags().collectLatest { tags ->
+                    _uiState.update { it.copy(trendingTags = tags) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error loading trending tags: ${e.message}") }
+            }
+        }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            try {
+                val email = preferencesRepository.userEmail.first() ?: return@launch
+                
+                // User Search
+                launch {
+                    mainRepository.searchUsersByUsername(query).collectLatest { users ->
+                        _uiState.update { it.copy(searchResultsUsers = users) }
+                    }
+                }
+                
+                // Posts search
+                launch {
+                    mainRepository.searchPostsByTitle(query, email).collectLatest { posts ->
+                        _uiState.update { it.copy(searchResultsPosts = posts) }
+                    }
+                }
+                
+                // Tags search
+                launch {
+                    mainRepository.searchPostsByTag(query, email).collectLatest { posts ->
+                        _uiState.update { it.copy(searchResultsTags = posts) }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Search failed: ${e.message}") }
+            }
+        }
+    }
+
+    fun onSaveSearchQuery(query: String) {
+        if (query.isBlank()) return
+        viewModelScope.launch {
+            try {
+                preferencesRepository.saveSearchQuery(query)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to save search: ${e.message}") }
+            }
+        }
     }
 
     private fun observeTags() {
@@ -266,6 +337,16 @@ class MainViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error liking post: ${e.message}") }
+            }
+        }
+    }
+
+    fun clearSearchHistory() {
+        viewModelScope.launch {
+            try {
+                preferencesRepository.clearSearchHistory()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error clearing history: ${e.message}") }
             }
         }
     }

@@ -11,9 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -41,49 +43,72 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `onCreatePost should call repository`() = runTest {
-        viewModel.onCreatePost("Test Title", "Test Message", "uri", MediaType.IMAGE, false)
+    fun createPost_callsRepository() = runTest {
+        // Verifica che la creazione di un checkpoint chiami il repository correttamente
+        viewModel.onCreatePost("Title", "Message", "uri", MediaType.IMAGE, false, listOf("tag1"))
         
         assertEquals(1, fakeMainRepository.posts.size)
-        assertEquals("Test Title", fakeMainRepository.posts[0].title)
+        assertEquals("Title", fakeMainRepository.posts[0].title)
         assertEquals(MediaType.IMAGE, fakeMainRepository.posts[0].mediaType)
     }
 
     @Test
-    fun `loadData should update UI state with posts`() = runTest {
-        val user = UserEntity("test@gmail.com", "testuser", "pass")
+    fun loadData_updatesUiState() = runTest {
+        // Verifica che il caricamento dati aggiorni lo stato della UI
         val post = Post(authorName = "Author", authorEmail = "test@gmail.com", title = "T", initialMessage = "M")
-        fakeMainRepository.createPost(post)
+        fakeMainRepository.createPost(post, emptyList())
         
         val state = viewModel.uiState.value
         assertEquals(1, state.posts.size)
         assertEquals("T", state.posts[0].post.title)
     }
 
-    // Fakes
+    @Test
+    fun saveSearch_addsToHistory() = runTest {
+        // Verifica che il salvataggio di una ricerca la aggiunga alla cronologia
+        val query = "new search"
+        viewModel.onSaveSearchQuery(query)
+        
+        assertTrue(fakePreferencesRepository.historyList.contains(query))
+    }
+
+    @Test
+    fun clearHistory_emptiesList() = runTest {
+        // Verifica che la pulizia della cronologia svuoti la lista
+        fakePreferencesRepository.historyList.add("query")
+        viewModel.clearSearchHistory()
+        
+        assertTrue(fakePreferencesRepository.historyList.isEmpty())
+    }
+
+    // Classi Fake per il testing
     class FakeMainRepository : MainRepository {
         val posts = mutableListOf<Post>()
         private val _postsFlow = MutableStateFlow<List<PostWithAuthor>>(emptyList())
         
         override fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>> = _postsFlow
+        override fun getAllUniqueTags(): Flow<List<String>> = emptyFlow()
+        override fun getTrendingTags(): Flow<List<String>> = emptyFlow()
         
-        override suspend fun createPost(post: Post) {
+        override fun searchPostsByTitle(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>> = _postsFlow
+        override fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>> = _postsFlow
+        override fun searchUsersByUsername(query: String): Flow<List<UserEntity>> = emptyFlow()
+
+        override suspend fun createPost(post: Post, tags: List<String>) {
             posts.add(post)
             val author = UserEntity(post.authorEmail, post.authorName, "pass")
             val currentPosts = _postsFlow.value.toMutableList()
-            currentPosts.add(PostWithAuthor(post, author, false))
+            currentPosts.add(PostWithAuthor(post, author, emptyList(), false))
             _postsFlow.value = currentPosts
         }
 
-        override suspend fun toggleLike(postId: String, userEmail: String) {
-            // Mock implementation
-        }
+        override suspend fun toggleLike(postId: String, userEmail: String) {}
     }
 
     class FakeAuthRepository : AuthRepository {
         override suspend fun registerUser(user: UserEntity) {}
         override suspend fun updateUser(user: UserEntity) {}
-        override suspend fun getUser(email: String): UserEntity = UserEntity(email, "testuser", "pass")
+        override suspend fun getUser(email: String): UserEntity = UserEntity(email, "user", "pass")
         override suspend fun isEmailTaken(email: String) = false
         override suspend fun isUsernameTaken(username: String) = false
         override suspend fun loginUser(identifier: String): UserEntity? = null
@@ -93,8 +118,19 @@ class MainViewModelTest {
         override val isLoggedIn = MutableStateFlow(true)
         override val userEmail = MutableStateFlow("test@gmail.com")
         override val isDarkTheme = MutableStateFlow(true)
+        val historyList = mutableListOf<String>()
+        override val searchHistory = MutableStateFlow<List<String>>(emptyList())
+        
         override suspend fun saveSession(email: String) {}
         override suspend fun setTheme(isDark: Boolean) {}
+        override suspend fun saveSearchQuery(query: String) {
+            historyList.add(query)
+            searchHistory.value = historyList.toList()
+        }
+        override suspend fun clearSearchHistory() {
+            historyList.clear()
+            searchHistory.value = emptyList()
+        }
         override suspend fun clearSession() {}
     }
 }

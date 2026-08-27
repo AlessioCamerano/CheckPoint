@@ -66,6 +66,36 @@ interface PostDao {
     @Query("SELECT DISTINCT tag FROM post_tags")
     fun getAllUniqueTags(): Flow<List<String>>
 
+    @Query("""
+        SELECT tag
+        FROM post_tags 
+        GROUP BY tag 
+        ORDER BY COUNT(*) DESC 
+        LIMIT 5
+    """)
+    fun getTrendingTags(): Flow<List<String>>
+
+    @Transaction
+    @Query("""
+        SELECT posts.*, 
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        FROM posts 
+        WHERE title LIKE '%' || :query || '%' OR authorName LIKE '%' || :query || '%' OR initialMessage LIKE '%' || :query || '%'
+        ORDER BY timestamp DESC
+    """)
+    fun searchPostsByTitle(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
+
+    @Transaction
+    @Query("""
+        SELECT DISTINCT posts.*, 
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        FROM posts 
+        INNER JOIN post_tags ON posts.id = post_tags.postId 
+        WHERE post_tags.tag LIKE '%' || :query || '%' 
+        ORDER BY timestamp DESC
+    """)
+    fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
+
     @Query("SELECT EXISTS(SELECT 1 FROM post_likes WHERE postId = :postId AND userEmail = :userEmail)")
     suspend fun isPostLikedByUser(postId: String, userEmail: String): Boolean
 
