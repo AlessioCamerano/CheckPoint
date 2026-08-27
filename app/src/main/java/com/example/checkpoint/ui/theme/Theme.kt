@@ -21,6 +21,8 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = TextPrimary,
     onSurface = TextPrimary,
     secondary = TextSecondary,
+    tertiaryContainer = DeepNavy,
+    onTertiaryContainer = CyanAccent,
     error = ErrorRed,
     onError = Color.White
 )
@@ -33,6 +35,8 @@ private val LightColorScheme = lightColorScheme(
     surface = LightBlueGray,
     onSurface = DeepNavy,
     secondary = TextSecondary,
+    tertiaryContainer = Color(0xFFD1E8EA),
+    onTertiaryContainer = CyanDark,
     surfaceVariant = Color.White,
     onSurfaceVariant = DeepNavy,
     error = ErrorRed,

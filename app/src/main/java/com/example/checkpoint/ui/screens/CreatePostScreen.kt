@@ -260,15 +260,18 @@ fun CreatePostScreenContent(
                                     .padding(top = 4.dp)
                                     .heightIn(max = 200.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                color = Color(0xFF0A1118),
-                                border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                border = androidx.compose.foundation.BorderStroke(
+                                    0.5.dp, 
+                                    MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
+                                ),
                                 tonalElevation = 8.dp
                             ) {
                                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                                     suggestions.forEach { tag ->
                                         Text(
                                             text = "#$tag",
-                                            color = Color(0xFF00D4FF),
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .clickable { 
@@ -279,7 +282,9 @@ fun CreatePostScreenContent(
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
                                         )
-                                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.1f)
+                                        )
                                     }
                                 }
                             }
@@ -297,9 +302,12 @@ fun CreatePostScreenContent(
                 ) {
                     selectedTags.forEach { tag ->
                         Surface(
-                            color = Color(0xFF0A1118),
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
                             shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp, 
+                                MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
+                            )
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -307,7 +315,7 @@ fun CreatePostScreenContent(
                             ) {
                                 Text(
                                     text = "#$tag",
-                                    color = Color(0xFF00D4FF),
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -315,7 +323,7 @@ fun CreatePostScreenContent(
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Remove",
-                                    tint = Color(0xFF00D4FF).copy(alpha = 0.7f),
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
                                     modifier = Modifier
                                         .size(14.dp)
                                         .clickable { selectedTags.remove(tag) }

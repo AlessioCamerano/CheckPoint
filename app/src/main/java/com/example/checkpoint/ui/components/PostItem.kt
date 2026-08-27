@@ -153,16 +153,16 @@ fun PostItem(
                 ) {
                     visibleTags.forEach { tagEntity ->
                         Surface(
-                            color = Color(0xFF0A1118),
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
                             shape = RoundedCornerShape(16.dp),
                             border = androidx.compose.foundation.BorderStroke(
                                 0.5.dp, 
-                                Color(0xFF00D4FF).copy(alpha = 0.3f)
+                                MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f)
                             )
                         ) {
                             Text(
                                 text = "#${tagEntity.tag}",
-                                color = Color(0xFF00D4FF),
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)

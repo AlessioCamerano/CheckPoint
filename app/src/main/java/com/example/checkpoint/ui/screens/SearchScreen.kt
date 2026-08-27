@@ -191,13 +191,17 @@ fun TagItem(tag: String, onClick: () -> Unit) {
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() },
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(16.dp)
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        shape = RoundedCornerShape(16.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            0.5.dp, 
+            MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f)
+        )
     ) {
         Text(
             text = "#$tag",
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold
         )

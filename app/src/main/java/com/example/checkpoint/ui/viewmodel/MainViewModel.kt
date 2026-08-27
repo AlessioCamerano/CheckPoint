@@ -80,6 +80,7 @@ class MainViewModel(
                     _uiState.update { it.copy(availableTags = tags) }
                 }
             } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error observing tags: ${e.message}") }
             }
         }
     }
