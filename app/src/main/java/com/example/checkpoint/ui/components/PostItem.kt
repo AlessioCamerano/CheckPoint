@@ -6,15 +6,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -26,6 +27,8 @@ import com.example.checkpoint.util.TimeUtils
 @Composable
 fun PostItem(
     post: Post,
+    authorProfilePicture: String? = null,
+    isLiked: Boolean = false,
     onFavoriteClick: () -> Unit = {}
 ) {
     val timeAgo = TimeUtils.getTimeAgo(post.timestamp)
@@ -55,12 +58,21 @@ fun PostItem(
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = post.authorName.take(1).uppercase(),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                    if (authorProfilePicture != null) {
+                        AsyncImage(
+                            model = authorProfilePicture,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
@@ -134,9 +146,9 @@ fun PostItem(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        imageVector = if (post.isFavorite) Icons.Default.Flag else Icons.Outlined.Flag,
+                        imageVector = if (isLiked) Icons.Default.Flag else Icons.Outlined.Flag,
                         contentDescription = "Favorite",
-                        tint = if (post.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                        tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -169,7 +181,8 @@ fun PostItemDarkPreview() {
                     timestamp = System.currentTimeMillis() - 7200000,
                     mediaUri = "https://example.com/image.jpg",
                     mediaType = MediaType.IMAGE
-                )
+                ),
+                isLiked = true
             )
         }
     }
@@ -189,8 +202,11 @@ fun PostItemLightPreview() {
                     initialMessage = "This is a sample message for the preview.",
                     favoriteCount = 12,
                     isFavorite = false,
-                    timestamp = System.currentTimeMillis() - 300000 // 5m ago
-                )
+                    timestamp = System.currentTimeMillis() - 300000,
+                    mediaUri = "https://example.com/image.jpg",
+                    mediaType = MediaType.IMAGE
+                ),
+                isLiked = false
             )
         }
     }

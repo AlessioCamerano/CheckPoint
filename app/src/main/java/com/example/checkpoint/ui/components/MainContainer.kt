@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
 import kotlinx.coroutines.launch
 
@@ -30,6 +31,8 @@ fun MainContainer(
     onStatusChange: (UserStatus) -> Unit,
     onThemeChange: (Boolean) -> Unit,
     onRefresh: () -> Unit,
+    onSortOrderChange: (PostSortOrder) -> Unit,
+    onToggleLike: (String) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit,
@@ -86,7 +89,8 @@ fun MainContainer(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (uiState.isLoading && !uiState.postSuccess) {
+
+            if (uiState.isLoading && uiState.username == "Username" && uiState.posts.isEmpty() && !uiState.postSuccess) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = MaterialTheme.colorScheme.primary
@@ -99,6 +103,8 @@ fun MainContainer(
                     onStatusChange = onStatusChange,
                     onThemeChange = onThemeChange,
                     onRefresh = onRefresh,
+                    onSortOrderChange = onSortOrderChange,
+                    onToggleLike = onToggleLike,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToEditProfile = onNavigateToEditProfile,
                     onCreatePost = onCreatePost,

@@ -6,15 +6,14 @@ import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -52,32 +51,39 @@ class MainViewModelTest {
 
     @Test
     fun `loadData should update UI state with posts`() = runTest {
-        val post = Post(authorName = "Author", authorEmail = "a@a.com", title = "T", initialMessage = "M")
+        val user = UserEntity("test@gmail.com", "testuser", "pass")
+        val post = Post(authorName = "Author", authorEmail = "test@gmail.com", title = "T", initialMessage = "M")
         fakeMainRepository.createPost(post)
         
-        // MainViewModel calls loadData in init
         val state = viewModel.uiState.value
         assertEquals(1, state.posts.size)
-        assertEquals("T", state.posts[0].title)
+        assertEquals("T", state.posts[0].post.title)
     }
 
     // Fakes
     class FakeMainRepository : MainRepository {
         val posts = mutableListOf<Post>()
-        private val _postsFlow = MutableStateFlow<List<Post>>(emptyList())
+        private val _postsFlow = MutableStateFlow<List<PostWithAuthor>>(emptyList())
         
-        override fun getAllPosts(): Flow<List<Post>> = _postsFlow
+        override fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>> = _postsFlow
         
         override suspend fun createPost(post: Post) {
             posts.add(post)
-            _postsFlow.value = posts.toList()
+            val author = UserEntity(post.authorEmail, post.authorName, "pass")
+            val currentPosts = _postsFlow.value.toMutableList()
+            currentPosts.add(PostWithAuthor(post, author, false))
+            _postsFlow.value = currentPosts
+        }
+
+        override suspend fun toggleLike(postId: String, userEmail: String) {
+            // Mock implementation
         }
     }
 
     class FakeAuthRepository : AuthRepository {
         override suspend fun registerUser(user: UserEntity) {}
         override suspend fun updateUser(user: UserEntity) {}
-        override suspend fun getUser(email: String): UserEntity? = UserEntity(email, "testuser", "pass")
+        override suspend fun getUser(email: String): UserEntity = UserEntity(email, "testuser", "pass")
         override suspend fun isEmailTaken(email: String) = false
         override suspend fun isUsernameTaken(username: String) = false
         override suspend fun loginUser(identifier: String): UserEntity? = null

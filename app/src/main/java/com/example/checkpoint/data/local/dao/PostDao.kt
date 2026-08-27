@@ -4,7 +4,10 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostLikeEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -15,8 +18,41 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPost(post: Post)
 
-    @Query("SELECT * FROM posts ORDER BY timestamp DESC")
-    fun getAllPosts(): Flow<List<Post>>
+    @Transaction
+    @Query("""
+        SELECT posts.*, 
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        FROM posts 
+        ORDER BY timestamp DESC
+    """)
+    fun getAllPostsWithAuthor(currentUserEmail: String): Flow<List<PostWithAuthor>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLike(like: PostLikeEntity)
+
+    @Query("DELETE FROM post_likes WHERE postId = :postId AND userEmail = :userEmail")
+    suspend fun deleteLike(postId: String, userEmail: String)
+
+    @Query("UPDATE posts SET favoriteCount = favoriteCount + 1 WHERE id = :postId")
+    suspend fun incrementFavoriteCount(postId: String)
+
+    @Query("UPDATE posts SET favoriteCount = favoriteCount - 1 WHERE id = :postId")
+    suspend fun decrementFavoriteCount(postId: String)
+
+    @Transaction
+    suspend fun toggleLike(postId: String, userEmail: String) {
+        val isLiked = isPostLikedByUser(postId, userEmail)
+        if (isLiked) {
+            deleteLike(postId, userEmail)
+            decrementFavoriteCount(postId)
+        } else {
+            insertLike(PostLikeEntity(postId, userEmail))
+            incrementFavoriteCount(postId)
+        }
+    }
+
+    @Query("SELECT EXISTS(SELECT 1 FROM post_likes WHERE postId = :postId AND userEmail = :userEmail)")
+    suspend fun isPostLikedByUser(postId: String, userEmail: String): Boolean
 
     @Query("DELETE FROM posts WHERE id = :postId")
     suspend fun deletePost(postId: String)

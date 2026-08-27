@@ -12,6 +12,7 @@ import com.example.checkpoint.ui.screens.ProfileScreen
 import com.example.checkpoint.ui.screens.SearchScreen
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
 
 /**
@@ -25,6 +26,8 @@ fun MainTabPager(
     onStatusChange: (UserStatus) -> Unit,
     onThemeChange: (Boolean) -> Unit,
     onRefresh: () -> Unit,
+    onSortOrderChange: (PostSortOrder) -> Unit,
+    onToggleLike: (String) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit,
@@ -41,6 +44,8 @@ fun MainTabPager(
             "home_feed" -> MainScreen(
                 state = uiState,
                 onRefresh = onRefresh,
+                onSortOrderChange = onSortOrderChange,
+                onToggleLike = onToggleLike,
                 onNavigateToNotifications = onNavigateToNotifications
             )
             "messages" -> MessagesScreen()

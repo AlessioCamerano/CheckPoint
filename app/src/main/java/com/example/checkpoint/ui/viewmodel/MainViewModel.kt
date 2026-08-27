@@ -13,12 +13,15 @@ import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
 import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,6 +35,8 @@ class MainViewModel(
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    private val _sortOrder = MutableStateFlow(PostSortOrder.NEWEST)
 
     // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
@@ -190,13 +195,27 @@ class MainViewModel(
     private fun observePosts() {
         viewModelScope.launch {
             try {
-                mainRepository.getAllPosts().collectLatest { result ->
-                    _uiState.update {
-                        it.copy(
-                            posts = result,
-                            isLoading = false,
-                            isRefreshing = false
-                        )
+                combine(
+                    preferencesRepository.userEmail,
+                    _sortOrder
+                ) { email, sortOrder ->
+                    email to sortOrder
+                }.collectLatest { (email, sortOrder) ->
+                    if (email != null) {
+                        mainRepository.getAllPosts(email).collectLatest { result ->
+                            val sortedList = when (sortOrder) {
+                                PostSortOrder.NEWEST -> result.sortedByDescending { it.post.timestamp }
+                                PostSortOrder.TRENDING -> result.sortedByDescending { it.post.favoriteCount }
+                            }
+                            _uiState.update {
+                                it.copy(
+                                    posts = sortedList,
+                                    sortOrder = sortOrder,
+                                    isLoading = false,
+                                    isRefreshing = false
+                                )
+                            }
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -205,9 +224,42 @@ class MainViewModel(
         }
     }
 
+    fun onSortOrderChange(newOrder: PostSortOrder) {
+        if (_sortOrder.value == newOrder) return
+        
+        viewModelScope.launch {
+            try {
+                // Mostra il caricamento per feedback visivo
+                _uiState.update { it.copy(isLoading = true) }
+                
+                // Piccolo delay simulato
+                kotlinx.coroutines.delay(600.milliseconds)
+                
+                _sortOrder.value = newOrder
+                // Il caricamento viene rimosso appena viene caricata la nuova lista
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Error sorting posts: ${e.message}") }
+            }
+        }
+    }
+
+    fun onToggleLike(postId: String) {
+        viewModelScope.launch {
+            try {
+                val email = preferencesRepository.userEmail.first()
+                if (email != null) {
+                    mainRepository.toggleLike(postId, email)
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error liking post: ${e.message}") }
+            }
+        }
+    }
+
     fun onRefresh() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
+            loadUserProfile()
             kotlinx.coroutines.delay(1000.milliseconds)
             _uiState.update { it.copy(isRefreshing = false) }
         }

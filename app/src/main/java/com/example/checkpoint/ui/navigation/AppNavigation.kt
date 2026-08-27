@@ -93,6 +93,8 @@ fun AppNavigation(
                 onStatusChange = { viewModel.onStatusChange(it) },
                 onThemeChange = { viewModel.onThemeChange(it) },
                 onRefresh = { viewModel.onRefresh() },
+                onSortOrderChange = { viewModel.onSortOrderChange(it) },
+                onToggleLike = { viewModel.onToggleLike(it) },
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications)
                 },
