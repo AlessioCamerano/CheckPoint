@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.PostLikeEntity
+import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import kotlinx.coroutines.flow.Flow
 
@@ -17,6 +18,17 @@ import kotlinx.coroutines.flow.Flow
 interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPost(post: Post)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTags(tags: List<PostTagEntity>)
+
+    @Transaction
+    suspend fun insertPostWithTags(post: Post, tags: List<PostTagEntity>) {
+        insertPost(post)
+        if (tags.isNotEmpty()) {
+            insertTags(tags)
+        }
+    }
 
     @Transaction
     @Query("""
@@ -50,6 +62,9 @@ interface PostDao {
             incrementFavoriteCount(postId)
         }
     }
+
+    @Query("SELECT DISTINCT tag FROM post_tags")
+    fun getAllUniqueTags(): Flow<List<String>>
 
     @Query("SELECT EXISTS(SELECT 1 FROM post_likes WHERE postId = :postId AND userEmail = :userEmail)")
     suspend fun isPostLikedByUser(postId: String, userEmail: String): Boolean

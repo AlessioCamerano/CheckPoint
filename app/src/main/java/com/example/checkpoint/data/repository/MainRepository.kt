@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.Flow
  */
 interface MainRepository {
     fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>>
-    suspend fun createPost(post: Post)
+    fun getAllUniqueTags(): Flow<List<String>>
+    suspend fun createPost(post: Post, tags: List<String>)
     suspend fun toggleLike(postId: String, userEmail: String)
 }
 
@@ -19,8 +20,13 @@ class MainRepositoryImpl(private val postDao: PostDao) : MainRepository {
         return postDao.getAllPostsWithAuthor(currentUserEmail)
     }
 
-    override suspend fun createPost(post: Post) {
-        postDao.insertPost(post)
+    override fun getAllUniqueTags(): Flow<List<String>> {
+        return postDao.getAllUniqueTags()
+    }
+
+    override suspend fun createPost(post: Post, tags: List<String>) {
+        val tagEntities = tags.map { com.example.checkpoint.data.local.entity.PostTagEntity(post.id, it) }
+        postDao.insertPostWithTags(post, tagEntities)
     }
 
     override suspend fun toggleLike(postId: String, userEmail: String) {

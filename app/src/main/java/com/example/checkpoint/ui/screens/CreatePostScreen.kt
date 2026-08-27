@@ -6,8 +6,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -19,37 +23,56 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.MediaType
+import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.components.MediaUploadButton
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.MediaStorageManager
 
 @Composable
 fun CreatePostScreen(
-    onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit = { _, _, _, _, _ -> }
+    state: MainUiState,
+    onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit = { _, _, _, _, _, _ -> }
 ) {
-    CreatePostScreenContent(onCreatePost = onCreatePost)
+    CreatePostScreenContent(state = state, onCreatePost = onCreatePost)
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CreatePostScreenContent(
-    onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit = { _, _, _, _, _ -> }
+    state: MainUiState,
+    onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit = { _, _, _, _, _, _ -> }
 ) {
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
     var initialMessage by remember { mutableStateOf("") }
+    var currentTag by remember { mutableStateOf("") }
+    val selectedTags = remember { mutableStateListOf<String>() }
     var mediaUri by remember { mutableStateOf<String?>(null) }
     var mediaType by remember { mutableStateOf(MediaType.NONE) }
     var isMuted by remember { mutableStateOf(false) }
+
+    // Suggerimenti Tag
+    val suggestions = remember(currentTag, state.availableTags) {
+        if (currentTag.isBlank()) emptyList()
+        else state.availableTags.filter { 
+            it.lowercase().contains(currentTag.lowercase().removePrefix("#")) && 
+            !selectedTags.contains(it) 
+        }
+    }
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -60,7 +83,6 @@ fun CreatePostScreenContent(
                 if (savedUri != null) {
                     mediaUri = savedUri.toString()
                     mediaType = if (isVideo) MediaType.VIDEO else MediaType.IMAGE
-                    // Resetta il muto se non è un video
                     if (!isVideo) isMuted = false
                 }
             }
@@ -101,7 +123,7 @@ fun CreatePostScreenContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Campo per il Titolo
+                // Titolo
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -119,7 +141,7 @@ fun CreatePostScreenContent(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Anteprima Media se presente
+                // Anteprima Media
                 if (mediaUri != null) {
                     Box(
                         modifier = Modifier
@@ -137,14 +159,10 @@ fun CreatePostScreenContent(
                                 contentScale = ContentScale.Crop
                             )
                         } else {
-                            // Placeholder per Video
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.Videocam, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
                                 Text("Video selected", color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
-                                
                                 Spacer(modifier = Modifier.height(8.dp))
-                                
-                                // Toggle Muto
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
@@ -169,8 +187,6 @@ fun CreatePostScreenContent(
                                 }
                             }
                         }
-                        
-                        // Bottone per rimuovere media
                         IconButton(
                             onClick = { mediaUri = null; mediaType = MediaType.NONE },
                             modifier = Modifier
@@ -184,7 +200,7 @@ fun CreatePostScreenContent(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                // Campo per il Messaggio
+                // Messaggio
                 OutlinedTextField(
                     value = initialMessage,
                     onValueChange = { initialMessage = it },
@@ -201,18 +217,117 @@ fun CreatePostScreenContent(
                     )
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Campo Tag con Suggerimenti
+                var textFieldHeight by remember { mutableIntStateOf(0) }
+                Box(
+                    modifier = Modifier.onGloballyPositioned { 
+                        textFieldHeight = it.size.height 
+                    }
+                ) {
+                    OutlinedTextField(
+                        value = currentTag,
+                        onValueChange = { currentTag = it },
+                        label = { Text("Add Tags (Enter to add)", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                        placeholder = { Text("#gaming", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = {
+                            val cleanTag = currentTag.trim().removePrefix("#")
+                            if (cleanTag.isNotBlank() && !selectedTags.contains(cleanTag)) {
+                                selectedTags.add(cleanTag)
+                                currentTag = ""
+                            }
+                        })
+                    )
+                    
+                    if (suggestions.isNotEmpty()) {
+                        Popup(
+                            alignment = Alignment.TopStart,
+                            offset = androidx.compose.ui.unit.IntOffset(0, textFieldHeight)
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.9f)
+                                    .padding(top = 4.dp)
+                                    .heightIn(max = 200.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFF0A1118),
+                                border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                tonalElevation = 8.dp
+                            ) {
+                                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                                    suggestions.forEach { tag ->
+                                        Text(
+                                            text = "#$tag",
+                                            color = Color(0xFF00D4FF),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { 
+                                                    selectedTags.add(tag)
+                                                    currentTag = ""
+                                                }
+                                                .padding(16.dp),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Lista Tag Selezionati
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    selectedTags.forEach { tag ->
+                        Surface(
+                            color = Color(0xFF0A1118),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "#$tag",
+                                    color = Color(0xFF00D4FF),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Remove",
+                                    tint = Color(0xFF00D4FF).copy(alpha = 0.7f),
+                                    modifier = Modifier
+                                        .size(14.dp)
+                                        .clickable { selectedTags.remove(tag) }
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 if (mediaUri == null) {
-                    Text(
-                        text = "Add an image or video to your post?",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     MediaUploadButton(
                         icon = Icons.Default.AddPhotoAlternate,
                         label = "Add Media",
@@ -232,7 +347,7 @@ fun CreatePostScreenContent(
             Button(
                 onClick = { 
                     if (title.isNotBlank() && initialMessage.isNotBlank()) {
-                        onCreatePost(title, initialMessage, mediaUri, mediaType, isMuted)
+                        onCreatePost(title, initialMessage, mediaUri, mediaType, isMuted, selectedTags.toList())
                     }
                 },
                 modifier = Modifier
@@ -252,7 +367,7 @@ fun CreatePostScreenContent(
 @Composable
 fun CreatePostScreenDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
-        CreatePostScreenContent()
+        CreatePostScreenContent(state = MainUiState(isDarkTheme = true))
     }
 }
 
@@ -260,6 +375,6 @@ fun CreatePostScreenDarkPreview() {
 @Composable
 fun CreatePostScreenLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
-        CreatePostScreenContent()
+        CreatePostScreenContent(state = MainUiState(isDarkTheme = false))
     }
 }

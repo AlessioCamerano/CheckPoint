@@ -25,6 +25,7 @@ data class MainUiState(
     val errorMessage: String? = null,
     val userStatus: UserStatus = UserStatus.Online,
     val posts: List<PostWithAuthor> = emptyList(),
+    val availableTags: List<String> = emptyList(),
     val sortOrder: PostSortOrder = PostSortOrder.NEWEST,
     val isDarkTheme: Boolean = true
 )

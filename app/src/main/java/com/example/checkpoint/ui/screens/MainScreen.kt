@@ -188,6 +188,7 @@ fun MainScreen(
                     PostItem(
                         post = postWithAuthor.post,
                         authorProfilePicture = postWithAuthor.author.profilePictureUri,
+                        tags = postWithAuthor.tags,
                         isLiked = postWithAuthor.isLikedByCurrentUser,
                         onFavoriteClick = { onToggleLike(postWithAuthor.post.id) }
                     )

@@ -8,12 +8,17 @@ import com.example.checkpoint.data.local.dao.PostDao
 import com.example.checkpoint.data.local.dao.UserDao
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.PostLikeEntity
+import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 
 /**
  * Punto cdi accesso a Room
  */
-@Database(entities = [UserEntity::class, Post::class, PostLikeEntity::class], version = 6, exportSchema = false)
+@Database(
+    entities = [UserEntity::class, Post::class, PostLikeEntity::class, PostTagEntity::class], 
+    version = 7, 
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun postDao(): PostDao

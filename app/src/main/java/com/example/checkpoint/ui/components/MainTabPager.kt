@@ -30,7 +30,7 @@ fun MainTabPager(
     onToggleLike: (String) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
-    onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit,
+    onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onLogout: () -> Unit
 ) {
     HorizontalPager(
@@ -40,7 +40,10 @@ fun MainTabPager(
     ) { page ->
         when (tabs[page]) {
             "search" -> SearchScreen()
-            "add" -> CreatePostScreen(onCreatePost = onCreatePost)
+            "add" -> CreatePostScreen(
+                state = uiState,
+                onCreatePost = onCreatePost
+            )
             "home_feed" -> MainScreen(
                 state = uiState,
                 onRefresh = onRefresh,

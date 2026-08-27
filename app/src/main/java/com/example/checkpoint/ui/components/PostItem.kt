@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,13 +22,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.TimeUtils
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PostItem(
     post: Post,
     authorProfilePicture: String? = null,
+    tags: List<PostTagEntity> = emptyList(),
     isLiked: Boolean = false,
     onFavoriteClick: () -> Unit = {}
 ) {
@@ -135,6 +139,48 @@ fun PostItem(
                 lineHeight = 20.sp
             )
 
+            // tags
+            if (tags.isNotEmpty()) {
+                val maxVisibleTags = 3
+                val visibleTags = tags.take(maxVisibleTags)
+                val remainingCount = tags.size - maxVisibleTags
+
+                Spacer(modifier = Modifier.height(12.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    visibleTags.forEach { tagEntity ->
+                        Surface(
+                            color = Color(0xFF0A1118),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                0.5.dp, 
+                                Color(0xFF00D4FF).copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Text(
+                                text = "#${tagEntity.tag}",
+                                color = Color(0xFF00D4FF),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                    if (remainingCount > 0) {
+                        Text(
+                            text = "+$remainingCount...",
+                            color = MaterialTheme.colorScheme.secondary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Footer: Interazioni (Flag per i preferiti)
@@ -182,6 +228,10 @@ fun PostItemDarkPreview() {
                     mediaUri = "https://example.com/image.jpg",
                     mediaType = MediaType.IMAGE
                 ),
+                tags = listOf(
+                    PostTagEntity("1", "gaming"),
+                    PostTagEntity("1", "coding")
+                ),
                 isLiked = true
             )
         }
@@ -205,6 +255,10 @@ fun PostItemLightPreview() {
                     timestamp = System.currentTimeMillis() - 300000,
                     mediaUri = "https://example.com/image.jpg",
                     mediaType = MediaType.IMAGE
+                ),
+                tags = listOf(
+                    PostTagEntity("1", "relax"),
+                    PostTagEntity("1", "nature")
                 ),
                 isLiked = false
             )

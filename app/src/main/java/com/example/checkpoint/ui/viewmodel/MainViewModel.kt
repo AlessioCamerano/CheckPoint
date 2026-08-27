@@ -70,6 +70,18 @@ class MainViewModel(
         checkSession()
         observeTheme()
         observePosts()
+        observeTags()
+    }
+
+    private fun observeTags() {
+        viewModelScope.launch {
+            try {
+                mainRepository.getAllUniqueTags().collectLatest { tags ->
+                    _uiState.update { it.copy(availableTags = tags) }
+                }
+            } catch (e: Exception) {
+            }
+        }
     }
 
     private fun observeTheme() {
@@ -162,7 +174,8 @@ class MainViewModel(
         message: String, 
         mediaUri: String? = null, 
         mediaType: MediaType = MediaType.NONE,
-        isMuted: Boolean = false
+        isMuted: Boolean = false,
+        tags: List<String> = emptyList()
     ) {
         viewModelScope.launch {
             try {
@@ -179,7 +192,7 @@ class MainViewModel(
                         mediaType = mediaType,
                         isMuted = isMuted
                     )
-                    mainRepository.createPost(newPost)
+                    mainRepository.createPost(newPost, tags)
                     _uiState.update { it.copy(isLoading = false, postSuccess = true) }
                 }
             } catch (e: Exception) {

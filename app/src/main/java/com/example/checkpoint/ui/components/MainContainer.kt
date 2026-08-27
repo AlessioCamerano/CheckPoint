@@ -35,7 +35,7 @@ fun MainContainer(
     onToggleLike: (String) -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
-    onCreatePost: (String, String, String?, MediaType, Boolean) -> Unit,
+    onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onPostSuccessReset: () -> Unit,
     onLogout: () -> Unit
 ) {
