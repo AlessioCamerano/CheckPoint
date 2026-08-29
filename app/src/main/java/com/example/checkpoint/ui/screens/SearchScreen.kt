@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.components.PostItem
+import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
 
@@ -235,7 +236,7 @@ fun SearchScreen(
                     when (selectedTab) {
                         0 -> { // Users
                             items(state.searchResultsUsers) { user ->
-                                UserSearchResultItem(user, onClick = onUserClick)
+                                UserItem(user, onClick = onUserClick)
                             }
                         }
                         1 -> { // Checkpoints
@@ -265,52 +266,6 @@ fun SearchScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun UserSearchResultItem(
-    user: UserEntity,
-    onClick: (UserEntity) -> Unit = {}
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick(user) }
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (user.profilePictureUri != null) {
-                AsyncImage(
-                    model = user.profilePictureUri,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary)
-            }
-        }
-        Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(
-                text = user.username,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = user.email,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.secondary
-            )
         }
     }
 }

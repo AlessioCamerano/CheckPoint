@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +30,11 @@ import com.example.checkpoint.data.local.entity.UserEntity
 @Composable
 fun UserProfilePopup(
     user: UserEntity,
-    onDismiss: () -> Unit
+    isFollowing: Boolean = false,
+    followersCount: Int = 0,
+    followingCount: Int = 0,
+    onDismiss: () -> Unit,
+    onFollowClick: () -> Unit = {}
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -104,6 +109,41 @@ fun UserProfilePopup(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Statistiche: Follower e Seguiti
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "$followingCount",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Following",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "$followersCount",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Followers",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Biografia
@@ -131,15 +171,25 @@ fun UserProfilePopup(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val buttonColor = if (isFollowing) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
                     Button(
-                        onClick = { /* TODO: Implementare follow */ },
+                        onClick = onFollowClick,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
                     ) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(
+                            imageVector = if (isFollowing) Icons.Default.PersonRemove else Icons.Default.PersonAdd, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(16.dp)
+                        )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Follow", maxLines = 1, softWrap = false)
+                        Text(
+                            text = if (isFollowing) "Unfollow" else "Follow", 
+                            maxLines = 1, 
+                            softWrap = false
+                        )
                     }
                     
                     OutlinedButton(

@@ -33,6 +33,7 @@ fun ProfileScreen(
     onStatusChange: (UserStatus) -> Unit = {},
     onThemeChange: (Boolean) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToFollowers: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showSupportDialog by remember { mutableStateOf(false) }
@@ -65,7 +66,9 @@ fun ProfileScreen(
                 ProfileMenuItem(Icons.Default.Lock, "Change Password") {
                     showSupportDialog = true
                 }
-                ProfileMenuItem(Icons.Default.Group, "Friends")
+                ProfileMenuItem(Icons.Default.Group, "Followers / Following") {
+                    onNavigateToFollowers()
+                }
             }
 
             item {

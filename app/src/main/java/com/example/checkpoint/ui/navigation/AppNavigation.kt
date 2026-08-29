@@ -14,7 +14,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.checkpoint.ui.components.MainContainer
+import com.example.checkpoint.ui.components.UserProfilePopup
 import com.example.checkpoint.ui.screens.EditProfileScreen
+import com.example.checkpoint.ui.screens.FollowersFollowingScreen
 import com.example.checkpoint.ui.screens.LoginScreen
 import com.example.checkpoint.ui.screens.NotificationsScreen
 import com.example.checkpoint.ui.screens.SignupScreen
@@ -30,6 +32,7 @@ object Screen {
     const val Home = "home"
     const val Notifications = "notifications"
     const val EditProfile = "edit_profile"
+    const val FollowersList = "followers_list"
 }
 
 @Composable
@@ -39,6 +42,7 @@ fun AppNavigation(
     val navController = rememberNavController()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val isSessionLoaded by viewModel.isSessionLoaded.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (!isSessionLoaded) {
         // Schermata di caricamento iniziale mentre DataStore legge i dati
@@ -51,89 +55,114 @@ fun AppNavigation(
         return
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = if (isLoggedIn) Screen.Home else Screen.Login,
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None }
-    ) {
-        composable(Screen.Login) {
-            LoginScreen(
-                onLoginSuccess = {
-                    navController.navigate(Screen.Home) {
-                        popUpTo(Screen.Login) { inclusive = true }
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = if (isLoggedIn) Screen.Home else Screen.Login,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) {
+            composable(Screen.Login) {
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.Login) { inclusive = true }
+                        }
+                    },
+                    onNavigateToSignup = {
+                        navController.navigate(Screen.Signup)
                     }
-                },
-                onNavigateToSignup = {
-                    navController.navigate(Screen.Signup)
-                }
-            )
-        }
+                )
+            }
 
-        composable(Screen.Signup) {
-            SignupScreen(
-                onSignupSuccess = {
-                    navController.navigate(Screen.Home) {
-                        popUpTo(Screen.Login) { inclusive = true }
+            composable(Screen.Signup) {
+                SignupScreen(
+                    onSignupSuccess = {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.Login) { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.popBackStack()
                     }
-                },
-                onNavigateToLogin = {
-                    navController.popBackStack()
-                }
-            )
-        }
+                )
+            }
 
-        composable(Screen.Home) {
-            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-            MainContainer(
-                uiState = uiState,
-                onStatusChange = { viewModel.onStatusChange(it) },
-                onThemeChange = { viewModel.onThemeChange(it) },
-                onRefresh = { viewModel.onRefresh() },
-                onSortOrderChange = { viewModel.onSortOrderChange(it) },
-                onToggleLike = { viewModel.onToggleLike(it) },
-                onSearch = { viewModel.onSearchQueryChange(it) },
-                onSaveSearch = { viewModel.onSaveSearchQuery(it) },
-                onClearHistory = { viewModel.clearSearchHistory() },
-                onNavigateToNotifications = {
-                    navController.navigate(Screen.Notifications)
-                },
-                onNavigateToEditProfile = {
-                    navController.navigate(Screen.EditProfile)
-                },
-                onCreatePost = { title, message, uri, type, muted, tags ->
-                    viewModel.onCreatePost(title, message, uri, type, muted, tags)
-                },
-                onPostSuccessReset = { viewModel.resetPostSuccess() },
-                onLogout = {
-                    viewModel.onLogout()
-                    navController.navigate(Screen.Login) {
-                        popUpTo(Screen.Home) { inclusive = true }
+            composable(Screen.Home) {
+                MainContainer(
+                    uiState = uiState,
+                    onStatusChange = { viewModel.onStatusChange(it) },
+                    onThemeChange = { viewModel.onThemeChange(it) },
+                    onRefresh = { viewModel.onRefresh() },
+                    onSortOrderChange = { viewModel.onSortOrderChange(it) },
+                    onToggleLike = { viewModel.onToggleLike(it) },
+                    onSearch = { viewModel.onSearchQueryChange(it) },
+                    onSaveSearch = { viewModel.onSaveSearchQuery(it) },
+                    onClearHistory = { viewModel.clearSearchHistory() },
+                    onNavigateToNotifications = {
+                        navController.navigate(Screen.Notifications)
+                    },
+                    onNavigateToEditProfile = {
+                        navController.navigate(Screen.EditProfile)
+                    },
+                    onCreatePost = { title, message, uri, type, muted, tags ->
+                        viewModel.onCreatePost(title, message, uri, type, muted, tags)
+                    },
+                    onPostSuccessReset = { viewModel.resetPostSuccess() },
+                    onLogout = {
+                        viewModel.onLogout()
+                        navController.navigate(Screen.Login) {
+                            popUpTo(Screen.Home) { inclusive = true }
+                        }
+                    },
+                    onUserClick = { viewModel.onOpenUserPopup(it) },
+                    onDismissUserPopup = { viewModel.onDismissUserPopup() },
+                    onToggleFollow = { viewModel.onToggleFollow() },
+                    onNavigateToFollowers = {
+                        navController.navigate(Screen.FollowersList)
                     }
-                },
-                onUserClick = { viewModel.onOpenUserPopup(it) },
-                onDismissUserPopup = { viewModel.onDismissUserPopup() }
-            )
+                )
+            }
+
+            composable(Screen.FollowersList) {
+                FollowersFollowingScreen(
+                    followers = uiState.followersList,
+                    following = uiState.followingList,
+                    onBack = { navController.popBackStack() },
+                    onUserClick = { user ->
+                        viewModel.onOpenUserPopup(user)
+                    }
+                )
+            }
+
+            composable(Screen.EditProfile) {
+                EditProfileScreen(
+                    state = uiState,
+                    onBack = { navController.popBackStack() },
+                    onSave = { username, bio, uri ->
+                        viewModel.onUpdateProfile(username, bio, uri)
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.Notifications) {
+                NotificationsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
 
-        composable(Screen.EditProfile) {
-            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            EditProfileScreen(
-                state = uiState,
-                onBack = { navController.popBackStack() },
-                onSave = { username, bio, uri ->
-                    viewModel.onUpdateProfile(username, bio, uri)
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Screen.Notifications) {
-            NotificationsScreen(
-                onBack = { navController.popBackStack() }
+        uiState.selectedUserForPopup?.let { user ->
+            UserProfilePopup(
+                user = user,
+                isFollowing = uiState.isFollowingSelectedUser,
+                followersCount = uiState.selectedUserFollowersCount,
+                followingCount = uiState.selectedUserFollowingCount,
+                onDismiss = { viewModel.onDismissUserPopup() },
+                onFollowClick = { viewModel.onToggleFollow() }
             )
         }
     }

@@ -35,5 +35,10 @@ data class MainUiState(
     val searchResultsTags: List<PostWithAuthor> = emptyList(),
     val sortOrder: PostSortOrder = PostSortOrder.NEWEST,
     val isDarkTheme: Boolean = true,
-    val selectedUserForPopup: UserEntity? = null // Utente selezionato per il popup
+    val selectedUserForPopup: UserEntity? = null, // Utente selezionato per il popup
+    val isFollowingSelectedUser: Boolean = false, // Se l'utente loggato segue l'utente nel popup
+    val selectedUserFollowersCount: Int = 0,
+    val selectedUserFollowingCount: Int = 0,
+    val followersList: List<UserEntity> = emptyList(),
+    val followingList: List<UserEntity> = emptyList()
 )

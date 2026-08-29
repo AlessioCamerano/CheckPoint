@@ -40,6 +40,7 @@ class MainViewModel(
     private val _sortOrder = MutableStateFlow(PostSortOrder.NEWEST)
 
     private var searchJob: kotlinx.coroutines.Job? = null
+    private var followJob: kotlinx.coroutines.Job? = null
 
     // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
@@ -76,6 +77,26 @@ class MainViewModel(
         observeTags()
         observeTrendingTags()
         observeSearchHistory()
+        observeCurrentUserFollows()
+    }
+
+    private fun observeCurrentUserFollows() {
+        viewModelScope.launch {
+            preferencesRepository.userEmail.collectLatest { email ->
+                if (email != null) {
+                    launch {
+                        mainRepository.getFollowers(email).collectLatest { followers ->
+                            _uiState.update { it.copy(followersList = followers) }
+                        }
+                    }
+                    launch {
+                        mainRepository.getFollowing(email).collectLatest { following ->
+                            _uiState.update { it.copy(followingList = following) }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun observeSearchHistory() {
@@ -405,13 +426,60 @@ class MainViewModel(
 
     // Gestione apertura popup profilo
     fun onOpenUserPopup(user: UserEntity) {
-        if (user.email != _uiState.value.currentUserEmail) {
+        val currentEmail = _uiState.value.currentUserEmail
+        if (user.email != currentEmail && currentEmail != null) {
             _uiState.update { it.copy(selectedUserForPopup = user) }
+            observeFollowStatus(currentEmail, user.email)
+        }
+    }
+
+    private fun observeFollowStatus(followerEmail: String, followedEmail: String) {
+        followJob?.cancel()
+        followJob = viewModelScope.launch {
+            // Osserva stato follow
+            launch {
+                mainRepository.isFollowing(followerEmail, followedEmail).collectLatest { isFollowing ->
+                    _uiState.update { it.copy(isFollowingSelectedUser = isFollowing) }
+                }
+            }
+            // Osserva conteggio follower
+            launch {
+                mainRepository.getFollowersCount(followedEmail).collectLatest { count ->
+                    _uiState.update { it.copy(selectedUserFollowersCount = count) }
+                }
+            }
+            // Osserva conteggio seguiti
+            launch {
+                mainRepository.getFollowingCount(followedEmail).collectLatest { count ->
+                    _uiState.update { it.copy(selectedUserFollowingCount = count) }
+                }
+            }
+        }
+    }
+
+    fun onToggleFollow() {
+        val followedUser = _uiState.value.selectedUserForPopup ?: return
+        val followerEmail = _uiState.value.currentUserEmail ?: return
+        
+        viewModelScope.launch {
+            try {
+                mainRepository.toggleFollow(followerEmail, followedUser.email)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Follow failed: ${e.message}") }
+            }
         }
     }
 
     // Chiusura popup profilo
     fun onDismissUserPopup() {
-        _uiState.update { it.copy(selectedUserForPopup = null) }
+        followJob?.cancel()
+        _uiState.update { 
+            it.copy(
+                selectedUserForPopup = null,
+                isFollowingSelectedUser = false,
+                selectedUserFollowersCount = 0,
+                selectedUserFollowingCount = 0
+            ) 
+        }
     }
 }

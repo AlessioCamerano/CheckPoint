@@ -43,7 +43,9 @@ fun MainContainer(
     onPostSuccessReset: () -> Unit,
     onLogout: () -> Unit,
     onUserClick: (UserEntity) -> Unit, // Callback per clic utente
-    onDismissUserPopup: () -> Unit // Callback per chiudere popup
+    onDismissUserPopup: () -> Unit, // Callback per chiudere popup
+    onToggleFollow: () -> Unit, // Callback follow
+    onNavigateToFollowers: () -> Unit // Callback lista follower
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -116,17 +118,10 @@ fun MainContainer(
                     onClearHistory = onClearHistory,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToEditProfile = onNavigateToEditProfile,
+                    onNavigateToFollowers = onNavigateToFollowers,
                     onCreatePost = onCreatePost,
                     onLogout = onLogout,
                     onUserClick = onUserClick
-                )
-            }
-
-            // Visualizzazione popup profilo utente
-            uiState.selectedUserForPopup?.let { user ->
-                UserProfilePopup(
-                    user = user,
-                    onDismiss = onDismissUserPopup
                 )
             }
         }

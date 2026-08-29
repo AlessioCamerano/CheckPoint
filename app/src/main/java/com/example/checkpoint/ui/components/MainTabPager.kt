@@ -34,6 +34,7 @@ fun MainTabPager(
     onClearHistory: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
+    onNavigateToFollowers: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onLogout: () -> Unit,
     onUserClick: (UserEntity) -> Unit // Callback clic utente
@@ -73,6 +74,7 @@ fun MainTabPager(
                 onStatusChange = onStatusChange,
                 onThemeChange = onThemeChange,
                 onNavigateToEditProfile = onNavigateToEditProfile,
+                onNavigateToFollowers = onNavigateToFollowers,
                 onLogout = onLogout
             )
         }
