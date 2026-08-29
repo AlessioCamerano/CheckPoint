@@ -1,6 +1,7 @@
 package com.example.checkpoint.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.PostTagEntity
+import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.TimeUtils
 
@@ -30,10 +32,11 @@ import com.example.checkpoint.util.TimeUtils
 @Composable
 fun PostItem(
     post: Post,
-    authorProfilePicture: String? = null,
+    author: UserEntity? = null,
     tags: List<PostTagEntity> = emptyList(),
     isLiked: Boolean = false,
-    onFavoriteClick: () -> Unit = {}
+    onFavoriteClick: () -> Unit = {},
+    onAuthorClick: (UserEntity) -> Unit = {}
 ) {
     val timeAgo = TimeUtils.getTimeAgo(post.timestamp)
     
@@ -53,7 +56,10 @@ fun PostItem(
         ) {
             // Header: Autore e Tempo
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable(enabled = author != null) { 
+                    author?.let { onAuthorClick(it) } 
+                }
             ) {
                 Box(
                     modifier = Modifier
@@ -62,9 +68,9 @@ fun PostItem(
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (authorProfilePicture != null) {
+                    if (author?.profilePictureUri != null) {
                         AsyncImage(
-                            model = authorProfilePicture,
+                            model = author.profilePictureUri,
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop

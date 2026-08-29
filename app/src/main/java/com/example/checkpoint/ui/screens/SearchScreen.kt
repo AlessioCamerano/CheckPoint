@@ -47,6 +47,7 @@ fun SearchScreen(
     onSaveSearch: (String) -> Unit = {},
     onClearHistory: () -> Unit = {},
     onToggleLike: (String) -> Unit = {},
+    onUserClick: (UserEntity) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var isSearched by remember { mutableStateOf(false) }
@@ -234,17 +235,18 @@ fun SearchScreen(
                     when (selectedTab) {
                         0 -> { // Users
                             items(state.searchResultsUsers) { user ->
-                                UserSearchResultItem(user)
+                                UserSearchResultItem(user, onClick = onUserClick)
                             }
                         }
                         1 -> { // Checkpoints
                             items(state.searchResultsPosts) { postWithAuthor ->
                                 PostItem(
                                     post = postWithAuthor.post,
-                                    authorProfilePicture = postWithAuthor.author.profilePictureUri,
+                                    author = postWithAuthor.author,
                                     tags = postWithAuthor.tags,
                                     isLiked = postWithAuthor.isLikedByCurrentUser,
-                                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) }
+                                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
+                                    onAuthorClick = onUserClick
                                 )
                             }
                         }
@@ -252,10 +254,11 @@ fun SearchScreen(
                             items(state.searchResultsTags) { postWithAuthor ->
                                 PostItem(
                                     post = postWithAuthor.post,
-                                    authorProfilePicture = postWithAuthor.author.profilePictureUri,
+                                    author = postWithAuthor.author,
                                     tags = postWithAuthor.tags,
                                     isLiked = postWithAuthor.isLikedByCurrentUser,
-                                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) }
+                                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
+                                    onAuthorClick = onUserClick
                                 )
                             }
                         }
@@ -267,10 +270,14 @@ fun SearchScreen(
 }
 
 @Composable
-fun UserSearchResultItem(user: UserEntity) {
+fun UserSearchResultItem(
+    user: UserEntity,
+    onClick: (UserEntity) -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick(user) }
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

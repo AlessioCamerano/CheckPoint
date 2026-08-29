@@ -11,6 +11,7 @@ import com.example.checkpoint.ui.screens.MessagesScreen
 import com.example.checkpoint.ui.screens.ProfileScreen
 import com.example.checkpoint.ui.screens.SearchScreen
 import com.example.checkpoint.data.local.entity.MediaType
+import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
@@ -34,7 +35,8 @@ fun MainTabPager(
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onUserClick: (UserEntity) -> Unit // Callback clic utente
 ) {
     HorizontalPager(
         state = pagerState,
@@ -47,7 +49,8 @@ fun MainTabPager(
                 onSearch = onSearch,
                 onSaveSearch = onSaveSearch,
                 onClearHistory = onClearHistory,
-                onToggleLike = onToggleLike
+                onToggleLike = onToggleLike,
+                onUserClick = onUserClick
             )
             "add" -> CreatePostScreen(
                 state = uiState,
@@ -58,7 +61,8 @@ fun MainTabPager(
                 onRefresh = onRefresh,
                 onSortOrderChange = onSortOrderChange,
                 onToggleLike = onToggleLike,
-                onNavigateToNotifications = onNavigateToNotifications
+                onNavigateToNotifications = onNavigateToNotifications,
+                onUserClick = onUserClick
             )
             "messages" -> MessagesScreen()
             "profile" -> ProfileScreen(

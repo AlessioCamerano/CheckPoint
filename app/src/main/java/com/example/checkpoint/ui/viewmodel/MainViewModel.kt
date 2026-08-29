@@ -13,6 +13,7 @@ import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
 import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
@@ -198,6 +199,7 @@ class MainViewModel(
                                     username = user.username,
                                     bio = user.bio,
                                     profilePictureUri = user.profilePictureUri,
+                                    currentUserEmail = email, // Salva email corrente
                                     data = "Welcome back, ${user.username}!"
                                 ) 
                             }
@@ -399,5 +401,17 @@ class MainViewModel(
                 _uiState.update { it.copy(errorMessage = "Error changing theme: ${e.message}") }
             }
         }
+    }
+
+    // Gestione apertura popup profilo
+    fun onOpenUserPopup(user: UserEntity) {
+        if (user.email != _uiState.value.currentUserEmail) {
+            _uiState.update { it.copy(selectedUserForPopup = user) }
+        }
+    }
+
+    // Chiusura popup profilo
+    fun onDismissUserPopup() {
+        _uiState.update { it.copy(selectedUserForPopup = null) }
     }
 }

@@ -32,7 +32,7 @@ import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.theme.CheckPointTheme
 
 /**
- * Contenuto della Homepage (Feed).
+ * Schermata principale del feed.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +41,8 @@ fun MainScreen(
     onRefresh: () -> Unit = {},
     onSortOrderChange: (PostSortOrder) -> Unit = {},
     onToggleLike: (String) -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onUserClick: (UserEntity) -> Unit = {}
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -187,10 +188,11 @@ fun MainScreen(
                 ) { postWithAuthor ->
                     PostItem(
                         post = postWithAuthor.post,
-                        authorProfilePicture = postWithAuthor.author.profilePictureUri,
+                        author = postWithAuthor.author,
                         tags = postWithAuthor.tags,
                         isLiked = postWithAuthor.isLikedByCurrentUser,
-                        onFavoriteClick = { onToggleLike(postWithAuthor.post.id) }
+                        onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
+                        onAuthorClick = onUserClick
                     )
                 }
                 

@@ -113,7 +113,9 @@ fun AppNavigation(
                     navController.navigate(Screen.Login) {
                         popUpTo(Screen.Home) { inclusive = true }
                     }
-                }
+                },
+                onUserClick = { viewModel.onOpenUserPopup(it) },
+                onDismissUserPopup = { viewModel.onDismissUserPopup() }
             )
         }
 

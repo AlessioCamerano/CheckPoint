@@ -17,6 +17,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.checkpoint.data.local.entity.MediaType
+import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
@@ -40,7 +41,9 @@ fun MainContainer(
     onNavigateToEditProfile: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onPostSuccessReset: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onUserClick: (UserEntity) -> Unit, // Callback per clic utente
+    onDismissUserPopup: () -> Unit // Callback per chiudere popup
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -114,7 +117,16 @@ fun MainContainer(
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToEditProfile = onNavigateToEditProfile,
                     onCreatePost = onCreatePost,
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onUserClick = onUserClick
+                )
+            }
+
+            // Visualizzazione popup profilo utente
+            uiState.selectedUserForPopup?.let { user ->
+                UserProfilePopup(
+                    user = user,
+                    onDismiss = onDismissUserPopup
                 )
             }
         }
