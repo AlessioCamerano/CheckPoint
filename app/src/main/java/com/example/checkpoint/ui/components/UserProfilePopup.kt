@@ -34,7 +34,8 @@ fun UserProfilePopup(
     followersCount: Int = 0,
     followingCount: Int = 0,
     onDismiss: () -> Unit,
-    onFollowClick: () -> Unit = {}
+    onFollowClick: () -> Unit = {},
+    onMessageClick: (UserEntity) -> Unit = {}
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -193,7 +194,10 @@ fun UserProfilePopup(
                     }
                     
                     OutlinedButton(
-                        onClick = { /* TODO: Implementare messaggi */ },
+                        onClick = { 
+                            onDismiss()
+                            onMessageClick(user) 
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp)

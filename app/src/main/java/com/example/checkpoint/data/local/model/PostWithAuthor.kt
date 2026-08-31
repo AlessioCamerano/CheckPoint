@@ -20,5 +20,6 @@ data class PostWithAuthor(
     )
     val tags: List<PostTagEntity> = emptyList(),
     
-    val isLikedByCurrentUser: Boolean = false
+    val isLikedByCurrentUser: Boolean = false,
+    val hasUnreadComments: Boolean = false
 )

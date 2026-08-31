@@ -33,7 +33,8 @@ interface PostDao {
     @Transaction
     @Query("""
         SELECT posts.*, 
-        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser,
+        EXISTS(SELECT 1 FROM comments WHERE postId = posts.id AND isRead = 0 AND authorEmail != :currentUserEmail) AS hasUnreadComments
         FROM posts 
         ORDER BY timestamp DESC
     """)
@@ -78,7 +79,8 @@ interface PostDao {
     @Transaction
     @Query("""
         SELECT posts.*, 
-        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser,
+        EXISTS(SELECT 1 FROM comments WHERE postId = posts.id AND isRead = 0 AND authorEmail != :currentUserEmail) AS hasUnreadComments
         FROM posts 
         WHERE title LIKE '%' || :query || '%' OR authorName LIKE '%' || :query || '%' OR initialMessage LIKE '%' || :query || '%'
         ORDER BY timestamp DESC
@@ -88,7 +90,8 @@ interface PostDao {
     @Transaction
     @Query("""
         SELECT DISTINCT posts.*, 
-        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser,
+        EXISTS(SELECT 1 FROM comments WHERE postId = posts.id AND isRead = 0 AND authorEmail != :currentUserEmail) AS hasUnreadComments
         FROM posts 
         INNER JOIN post_tags ON posts.id = post_tags.postId 
         WHERE post_tags.tag LIKE '%' || :query || '%' 

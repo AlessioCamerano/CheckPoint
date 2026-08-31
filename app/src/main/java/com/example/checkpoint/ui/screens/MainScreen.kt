@@ -42,7 +42,8 @@ fun MainScreen(
     onSortOrderChange: (PostSortOrder) -> Unit = {},
     onToggleLike: (String) -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
-    onUserClick: (UserEntity) -> Unit = {}
+    onUserClick: (UserEntity) -> Unit = {},
+    onPostClick: (PostWithAuthor) -> Unit = {}
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -192,7 +193,8 @@ fun MainScreen(
                         tags = postWithAuthor.tags,
                         isLiked = postWithAuthor.isLikedByCurrentUser,
                         onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
-                        onAuthorClick = onUserClick
+                        onAuthorClick = onUserClick,
+                        onPostClick = onPostClick
                     )
                 }
                 

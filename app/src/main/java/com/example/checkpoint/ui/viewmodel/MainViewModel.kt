@@ -11,7 +11,9 @@ import com.example.checkpoint.data.repository.MainRepositoryImpl
 import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
 import com.example.checkpoint.data.local.AppDatabase
+import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MediaType
+import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
@@ -22,9 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -41,6 +41,9 @@ class MainViewModel(
 
     private var searchJob: kotlinx.coroutines.Job? = null
     private var followJob: kotlinx.coroutines.Job? = null
+    private var chatJob: kotlinx.coroutines.Job? = null
+    private var commentJob: kotlinx.coroutines.Job? = null
+    private val chatUnreadJobs = mutableMapOf<String, kotlinx.coroutines.Job>()
 
     // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
@@ -59,7 +62,12 @@ class MainViewModel(
 
                 val authRepository = AuthRepositoryImpl(database.userDao())
                 val preferencesRepository = UserPreferencesRepositoryImpl(application)
-                val mainRepository = MainRepositoryImpl(database.postDao(), database.userDao())
+                val mainRepository = MainRepositoryImpl(
+                    database.postDao(), 
+                    database.userDao(),
+                    database.chatDao(),
+                    database.commentDao()
+                )
 
                 return MainViewModel(
                     mainRepository = mainRepository,
@@ -77,9 +85,47 @@ class MainViewModel(
         observeTags()
         observeTrendingTags()
         observeSearchHistory()
-        observeCurrentUserFollows()
+        observeCurrentUserFollows() // Osserva follower/following dell'utente loggato
+        observeChatPartners()       // Osserva le chat attive e i messaggi non letti
     }
 
+    // Gestione reattiva dei partner di chat e notifiche (pallino rosso)
+    private fun observeChatPartners() {
+        viewModelScope.launch {
+            preferencesRepository.userEmail.collectLatest { email ->
+                if (email != null) {
+                    mainRepository.getChatPartners(email).collectLatest { partners ->
+                        _uiState.update { it.copy(chatPartners = partners) }
+                        
+                        // Gestione job per notifiche unread: cancella job per partner non più presenti
+                        val currentEmails = partners.map { it.email }.toSet()
+                        chatUnreadJobs.keys.filter { it !in currentEmails }.forEach { 
+                            chatUnreadJobs[it]?.cancel()
+                            chatUnreadJobs.remove(it)
+                            _uiState.update { state -> state.copy(chatPartnersUnread = state.chatPartnersUnread - it) }
+                        }
+
+                        // Avvia job di osservazione per ogni partner per aggiornare il pallino delle notifiche
+                        partners.forEach { partner ->
+                            if (partner.email !in chatUnreadJobs) {
+                                chatUnreadJobs[partner.email] = launch {
+                                    mainRepository.hasUnreadMessages(email, partner.email).collectLatest { hasUnread ->
+                                        _uiState.update { state ->
+                                            val newSet = if (hasUnread) state.chatPartnersUnread + partner.email 
+                                                         else state.chatPartnersUnread - partner.email
+                                            state.copy(chatPartnersUnread = newSet)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Osserva le relazioni di follow dell'utente corrente
     private fun observeCurrentUserFollows() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
@@ -433,22 +479,23 @@ class MainViewModel(
         }
     }
 
+    // Avvia l'osservazione dello stato di follow per l'utente visualizzato nel popup
     private fun observeFollowStatus(followerEmail: String, followedEmail: String) {
         followJob?.cancel()
         followJob = viewModelScope.launch {
-            // Osserva stato follow
+            // Osserva se lo seguiamo
             launch {
                 mainRepository.isFollowing(followerEmail, followedEmail).collectLatest { isFollowing ->
                     _uiState.update { it.copy(isFollowingSelectedUser = isFollowing) }
                 }
             }
-            // Osserva conteggio follower
+            // Conteggio follower in tempo reale
             launch {
                 mainRepository.getFollowersCount(followedEmail).collectLatest { count ->
                     _uiState.update { it.copy(selectedUserFollowersCount = count) }
                 }
             }
-            // Osserva conteggio seguiti
+            // Conteggio seguiti in tempo reale
             launch {
                 mainRepository.getFollowingCount(followedEmail).collectLatest { count ->
                     _uiState.update { it.copy(selectedUserFollowingCount = count) }
@@ -457,6 +504,7 @@ class MainViewModel(
         }
     }
 
+    // Alterna lo stato di follow (Follow/Unfollow)
     fun onToggleFollow() {
         val followedUser = _uiState.value.selectedUserForPopup ?: return
         val followerEmail = _uiState.value.currentUserEmail ?: return
@@ -468,6 +516,91 @@ class MainViewModel(
                 _uiState.update { it.copy(errorMessage = "Follow failed: ${e.message}") }
             }
         }
+    }
+
+    // Logica Chat: apre la chat con un utente e segna i messaggi come letti
+    fun onOpenChat(partner: UserEntity) {
+        val currentEmail = _uiState.value.currentUserEmail ?: return
+        _uiState.update { it.copy(selectedChatPartner = partner) }
+        
+        chatJob?.cancel()
+        chatJob = viewModelScope.launch {
+            mainRepository.markAsRead(currentEmail, partner.email)
+            mainRepository.getChatMessages(currentEmail, partner.email).collectLatest { messages ->
+                _uiState.update { it.copy(currentChatMessages = messages) }
+            }
+        }
+    }
+
+    // Invia un nuovo messaggio diretto
+    fun onSendMessage(content: String) {
+        if (content.isBlank()) return
+        val currentEmail = _uiState.value.currentUserEmail ?: return
+        val partnerEmail = _uiState.value.selectedChatPartner?.email ?: return
+        
+        viewModelScope.launch {
+            try {
+                val message = MessageEntity(
+                    senderEmail = currentEmail,
+                    receiverEmail = partnerEmail,
+                    content = content
+                )
+                mainRepository.sendMessage(message)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to send message: ${e.message}") }
+            }
+        }
+    }
+
+    // Chiude la chat e pulisce lo stato
+    fun onCloseChat() {
+        chatJob?.cancel()
+        _uiState.update { it.copy(selectedChatPartner = null, currentChatMessages = emptyList()) }
+    }
+
+    // Logica Commenti: apre il dettaglio del post e segna i commenti come letti
+    fun onOpenPostDetail(postWithAuthor: PostWithAuthor) {
+        _uiState.update { it.copy(selectedPost = postWithAuthor) }
+        val currentEmail = _uiState.value.currentUserEmail
+        
+        commentJob?.cancel()
+        commentJob = viewModelScope.launch {
+            if (currentEmail != null) {
+                mainRepository.markCommentsAsRead(postWithAuthor.post.id, currentEmail)
+            }
+            mainRepository.getCommentsForPost(postWithAuthor.post.id).collectLatest { comments ->
+                _uiState.update { it.copy(currentPostComments = comments) }
+            }
+        }
+    }
+
+    // Aggiunge un commento o una risposta (parentCommentId) a un post
+    fun onAddComment(content: String, parentCommentId: String? = null) {
+        if (content.isBlank()) return
+        val currentEmail = _uiState.value.currentUserEmail ?: return
+        val currentName = _uiState.value.username
+        val postId = _uiState.value.selectedPost?.post?.id ?: return
+        
+        viewModelScope.launch {
+            try {
+                val comment = CommentEntity(
+                    postId = postId,
+                    authorEmail = currentEmail,
+                    authorName = currentName,
+                    content = content,
+                    parentCommentId = parentCommentId
+                )
+                mainRepository.addComment(comment)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to add comment: ${e.message}") }
+            }
+        }
+    }
+
+    // Chiude il dettaglio post
+    fun onClosePostDetail() {
+        commentJob?.cancel()
+        _uiState.update { it.copy(selectedPost = null, currentPostComments = emptyList()) }
     }
 
     // Chiusura popup profilo

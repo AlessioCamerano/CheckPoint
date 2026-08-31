@@ -9,10 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.components.UserItem
+import com.example.checkpoint.ui.theme.CheckPointTheme
 
 /**
  * Schermata per visualizzare follower e persone seguite.
@@ -98,6 +100,25 @@ fun FollowersFollowingScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Followers Dark")
+@Composable
+fun FollowersFollowingScreenDarkPreview() {
+    val followers = listOf(
+        UserEntity("u1@g.com", "User 1", "pass"),
+        UserEntity("u2@g.com", "User 2", "pass")
+    )
+    CheckPointTheme(darkTheme = true, dynamicColor = false) {
+        Surface {
+            FollowersFollowingScreen(
+                followers = followers,
+                following = emptyList(),
+                onBack = {},
+                onUserClick = {}
+            )
         }
     }
 }

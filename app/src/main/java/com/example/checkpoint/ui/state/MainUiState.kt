@@ -1,6 +1,8 @@
 package com.example.checkpoint.ui.state
 
 import androidx.compose.ui.graphics.Color
+import com.example.checkpoint.data.local.entity.CommentEntity
+import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
@@ -19,7 +21,7 @@ data class MainUiState(
     val username: String = "Username",
     val bio: String = "",
     val profilePictureUri: String? = null,
-    val currentUserEmail: String? = null, // Email dell'utente loggato
+    val currentUserEmail: String? = null,
     val data: String = "",
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -35,10 +37,20 @@ data class MainUiState(
     val searchResultsTags: List<PostWithAuthor> = emptyList(),
     val sortOrder: PostSortOrder = PostSortOrder.NEWEST,
     val isDarkTheme: Boolean = true,
-    val selectedUserForPopup: UserEntity? = null, // Utente selezionato per il popup
-    val isFollowingSelectedUser: Boolean = false, // Se l'utente loggato segue l'utente nel popup
+    val selectedUserForPopup: UserEntity? = null,
+    val isFollowingSelectedUser: Boolean = false,
     val selectedUserFollowersCount: Int = 0,
     val selectedUserFollowingCount: Int = 0,
     val followersList: List<UserEntity> = emptyList(),
-    val followingList: List<UserEntity> = emptyList()
+    val followingList: List<UserEntity> = emptyList(),
+    
+    // Chat e Messaggi
+    val chatPartners: List<UserEntity> = emptyList(),
+    val chatPartnersUnread: Set<String> = emptySet(),
+    val currentChatMessages: List<MessageEntity> = emptyList(),
+    val selectedChatPartner: UserEntity? = null,
+    
+    // Commenti
+    val selectedPost: PostWithAuthor? = null,
+    val currentPostComments: List<CommentEntity> = emptyList()
 )

@@ -15,11 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.checkpoint.ui.components.MainContainer
 import com.example.checkpoint.ui.components.UserProfilePopup
-import com.example.checkpoint.ui.screens.EditProfileScreen
-import com.example.checkpoint.ui.screens.FollowersFollowingScreen
-import com.example.checkpoint.ui.screens.LoginScreen
-import com.example.checkpoint.ui.screens.NotificationsScreen
-import com.example.checkpoint.ui.screens.SignupScreen
+import com.example.checkpoint.ui.screens.*
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.viewmodel.MainViewModel
 
@@ -33,6 +29,8 @@ object Screen {
     const val Notifications = "notifications"
     const val EditProfile = "edit_profile"
     const val FollowersList = "followers_list"
+    const val Chat = "chat"
+    const val PostDetail = "post_detail"
 }
 
 @Composable
@@ -122,8 +120,46 @@ fun AppNavigation(
                     onToggleFollow = { viewModel.onToggleFollow() },
                     onNavigateToFollowers = {
                         navController.navigate(Screen.FollowersList)
+                    },
+                    onPostClick = { post ->
+                        viewModel.onOpenPostDetail(post)
+                        navController.navigate(Screen.PostDetail)
+                    },
+                    onPartnerClick = { partner ->
+                        viewModel.onOpenChat(partner)
+                        navController.navigate(Screen.Chat)
                     }
                 )
+            }
+
+            composable(Screen.Chat) {
+                uiState.selectedChatPartner?.let { partner ->
+                    ChatScreen(
+                        currentUserEmail = uiState.currentUserEmail,
+                        partner = partner,
+                        messages = uiState.currentChatMessages,
+                        onBack = { 
+                            viewModel.onCloseChat()
+                            navController.popBackStack() 
+                        },
+                        onSendMessage = { viewModel.onSendMessage(it) }
+                    )
+                }
+            }
+
+            composable(Screen.PostDetail) {
+                uiState.selectedPost?.let { post ->
+                    PostDetailScreen(
+                        postWithAuthor = post,
+                        comments = uiState.currentPostComments,
+                        onBack = {
+                            viewModel.onClosePostDetail()
+                            navController.popBackStack()
+                        },
+                        onAddComment = { content, parentId -> viewModel.onAddComment(content, parentId) },
+                        onToggleLike = { viewModel.onToggleLike(it) }
+                    )
+                }
             }
 
             composable(Screen.FollowersList) {
@@ -162,7 +198,11 @@ fun AppNavigation(
                 followersCount = uiState.selectedUserFollowersCount,
                 followingCount = uiState.selectedUserFollowingCount,
                 onDismiss = { viewModel.onDismissUserPopup() },
-                onFollowClick = { viewModel.onToggleFollow() }
+                onFollowClick = { viewModel.onToggleFollow() },
+                onMessageClick = { user ->
+                    viewModel.onOpenChat(user)
+                    navController.navigate(Screen.Chat)
+                }
             )
         }
     }

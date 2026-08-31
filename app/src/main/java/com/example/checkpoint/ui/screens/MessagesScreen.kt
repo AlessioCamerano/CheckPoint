@@ -8,175 +8,253 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.checkpoint.data.local.entity.MediaType
+import com.example.checkpoint.data.local.entity.MessageEntity
+import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.example.checkpoint.ui.components.UserItem
+import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Schermata che raccoglie le Chat Dirette e i Checkpoint salvati.
+ */
 @Composable
-fun MessagesScreen() {
+fun MessagesScreen(
+    uiState: MainUiState,
+    onPartnerClick: (UserEntity) -> Unit = {},
+    onPostClick: (PostWithAuthor) -> Unit = {},
+    onToggleLike: (String) -> Unit = {},
+    onUserClick: (UserEntity) -> Unit = {}
+) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Messages", "Checkpoints")
+    val tabs = listOf("Directs", "Saved Checkpoints")
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Messages & Saves",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-            SecondaryTabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.primary,
-                divider = {}
-            ) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
-                        text = {
-                            Text(
-                                text = title,
-                                fontSize = 16.sp,
-                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                            )
+        // Tab per passare tra Messaggi e Salvati
+        SecondaryTabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            divider = {}
+        ) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = {
+                        Text(
+                            text = title,
+                            fontSize = 14.sp,
+                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (selectedTab == 0) {
+            // Sezione Messaggi Diretti
+            if (uiState.chatPartners.isEmpty()) {
+                MessagesEmptyState(
+                    icon = Icons.AutoMirrored.Filled.Chat,
+                    text = "No messages yet."
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(uiState.chatPartners) { partner ->
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            UserItem(user = partner, onClick = onPartnerClick)
+                            // Mostra il pallino se ci sono messaggi non letti
+                            if (uiState.chatPartnersUnread.contains(partner.email)) {
+                                UnreadDot(modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp))
+                            }
                         }
+                    }
+                }
+            }
+        } else {
+            // Sezione Checkpoint Salvati
+            val savedPosts = uiState.posts.filter { it.isLikedByCurrentUser }
+            if (savedPosts.isEmpty()) {
+                MessagesEmptyState(
+                    icon = Icons.Default.Flag,
+                    text = "No saved checkpoints."
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(savedPosts) { postWithAuthor ->
+                        CompactPostItem(
+                            postWithAuthor = postWithAuthor,
+                            onClick = { onPostClick(postWithAuthor) },
+                            onToggleLike = onToggleLike,
+                            onUserClick = onUserClick
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Rappresentazione compatta di un post per la lista dei salvati.
+ */
+@Composable
+fun CompactPostItem(
+    postWithAuthor: PostWithAuthor,
+    onClick: () -> Unit,
+    onToggleLike: (String) -> Unit,
+    onUserClick: (UserEntity) -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        border = androidx.compose.foundation.BorderStroke(
+            0.5.dp,
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Mini Avatar del post author
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                    .clickable { onUserClick(postWithAuthor.author) },
+                contentAlignment = Alignment.Center
+            ) {
+                if (postWithAuthor.author.profilePictureUri != null) {
+                    AsyncImage(
+                        model = postWithAuthor.author.profilePictureUri,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                }
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = postWithAuthor.post.title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Checkpoint by ${postWithAuthor.author.username}",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.secondary,
+                    maxLines = 1
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (postWithAuthor.hasUnreadComments) {
+                    UnreadDot()
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+                
+                IconButton(
+                    onClick = { onToggleLike(postWithAuthor.post.id) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Flag, 
+                        contentDescription = null, 
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                placeholder = { Text("Search users...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface) },
-                shape = RoundedCornerShape(24.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-                ),
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            when (selectedTab) {
-                0 -> ChatList(emptyList())
-                1 -> ChatList(emptyList())
-            }
         }
     }
 }
 
 @Composable
-fun ChatList(chats: List<ChatPreview>) {
-    if (chats.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "No conversations yet",
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
-                fontSize = 14.sp
-            )
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(chats) { chat ->
-                ChatItem(chat)
-            }
-        }
-    }
+fun UnreadDot(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(10.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary)
+    )
 }
 
 @Composable
-fun ChatItem(chat: ChatPreview) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Apri chat */ },
-        verticalAlignment = Alignment.CenterVertically
+fun MessagesEmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = chat.name.take(1).uppercase(),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
+                text = text,
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
             )
         }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = chat.name,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp
-            )
-            Text(
-                text = chat.lastMessage,
-                color = MaterialTheme.colorScheme.secondary,
-                fontSize = 14.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        Text(
-            text = chat.time,
-            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
-            fontSize = 12.sp
-        )
-    }
-}
-
-data class ChatPreview(val name: String, val lastMessage: String, val time: String)
-
-@Preview(showSystemUi = true, name = "Messages Dark")
-@Composable
-fun MessagesScreenDarkPreview() {
-    CheckPointTheme(darkTheme = true, dynamicColor = false) {
-        MessagesScreen()
-    }
-}
-
-@Preview(showSystemUi = true, name = "Messages Light")
-@Composable
-fun MessagesScreenLightPreview() {
-    CheckPointTheme(darkTheme = false, dynamicColor = false) {
-        MessagesScreen()
     }
 }

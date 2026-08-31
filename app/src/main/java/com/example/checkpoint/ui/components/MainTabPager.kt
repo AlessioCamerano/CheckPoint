@@ -12,6 +12,7 @@ import com.example.checkpoint.ui.screens.ProfileScreen
 import com.example.checkpoint.ui.screens.SearchScreen
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
@@ -37,7 +38,9 @@ fun MainTabPager(
     onNavigateToFollowers: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onLogout: () -> Unit,
-    onUserClick: (UserEntity) -> Unit // Callback clic utente
+    onUserClick: (UserEntity) -> Unit,
+    onPostClick: (PostWithAuthor) -> Unit,
+    onPartnerClick: (UserEntity) -> Unit
 ) {
     HorizontalPager(
         state = pagerState,
@@ -63,9 +66,16 @@ fun MainTabPager(
                 onSortOrderChange = onSortOrderChange,
                 onToggleLike = onToggleLike,
                 onNavigateToNotifications = onNavigateToNotifications,
+                onUserClick = onUserClick,
+                onPostClick = onPostClick
+            )
+            "messages" -> MessagesScreen(
+                uiState = uiState,
+                onPartnerClick = onPartnerClick,
+                onPostClick = onPostClick,
+                onToggleLike = onToggleLike,
                 onUserClick = onUserClick
             )
-            "messages" -> MessagesScreen()
             "profile" -> ProfileScreen(
                 isDarkTheme = uiState.isDarkTheme,
                 userStatus = uiState.userStatus,

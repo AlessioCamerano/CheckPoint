@@ -25,9 +25,13 @@ import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.TimeUtils
 
+/**
+ * Rappresentazione di un singolo post.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PostItem(
@@ -36,14 +40,16 @@ fun PostItem(
     tags: List<PostTagEntity> = emptyList(),
     isLiked: Boolean = false,
     onFavoriteClick: () -> Unit = {},
-    onAuthorClick: (UserEntity) -> Unit = {}
+    onAuthorClick: (UserEntity) -> Unit = {},
+    onPostClick: (PostWithAuthor) -> Unit = {}
 ) {
     val timeAgo = TimeUtils.getTimeAgo(post.timestamp)
     
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { author?.let { onPostClick(PostWithAuthor(post, it, tags, isLiked)) } },
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         border = androidx.compose.foundation.BorderStroke(

@@ -4,9 +4,13 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.checkpoint.data.local.dao.ChatDao
+import com.example.checkpoint.data.local.dao.CommentDao
 import com.example.checkpoint.data.local.dao.PostDao
 import com.example.checkpoint.data.local.dao.UserDao
+import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.FollowEntity
+import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.PostLikeEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
@@ -16,13 +20,23 @@ import com.example.checkpoint.data.local.entity.UserEntity
  * Punto cdi accesso a Room
  */
 @Database(
-    entities = [UserEntity::class, Post::class, PostLikeEntity::class, PostTagEntity::class, FollowEntity::class], 
-    version = 8, 
+    entities = [
+        UserEntity::class, 
+        Post::class, 
+        PostLikeEntity::class, 
+        PostTagEntity::class, 
+        FollowEntity::class,
+        MessageEntity::class,
+        CommentEntity::class
+    ], 
+    version = 10, 
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun postDao(): PostDao
+    abstract fun chatDao(): ChatDao
+    abstract fun commentDao(): CommentDao
 
     companion object {
         //Logica Singleton

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
@@ -42,10 +43,12 @@ fun MainContainer(
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onPostSuccessReset: () -> Unit,
     onLogout: () -> Unit,
-    onUserClick: (UserEntity) -> Unit, // Callback per clic utente
-    onDismissUserPopup: () -> Unit, // Callback per chiudere popup
-    onToggleFollow: () -> Unit, // Callback follow
-    onNavigateToFollowers: () -> Unit // Callback lista follower
+    onUserClick: (UserEntity) -> Unit,
+    onDismissUserPopup: () -> Unit,
+    onToggleFollow: () -> Unit,
+    onNavigateToFollowers: () -> Unit,
+    onPostClick: (PostWithAuthor) -> Unit,
+    onPartnerClick: (UserEntity) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -121,7 +124,9 @@ fun MainContainer(
                     onNavigateToFollowers = onNavigateToFollowers,
                     onCreatePost = onCreatePost,
                     onLogout = onLogout,
-                    onUserClick = onUserClick
+                    onUserClick = onUserClick,
+                    onPostClick = onPostClick,
+                    onPartnerClick = onPartnerClick
                 )
             }
         }
