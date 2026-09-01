@@ -10,6 +10,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.checkpoint.ui.theme.CheckPointTheme
@@ -22,20 +23,20 @@ fun SupportDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Customer Support",
+                text = stringResource(com.example.checkpoint.R.string.support_title),
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
         },
         text = {
             Text(
-                text = "Contact this email for customer support: example@gmail.com",
+                text = stringResource(com.example.checkpoint.R.string.support_message, "example@gmail.com"),
                 color = MaterialTheme.colorScheme.onSurface
             )
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(com.example.checkpoint.R.string.action_close), color = MaterialTheme.colorScheme.primary)
             }
         },
         containerColor = MaterialTheme.colorScheme.surface

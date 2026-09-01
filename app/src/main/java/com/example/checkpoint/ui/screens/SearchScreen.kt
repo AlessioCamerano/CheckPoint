@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -53,7 +54,11 @@ fun SearchScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isSearched by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Users", "Checkpoints", "Tags")
+    val tabs = listOf(
+        stringResource(com.example.checkpoint.R.string.tab_users),
+        stringResource(com.example.checkpoint.R.string.tab_checkpoints),
+        stringResource(com.example.checkpoint.R.string.tab_tags)
+    )
     val focusManager = LocalFocusManager.current
 
     val topPadding by animateDpAsState(
@@ -81,7 +86,7 @@ fun SearchScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "Checkpoint Search",
+                        text = stringResource(com.example.checkpoint.R.string.search_title),
                         color = MaterialTheme.colorScheme.primary,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold
@@ -101,7 +106,7 @@ fun SearchScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search users, checkpoints or tags...", color = MaterialTheme.colorScheme.secondary) },
+                placeholder = { Text(stringResource(com.example.checkpoint.R.string.search_placeholder), color = MaterialTheme.colorScheme.secondary) },
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,
@@ -141,13 +146,13 @@ fun SearchScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "Recent Searches",
+                                text = stringResource(com.example.checkpoint.R.string.search_recent),
                                 color = MaterialTheme.colorScheme.onBackground,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             TextButton(onClick = onClearHistory) {
-                                Text("Clear", color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+                                Text(stringResource(com.example.checkpoint.R.string.search_clear), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
                             }
                         }
                         FlowRow(
@@ -180,7 +185,7 @@ fun SearchScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Trending Now",
+                            text = stringResource(com.example.checkpoint.R.string.search_trending),
                             color = MaterialTheme.colorScheme.onBackground,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold

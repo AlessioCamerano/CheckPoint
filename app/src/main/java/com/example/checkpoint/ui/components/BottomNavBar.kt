@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.state.UserStatus
@@ -48,7 +49,7 @@ fun BottomNavBar(
             NavigationBarItem(
                 selected = currentRoute == "search",
                 onClick = { onNavigate("search") },
-                icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                icon = { Icon(Icons.Default.Search, contentDescription = stringResource(com.example.checkpoint.R.string.tab_users)) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.secondary,
@@ -59,7 +60,7 @@ fun BottomNavBar(
             NavigationBarItem(
                 selected = currentRoute == "add",
                 onClick = { onNavigate("add") },
-                icon = { Icon(Icons.Default.Add, contentDescription = "Add") },
+                icon = { Icon(Icons.Default.Add, contentDescription = stringResource(com.example.checkpoint.R.string.post_add_media)) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.secondary,
@@ -70,7 +71,7 @@ fun BottomNavBar(
             NavigationBarItem(
                 selected = currentRoute == "home_feed",
                 onClick = { onNavigate("home_feed") },
-                icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                icon = { Icon(Icons.Default.Home, contentDescription = stringResource(com.example.checkpoint.R.string.app_name)) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.secondary,
@@ -81,7 +82,7 @@ fun BottomNavBar(
             NavigationBarItem(
                 selected = currentRoute == "messages",
                 onClick = { onNavigate("messages") },
-                icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Messages") },
+                icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(com.example.checkpoint.R.string.messages_title)) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,
                     unselectedIconColor = MaterialTheme.colorScheme.secondary,
@@ -104,14 +105,14 @@ fun BottomNavBar(
                             if (profilePictureUri != null) {
                                 AsyncImage(
                                     model = profilePictureUri,
-                                    contentDescription = "Profile",
+                                    contentDescription = stringResource(com.example.checkpoint.R.string.tab_profile),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.Person,
-                                    contentDescription = "Profile",
+                                    contentDescription = stringResource(com.example.checkpoint.R.string.tab_profile),
                                     modifier = Modifier.size(20.dp),
                                     tint = if (currentRoute == "profile") 
                                         MaterialTheme.colorScheme.primary 

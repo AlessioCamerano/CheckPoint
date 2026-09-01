@@ -8,6 +8,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,21 +29,24 @@ fun FollowersFollowingScreen(
     onUserClick: (UserEntity) -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Followers", "Following")
+    val tabs = listOf(
+        stringResource(com.example.checkpoint.R.string.tab_followers),
+        stringResource(com.example.checkpoint.R.string.tab_following)
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
-                        text = "Followers & Following",
+                        text = stringResource(com.example.checkpoint.R.string.follows_title),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.example.checkpoint.R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -88,7 +92,7 @@ fun FollowersFollowingScreen(
                             contentAlignment = androidx.compose.ui.Alignment.Center
                         ) {
                             Text(
-                                text = if (selectedTab == 0) "No followers yet." else "You are not following anyone.",
+                                text = if (selectedTab == 0) stringResource(com.example.checkpoint.R.string.followers_empty) else stringResource(com.example.checkpoint.R.string.following_empty),
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
                                 fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                             )

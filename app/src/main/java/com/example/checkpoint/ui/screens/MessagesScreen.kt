@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,7 +47,10 @@ fun MessagesScreen(
     onUserClick: (UserEntity) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Directs", "Saved Checkpoints")
+    val tabs = listOf(
+        stringResource(com.example.checkpoint.R.string.tab_directs),
+        stringResource(com.example.checkpoint.R.string.tab_saved)
+    )
 
     Column(
         modifier = Modifier
@@ -55,7 +59,7 @@ fun MessagesScreen(
     ) {
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Messages & Saves",
+            text = stringResource(com.example.checkpoint.R.string.messages_title),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -91,7 +95,7 @@ fun MessagesScreen(
             if (uiState.chatPartners.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.AutoMirrored.Filled.Chat,
-                    text = "No messages yet."
+                    text = stringResource(com.example.checkpoint.R.string.messages_empty)
                 )
             } else {
                 LazyColumn(
@@ -116,7 +120,7 @@ fun MessagesScreen(
             if (savedPosts.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.Default.Flag,
-                    text = "No saved checkpoints."
+                    text = stringResource(com.example.checkpoint.R.string.saves_empty)
                 )
             } else {
                 LazyColumn(
@@ -198,7 +202,7 @@ fun CompactPostItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Checkpoint by ${postWithAuthor.author.username}",
+                    text = stringResource(com.example.checkpoint.R.string.post_by_author, postWithAuthor.author.username),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.secondary,
                     maxLines = 1

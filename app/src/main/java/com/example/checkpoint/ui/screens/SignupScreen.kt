@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,14 +78,14 @@ fun SignupScreenContent(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "CheckPoint",
+                    text = stringResource(com.example.checkpoint.R.string.app_name),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
-                    text = "Create your account",
+                    text = stringResource(com.example.checkpoint.R.string.signup_title),
                     color = MaterialTheme.colorScheme.secondary,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
@@ -101,8 +102,8 @@ fun SignupScreenContent(
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("Username") },
-                    placeholder = { Text("Enter your username") },
+                    label = { Text(stringResource(com.example.checkpoint.R.string.field_username)) },
+                    placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_username)) },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -114,8 +115,8 @@ fun SignupScreenContent(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
-                    placeholder = { Text("Enter your email") },
+                    label = { Text(stringResource(com.example.checkpoint.R.string.field_email)) },
+                    placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_email)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -128,8 +129,8 @@ fun SignupScreenContent(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
+                    label = { Text(stringResource(com.example.checkpoint.R.string.field_password)) },
+                    placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_password)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
                         val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
@@ -149,8 +150,8 @@ fun SignupScreenContent(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
-                    label = { Text("Confirm Password") },
-                    placeholder = { Text("Re-enter your password") },
+                    label = { Text(stringResource(com.example.checkpoint.R.string.field_confirm_password)) },
+                    placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_confirm_password)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -167,13 +168,13 @@ fun SignupScreenContent(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !uiState.isLoading
                 ) {
-                    Text(text = "SIGN UP", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(com.example.checkpoint.R.string.signup_button), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Already have an account? Login",
+                    text = stringResource(com.example.checkpoint.R.string.signup_login_hint),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable(enabled = !uiState.isLoading) { onNavigateToLogin() },
                     fontSize = 14.sp

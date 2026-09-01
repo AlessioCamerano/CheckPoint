@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,7 +106,7 @@ fun CreatePostScreenContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "New Checkpoint",
+                    text = stringResource(com.example.checkpoint.R.string.post_new_title),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -113,7 +114,7 @@ fun CreatePostScreenContent(
                 )
 
                 Text(
-                    text = "Share your thoughts with the community",
+                    text = stringResource(com.example.checkpoint.R.string.post_new_subtitle),
                     color = MaterialTheme.colorScheme.secondary,
                     fontSize = 14.sp,
                     fontStyle = FontStyle.Italic,
@@ -127,8 +128,8 @@ fun CreatePostScreenContent(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Title", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
-                    placeholder = { Text("What's on your mind?", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+                    label = { Text(stringResource(com.example.checkpoint.R.string.field_title), color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                    placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_title), color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -161,7 +162,7 @@ fun CreatePostScreenContent(
                         } else {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.Videocam, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
-                                Text("Video selected", color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
+                                Text(stringResource(com.example.checkpoint.R.string.post_video_selected), color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -179,7 +180,7 @@ fun CreatePostScreenContent(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = if (isMuted) "Muted" else "Audio On",
+                                        text = if (isMuted) stringResource(com.example.checkpoint.R.string.post_media_muted) else stringResource(com.example.checkpoint.R.string.post_media_unmuted),
                                         color = MaterialTheme.colorScheme.onSurface,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium
@@ -204,8 +205,8 @@ fun CreatePostScreenContent(
                 OutlinedTextField(
                     value = initialMessage,
                     onValueChange = { initialMessage = it },
-                    label = { Text("Initial chat message", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
-                    placeholder = { Text("Start the conversation...", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+                    label = { Text(stringResource(com.example.checkpoint.R.string.field_message), color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                    placeholder = { Text(stringResource(com.example.checkpoint.R.string.comment_placeholder), color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(130.dp),
@@ -229,8 +230,8 @@ fun CreatePostScreenContent(
                     OutlinedTextField(
                         value = currentTag,
                         onValueChange = { currentTag = it },
-                        label = { Text("Add Tags (Enter to add)", color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
-                        placeholder = { Text("#gaming", color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
+                        label = { Text(stringResource(com.example.checkpoint.R.string.field_tags_hint), color = MaterialTheme.colorScheme.secondary, fontSize = 13.sp) },
+                        placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_tags_placeholder), color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f), fontSize = 13.sp) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -322,7 +323,7 @@ fun CreatePostScreenContent(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove",
+                                    contentDescription = stringResource(com.example.checkpoint.R.string.action_remove),
                                     tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
                                     modifier = Modifier
                                         .size(14.dp)
@@ -338,7 +339,7 @@ fun CreatePostScreenContent(
                 if (mediaUri == null) {
                     MediaUploadButton(
                         icon = Icons.Default.AddPhotoAlternate,
-                        label = "Add Media",
+                        label = stringResource(com.example.checkpoint.R.string.post_add_media),
                         modifier = Modifier.fillMaxWidth(),
                         onClick = { 
                             mediaPickerLauncher.launch(
@@ -365,7 +366,7 @@ fun CreatePostScreenContent(
                 shape = RoundedCornerShape(24.dp),
                 enabled = title.isNotBlank() && initialMessage.isNotBlank()
             ) {
-                Text("Post", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(stringResource(com.example.checkpoint.R.string.post_button), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
     }

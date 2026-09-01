@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,21 +60,21 @@ fun ProfileScreen(
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
             item {
-                SectionLabel("Account Settings")
-                ProfileMenuItem(Icons.Default.Person, "Edit Profile") {
+                SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_account))
+                ProfileMenuItem(Icons.Default.Person, stringResource(com.example.checkpoint.R.string.profile_menu_edit)) {
                     onNavigateToEditProfile()
                 }
-                ProfileMenuItem(Icons.Default.Lock, "Change Password") {
+                ProfileMenuItem(Icons.Default.Lock, stringResource(com.example.checkpoint.R.string.profile_menu_password)) {
                     showSupportDialog = true
                 }
-                ProfileMenuItem(Icons.Default.Group, "Followers / Following") {
+                ProfileMenuItem(Icons.Default.Group, stringResource(com.example.checkpoint.R.string.profile_menu_follows)) {
                     onNavigateToFollowers()
                 }
             }
 
             item {
                 Spacer(modifier = Modifier.height(24.dp))
-                SectionLabel("App Settings")
+                SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_app))
                 ThemeSwitchMenuItem(isDarkTheme, onThemeChange)
             }
 
@@ -108,7 +109,7 @@ fun ThemeSwitchMenuItem(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Dark Mode",
+                text = stringResource(com.example.checkpoint.R.string.profile_menu_dark_mode),
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -159,7 +160,7 @@ fun ProfileHeader(
                 if (profilePictureUri != null) {
                     AsyncImage(
                         model = profilePictureUri,
-                        contentDescription = "Profile Picture",
+                        contentDescription = stringResource(com.example.checkpoint.R.string.profile_picture),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -309,7 +310,7 @@ fun LogoutMenuItem(onLogout: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                "Log Out",
+                text = stringResource(com.example.checkpoint.R.string.profile_menu_logout),
                 color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp

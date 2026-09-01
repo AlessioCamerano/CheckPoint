@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,10 +50,10 @@ fun PostDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Discussion", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(com.example.checkpoint.R.string.post_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.example.checkpoint.R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -77,7 +78,7 @@ fun PostDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Replying to ${replyingTo?.authorName}",
+                                text = stringResource(com.example.checkpoint.R.string.replying_to_label, replyingTo?.authorName ?: ""),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -85,7 +86,7 @@ fun PostDetailScreen(
                                 onClick = { replyingTo = null },
                                 modifier = Modifier.size(18.dp)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = "Cancel", modifier = Modifier.size(14.dp))
+                                Icon(Icons.Default.Close, contentDescription = stringResource(com.example.checkpoint.R.string.action_cancel), modifier = Modifier.size(14.dp))
                             }
                         }
                     }
@@ -98,7 +99,7 @@ fun PostDetailScreen(
                             value = commentText,
                             onValueChange = { commentText = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text(if (replyingTo != null) "Write a reply..." else "Add a comment...") },
+                            placeholder = { Text(if (replyingTo != null) stringResource(com.example.checkpoint.R.string.reply_placeholder) else stringResource(com.example.checkpoint.R.string.comment_placeholder)) },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent
@@ -114,7 +115,7 @@ fun PostDetailScreen(
                             },
                             enabled = commentText.isNotBlank()
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(com.example.checkpoint.R.string.action_send))
                         }
                     }
                 }
@@ -158,7 +159,7 @@ fun PostDetailScreen(
             
             item {
                 Text(
-                    text = "Comments (${comments.size})",
+                    text = stringResource(com.example.checkpoint.R.string.post_detail_comments_count, comments.size),
                     modifier = Modifier.padding(16.dp),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -255,7 +256,7 @@ fun CommentItem(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Reply,
-                        contentDescription = "Reply",
+                        contentDescription = stringResource(com.example.checkpoint.R.string.action_reply),
                         tint = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(16.dp)
                     )

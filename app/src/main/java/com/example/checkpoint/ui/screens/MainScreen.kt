@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -71,7 +72,7 @@ fun MainScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.NotificationsNone,
-                        contentDescription = "Notifications",
+                        contentDescription = stringResource(com.example.checkpoint.R.string.notifications),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -81,7 +82,7 @@ fun MainScreen(
             
             // Titolo
             Text(
-                text = "CheckPoint",
+                text = stringResource(com.example.checkpoint.R.string.app_name),
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
@@ -90,7 +91,7 @@ fun MainScreen(
             )
 
             Text(
-                text = "take it easy, player... stay here and relax",
+                text = stringResource(com.example.checkpoint.R.string.main_relax_quote),
                 color = MaterialTheme.colorScheme.secondary,
                 fontSize = 14.sp,
                 fontStyle = FontStyle.Italic,
@@ -108,7 +109,7 @@ fun MainScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Your Feed",
+                    text = stringResource(com.example.checkpoint.R.string.main_feed_title),
                     color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium
@@ -118,7 +119,7 @@ fun MainScreen(
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
-                            contentDescription = "Sort",
+                            contentDescription = stringResource(com.example.checkpoint.R.string.action_sort),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -131,7 +132,7 @@ fun MainScreen(
                         DropdownMenuItem(
                             text = { 
                                 Text(
-                                    text = "Trending",
+                                    text = stringResource(com.example.checkpoint.R.string.main_sort_trending),
                                     fontWeight = if (state.sortOrder == PostSortOrder.TRENDING) FontWeight.Bold else FontWeight.Normal
                                 ) 
                             },
@@ -144,7 +145,7 @@ fun MainScreen(
                         DropdownMenuItem(
                             text = { 
                                 Text(
-                                    text = "Newest",
+                                    text = stringResource(com.example.checkpoint.R.string.main_sort_newest),
                                     fontWeight = if (state.sortOrder == PostSortOrder.NEWEST) FontWeight.Bold else FontWeight.Normal
                                 ) 
                             },
@@ -207,7 +208,7 @@ fun MainScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (state.isLoading) "Loading checkpoints..." else "No more checkpoints.",
+                            text = if (state.isLoading) stringResource(com.example.checkpoint.R.string.main_loading) else stringResource(com.example.checkpoint.R.string.main_no_more),
                             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
                             fontSize = 12.sp,
                             fontStyle = FontStyle.Italic

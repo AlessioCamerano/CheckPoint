@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,10 +58,10 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Edit Profile", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(com.example.checkpoint.R.string.profile_menu_edit), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.example.checkpoint.R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -94,7 +95,7 @@ fun EditProfileScreen(
                     if (profilePictureUri != null) {
                         AsyncImage(
                             model = profilePictureUri,
-                            contentDescription = "Profile Picture",
+                            contentDescription = stringResource(com.example.checkpoint.R.string.profile_picture),
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -130,7 +131,7 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = username,
                 onValueChange = { username = it },
-                label = { Text("Username") },
+                label = { Text(stringResource(com.example.checkpoint.R.string.field_username)) },
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = { Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp)) },
                 shape = RoundedCornerShape(16.dp),
@@ -142,7 +143,7 @@ fun EditProfileScreen(
             OutlinedTextField(
                 value = bio,
                 onValueChange = { if (it.length <= bioCharLimit) bio = it },
-                label = { Text("About me") },
+                label = { Text(stringResource(com.example.checkpoint.R.string.field_bio)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
@@ -169,7 +170,7 @@ fun EditProfileScreen(
                 )
             ) {
                 Text(
-                    text = "Save Changes",
+                    text = stringResource(com.example.checkpoint.R.string.profile_edit_save),
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp

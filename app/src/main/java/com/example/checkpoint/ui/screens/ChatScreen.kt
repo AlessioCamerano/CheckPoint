@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,7 +54,7 @@ fun ChatScreen(
                 title = { Text(partner.username, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.example.checkpoint.R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -78,7 +79,7 @@ fun ChatScreen(
                         value = text,
                         onValueChange = { text = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Write a message...") },
+                        placeholder = { Text(stringResource(com.example.checkpoint.R.string.chat_placeholder)) },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
@@ -96,7 +97,7 @@ fun ChatScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
+                            contentDescription = stringResource(com.example.checkpoint.R.string.action_send),
                             tint = if (text.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
                         )
                     }

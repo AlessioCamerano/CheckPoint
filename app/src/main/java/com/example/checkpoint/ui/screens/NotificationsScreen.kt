@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,7 @@ fun NotificationsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Notifications",
+                        text = stringResource(com.example.checkpoint.R.string.notifications),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -38,7 +39,7 @@ fun NotificationsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(com.example.checkpoint.R.string.action_back),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -66,7 +67,7 @@ fun NotificationList(notifications: List<NotificationItem>) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "No notifications yet",
+                text = stringResource(com.example.checkpoint.R.string.notifications_empty),
                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
                 fontSize = 14.sp
             )

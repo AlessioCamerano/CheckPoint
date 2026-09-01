@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,14 +81,14 @@ fun LoginScreenContent(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "CheckPoint",
+                    text = stringResource(R.string.app_name),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
-                    text = "Welcome back, player!",
+                    text = stringResource(R.string.login_welcome),
                     color = MaterialTheme.colorScheme.secondary,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
@@ -104,8 +105,8 @@ fun LoginScreenContent(
                 OutlinedTextField(
                     value = identifier,
                     onValueChange = { identifier = it },
-                    label = { Text("Email or Username") },
-                    placeholder = { Text("Enter your email or username") },
+                    label = { Text(stringResource(R.string.field_login_identifier)) },
+                    placeholder = { Text(stringResource(R.string.field_login_identifier)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -117,8 +118,8 @@ fun LoginScreenContent(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
-                    placeholder = { Text("Enter your password") },
+                    label = { Text(stringResource(R.string.field_password)) },
+                    placeholder = { Text(stringResource(R.string.field_password)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
                         val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
@@ -141,13 +142,13 @@ fun LoginScreenContent(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !uiState.isLoading && identifier.isNotBlank() && password.isNotBlank()
                 ) {
-                    Text(text = "LOGIN", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.login_button), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Don't have an account? Sign up",
+                    text = stringResource(R.string.login_signup_hint),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable(enabled = !uiState.isLoading) { onNavigateToSignup() },
                     fontSize = 14.sp
@@ -156,7 +157,7 @@ fun LoginScreenContent(
                 if (uiState.errorMessage != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Forgot password?",
+                        text = stringResource(R.string.login_forgot_password),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable { showSupportDialog = true },
                         fontSize = 14.sp,
@@ -169,7 +170,7 @@ fun LoginScreenContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surface)
                     Text(
-                        text = " OR ",
+                        text = stringResource(R.string.login_or_divider),
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(horizontal = 8.dp),
                         fontSize = 12.sp
@@ -196,7 +197,7 @@ fun LoginScreenContent(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = "Sign in with Google", color = MaterialTheme.colorScheme.onBackground)
+                        Text(text = stringResource(R.string.login_google_button), color = MaterialTheme.colorScheme.onBackground)
                     }
                 }
             }

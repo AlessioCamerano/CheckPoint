@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,7 @@ fun UserProfilePopup(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Following",
+                            text = stringResource(com.example.checkpoint.R.string.tab_following),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -138,7 +139,7 @@ fun UserProfilePopup(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Followers",
+                            text = stringResource(com.example.checkpoint.R.string.tab_followers),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -158,7 +159,7 @@ fun UserProfilePopup(
                     )
                 } else {
                     Text(
-                        text = "No bio available",
+                        text = stringResource(com.example.checkpoint.R.string.profile_no_bio),
                         style = MaterialTheme.typography.bodyMedium,
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -187,7 +188,7 @@ fun UserProfilePopup(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isFollowing) "Unfollow" else "Follow", 
+                            text = if (isFollowing) stringResource(com.example.checkpoint.R.string.action_unfollow) else stringResource(com.example.checkpoint.R.string.action_follow), 
                             maxLines = 1, 
                             softWrap = false
                         )
@@ -204,7 +205,7 @@ fun UserProfilePopup(
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Message", maxLines = 1, softWrap = false)
+                        Text(text = stringResource(com.example.checkpoint.R.string.action_message), maxLines = 1, softWrap = false)
                     }
                 }
             }

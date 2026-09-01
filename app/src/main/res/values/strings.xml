@@ -1,3 +1,113 @@
 <resources>
     <string name="app_name">CheckPoint</string>
+    <string name="checkpoint">Checkpoint</string>
+
+    <!-- Login -->
+    <string name="login_welcome">Welcome back, player!</string>
+    <string name="login_button">LOGIN</string>
+    <string name="login_signup_hint">Don\'t have an account? Sign up</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="login_or_divider"> OR </string>
+    <string name="login_google_button">Sign in with Google</string>
+
+    <!-- Signup -->
+    <string name="signup_title">Create your account</string>
+    <string name="signup_button">SIGN UP</string>
+    <string name="signup_login_hint">Already have an account? Login</string>
+
+    <!-- Main/Home -->
+    <string name="main_relax_quote">take it easy, player... stay here and relax</string>
+    <string name="main_feed_title">Your Feed</string>
+    <string name="main_sort_trending">Trending</string>
+    <string name="main_sort_newest">Newest</string>
+    <string name="main_loading">Loading checkpoints...</string>
+    <string name="main_no_more">No more checkpoints.</string>
+
+    <!-- Search -->
+    <string name="search_title">Checkpoint Search</string>
+    <string name="search_recent">Recent Searches</string>
+    <string name="search_trending">Trending Now</string>
+    <string name="search_placeholder">Search users, checkpoints or tags...</string>
+    <string name="search_clear">Clear</string>
+
+    <!-- Tabs -->
+    <string name="tab_users">Users</string>
+    <string name="tab_checkpoints">Checkpoints</string>
+    <string name="tab_tags">Tags</string>
+    <string name="tab_directs">Directs</string>
+    <string name="tab_saved">Saved Checkpoints</string>
+    <string name="tab_followers">Followers</string>
+    <string name="tab_following">Following</string>
+    <string name="tab_profile">Profile</string>
+
+    <!-- Create Post -->
+    <string name="post_new_title">New Checkpoint</string>
+    <string name="post_new_subtitle">Share your thoughts with the community</string>
+    <string name="post_video_selected">Video selected</string>
+    <string name="post_media_muted">Muted</string>
+    <string name="post_media_unmuted">Audio On</string>
+    <string name="post_button">POST CHECKPOINT</string>
+    <string name="post_add_media">Add Media</string>
+
+    <!-- Profile -->
+    <string name="profile_section_account">Account Settings</string>
+    <string name="profile_menu_edit">Edit Profile</string>
+    <string name="profile_menu_password">Change Password</string>
+    <string name="profile_menu_follows">Followers / Following</string>
+    <string name="profile_section_app">App Settings</string>
+    <string name="profile_menu_dark_mode">Dark Mode</string>
+    <string name="profile_menu_logout">Log Out</string>
+    <string name="profile_edit_save">Save Changes</string>
+    <string name="profile_no_bio">No bio available</string>
+    <string name="profile_picture">Profile Picture</string>
+
+    <!-- Messages & Chat -->
+    <string name="messages_title">Messages &amp; Saves</string>
+    <string name="messages_empty">No messages yet.</string>
+    <string name="saves_empty">No saved checkpoints.</string>
+    <string name="chat_placeholder">Write a message...</string>
+    <string name="post_by_author">Checkpoint by %1$s</string>
+
+    <!-- Post Detail & Comments -->
+    <string name="post_detail_title">Discussion</string>
+    <string name="post_detail_comments_count">Comments (%1$d)</string>
+    <string name="comment_placeholder">Add a comment...</string>
+    <string name="reply_placeholder">Write a reply...</string>
+    <string name="replying_to_label">Replying to %1$s</string>
+
+    <!-- Followers -->
+    <string name="follows_title">Followers &amp; Following</string>
+    <string name="followers_empty">No followers yet.</string>
+    <string name="following_empty">You are not following anyone.</string>
+
+    <!-- Common Fields -->
+    <string name="field_title">Title</string>
+    <string name="field_message">Initial chat message</string>
+    <string name="field_tags_hint">Add Tags (Enter to add)</string>
+    <string name="field_tags_placeholder">#gaming</string>
+    <string name="field_username">Username</string>
+    <string name="field_bio">About me</string>
+    <string name="field_email">Email</string>
+    <string name="field_password">Password</string>
+    <string name="field_confirm_password">Confirm Password</string>
+    <string name="field_login_identifier">Email or Username</string>
+
+    <!-- Actions -->
+    <string name="action_follow">Follow</string>
+    <string name="action_unfollow">Unfollow</string>
+    <string name="action_message">Message</string>
+    <string name="action_back">Back</string>
+    <string name="action_send">Send</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_favorite">Favorite</string>
+    <string name="action_reply">Reply</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_sort">Sort</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_empty">No notifications yet</string>
+
+    <!-- Misc -->
+    <string name="support_title">Customer Support</string>
+    <string name="support_message">Contact this email for customer support: %1$s</string>
 </resources>
