@@ -36,6 +36,7 @@ fun MainTabPager(
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onNavigateToFollowers: () -> Unit,
+    onNavigateToOnboarding: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, Boolean, List<String>) -> Unit,
     onLogout: () -> Unit,
     onUserClick: (UserEntity) -> Unit,
@@ -85,6 +86,7 @@ fun MainTabPager(
                 onThemeChange = onThemeChange,
                 onNavigateToEditProfile = onNavigateToEditProfile,
                 onNavigateToFollowers = onNavigateToFollowers,
+                onNavigateToOnboarding = onNavigateToOnboarding,
                 onLogout = onLogout
             )
         }

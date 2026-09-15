@@ -65,7 +65,8 @@ private data class OnboardingSlideData(
 
 @Composable
 fun OnboardingScreen(
-    onContinueToLogin: () -> Unit
+    showPermissionsStep: Boolean = true,
+    onFinish: () -> Unit
 ) {
     val context = LocalContext.current
     val slides = remember {
@@ -120,7 +121,8 @@ fun OnboardingScreen(
             )
         )
     }
-    val pagerState = rememberPagerState { 5 }
+    val pageCount = if (showPermissionsStep) 5 else 4
+    val pagerState = rememberPagerState { pageCount }
     var permissionsRequested by remember { mutableStateOf(false) }
 
     val requiredPermissions = remember {
@@ -171,13 +173,7 @@ fun OnboardingScreen(
                     horizontal = MaterialTheme.spacing.smallMedium
                 )
             ) { page ->
-                if (page < 4) {
-                    IntroSlideContent(
-                        title = stringResource(slides[page].titleRes),
-                        subtitle = stringResource(slides[page].subtitleRes),
-                        icon = slides[page].icon
-                    )
-                } else {
+                if (showPermissionsStep && page == pageCount - 1) {
                     val permissionStates = requiredPermissions.map { permission ->
                         val granted = ContextCompat.checkSelfPermission(
                             context,
@@ -190,6 +186,13 @@ fun OnboardingScreen(
                         onRequestPermissions = ::requestPermissions,
                         permissionsRequested = permissionsRequested
                     )
+                } else {
+                    val slideIndex = if (showPermissionsStep) page else page
+                    IntroSlideContent(
+                        title = stringResource(slides[slideIndex].titleRes),
+                        subtitle = stringResource(slides[slideIndex].subtitleRes),
+                        icon = slides[slideIndex].icon
+                    )
                 }
             }
 
@@ -199,7 +202,7 @@ fun OnboardingScreen(
                     .padding(vertical = MaterialTheme.spacing.medium),
                 horizontalArrangement = Arrangement.Center
             ) {
-                repeat(5) { index ->
+                repeat(pageCount) { index ->
                     val selected = index == pagerState.currentPage
                     Box(
                         modifier = Modifier
@@ -213,9 +216,9 @@ fun OnboardingScreen(
                 }
             }
 
-            if (pagerState.currentPage == 4) {
+            if (pagerState.currentPage == pageCount - 1) {
                 Button(
-                    onClick = onContinueToLogin,
+                    onClick = onFinish,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MaterialTheme.spacing.extraLarge),
@@ -223,13 +226,13 @@ fun OnboardingScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(
-                        text = stringResource(R.string.onboarding_start_button),
+                        text = stringResource(if (showPermissionsStep) R.string.onboarding_start_button else R.string.onboarding_done_button),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
             } else {
                 OutlinedButton(
-                    onClick = onContinueToLogin,
+                    onClick = onFinish,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MaterialTheme.spacing.extraLarge),
@@ -423,7 +426,7 @@ private fun PermissionRow(
 @Composable
 private fun OnboardingLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
-        OnboardingScreen(onContinueToLogin = {})
+        OnboardingScreen(showPermissionsStep = true, onFinish = {})
     }
 }
 
@@ -431,6 +434,6 @@ private fun OnboardingLightPreview() {
 @Composable
 private fun OnboardingDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
-        OnboardingScreen(onContinueToLogin = {})
+        OnboardingScreen(showPermissionsStep = true, onFinish = {})
     }
 }

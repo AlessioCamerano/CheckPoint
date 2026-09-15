@@ -35,6 +35,7 @@ fun ProfileScreen(
     onThemeChange: (Boolean) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {},
     onNavigateToFollowers: () -> Unit = {},
+    onNavigateToOnboarding: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showSupportDialog by remember { mutableStateOf(false) }
@@ -76,6 +77,10 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                 SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_app))
                 ThemeSwitchMenuItem(isDarkTheme, onThemeChange)
+                ProfileMenuItem(Icons.Default.Slideshow, stringResource(com.example.checkpoint.R.string.profile_menu_onboarding)) {
+                    onNavigateToOnboarding()
+                }
+                MenuItemCaption(stringResource(com.example.checkpoint.R.string.profile_menu_onboarding_caption))
             }
 
             item {
@@ -239,6 +244,21 @@ fun SectionLabel(text: String) {
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(start = MaterialTheme.spacing.small, bottom = MaterialTheme.spacing.smallMedium)
+    )
+}
+
+@Composable
+fun MenuItemCaption(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = Modifier.padding(
+            start = MaterialTheme.spacing.small,
+            end = MaterialTheme.spacing.small,
+            top = MaterialTheme.spacing.extraSmall,
+            bottom = MaterialTheme.spacing.smallMedium
+        )
     )
 }
 

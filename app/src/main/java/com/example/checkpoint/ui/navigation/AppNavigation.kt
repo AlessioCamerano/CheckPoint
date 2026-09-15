@@ -24,6 +24,7 @@ import com.example.checkpoint.ui.viewmodel.MainViewModel
  */
 object Screen {
     const val Onboarding = "onboarding"
+    const val OnboardingReview = "onboarding_review"
     const val Login = "login"
     const val Signup = "signup"
     const val Home = "home"
@@ -70,11 +71,21 @@ fun AppNavigation(
         ) {
             composable(Screen.Onboarding) {
                 OnboardingScreen(
-                    onContinueToLogin = {
+                    showPermissionsStep = true,
+                    onFinish = {
                         viewModel.onOnboardingCompleted()
                         navController.navigate(Screen.Login) {
                             popUpTo(Screen.Onboarding) { inclusive = true }
                         }
+                    }
+                )
+            }
+
+            composable(Screen.OnboardingReview) {
+                OnboardingScreen(
+                    showPermissionsStep = false,
+                    onFinish = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -123,7 +134,7 @@ fun AppNavigation(
                         navController.navigate(Screen.EditProfile)
                     },
                     onNavigateToOnboarding = {
-                        navController.navigate(Screen.Onboarding)
+                        navController.navigate(Screen.OnboardingReview)
                     },
                     onCreatePost = { title, message, uri, type, muted, tags ->
                         viewModel.onCreatePost(title, message, uri, type, muted, tags)

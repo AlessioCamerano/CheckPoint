@@ -133,4 +133,5 @@
     <string name="onboarding_permissions_retry">Try again</string>
     <string name="onboarding_skip_button">Skip for now</string>
     <string name="onboarding_start_button">Continue to login</string>
+    <string name="onboarding_done_button">Done!</string>
 </resources>
