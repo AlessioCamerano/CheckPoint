@@ -128,7 +128,6 @@ fun OnboardingScreen(
     val requiredPermissions = remember {
         buildList {
             add(Manifest.permission.ACCESS_FINE_LOCATION)
-            add(Manifest.permission.READ_CONTACTS)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
             }
@@ -354,12 +353,6 @@ private fun PermissionsSlideContent(
                 icon = Icons.Default.Place,
                 label = stringResource(R.string.onboarding_permission_location),
                 granted = permissionStates.any { it.first == Manifest.permission.ACCESS_FINE_LOCATION && it.second }
-            )
-            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
-            PermissionRow(
-                icon = Icons.Default.Groups,
-                label = stringResource(R.string.onboarding_permission_contacts),
-                granted = permissionStates.any { it.first == Manifest.permission.READ_CONTACTS && it.second }
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
             PermissionRow(

@@ -123,9 +123,8 @@
     <string name="onboarding_slide_4_title">Never miss important updates</string>
     <string name="onboarding_slide_4_subtitle">Get signals on activity, interactions, and moments that matter to you.</string>
     <string name="onboarding_permissions_title">Enable essential permissions</string>
-    <string name="onboarding_permissions_subtitle">To offer the full experience, we need access to position, contacts, and notifications.</string>
+    <string name="onboarding_permissions_subtitle">To offer the full experience, we need access to GPS and notifications.</string>
     <string name="onboarding_permission_location">GPS location</string>
-    <string name="onboarding_permission_contacts">Phone contacts</string>
     <string name="onboarding_permission_notifications">Notifications</string>
     <string name="onboarding_permission_enabled">Enabled</string>
     <string name="onboarding_permission_disabled">Not enabled</string>
