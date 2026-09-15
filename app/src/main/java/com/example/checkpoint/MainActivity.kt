@@ -1,5 +1,6 @@
 package com.example.checkpoint
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,28 +12,38 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.navigation.AppNavigation
-import com.example.checkpoint.ui.viewmodel.MainViewModel
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val launchRoute = intent?.getStringExtra("extra_target_route")
+
         setContent {
             val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            
+
             CheckPointTheme(
                 darkTheme = uiState.isDarkTheme,
                 dynamicColor = false
             ) {
-                //  applica automaticamente lo sfondo e il colore del testo
                 Surface(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    AppNavigation(viewModel = viewModel)
+                    AppNavigation(
+                        viewModel = viewModel,
+                        initialRoute = launchRoute
+                    )
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 }

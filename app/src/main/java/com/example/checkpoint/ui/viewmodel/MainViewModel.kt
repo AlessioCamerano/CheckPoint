@@ -17,6 +17,7 @@ import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus

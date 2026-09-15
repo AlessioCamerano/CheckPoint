@@ -43,6 +43,7 @@ data class MainUiState(
     val selectedUserFollowingCount: Int = 0,
     val followersList: List<UserEntity> = emptyList(),
     val followingList: List<UserEntity> = emptyList(),
+    val notifications: List<AppNotification> = emptyList(),
     
     // Chat e Messaggi
     val chatPartners: List<UserEntity> = emptyList(),
@@ -53,4 +54,13 @@ data class MainUiState(
     // Commenti
     val selectedPost: PostWithAuthor? = null,
     val currentPostComments: List<CommentEntity> = emptyList()
+)
+
+data class AppNotification(
+    val id: Int,
+    val title: String,
+    val body: String,
+    val route: String,
+    val time: String,
+    val unread: Boolean = true
 )

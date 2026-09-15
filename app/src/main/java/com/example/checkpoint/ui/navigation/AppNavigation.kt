@@ -37,13 +37,21 @@ object Screen {
 
 @Composable
 fun AppNavigation(
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    initialRoute: String? = null
 ) {
     val navController = rememberNavController()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val hasCompletedOnboarding by viewModel.hasCompletedOnboarding.collectAsStateWithLifecycle()
     val isSessionLoaded by viewModel.isSessionLoaded.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val startDestination = when {
+        initialRoute != null && isLoggedIn -> initialRoute
+        initialRoute != null && !isLoggedIn -> Screen.Login
+        isLoggedIn -> Screen.Home
+        hasCompletedOnboarding -> Screen.Login
+        else -> Screen.Onboarding
+    }
 
     if (!isSessionLoaded) {
         // Schermata di caricamento iniziale mentre DataStore legge i dati
@@ -59,11 +67,7 @@ fun AppNavigation(
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = when {
-                isLoggedIn -> Screen.Home
-                hasCompletedOnboarding -> Screen.Login
-                else -> Screen.Onboarding
-            },
+            startDestination = startDestination,
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
@@ -217,7 +221,28 @@ fun AppNavigation(
 
             composable(Screen.Notifications) {
                 NotificationsScreen(
-                    onBack = { navController.popBackStack() }
+                    notifications = uiState.notifications,
+                    onBack = { navController.popBackStack() },
+                    onNotificationClick = { notification ->
+                        when (notification.route) {
+                            "chat" -> {
+                                uiState.chatPartners.firstOrNull()?.let { viewModel.onOpenChat(it) }
+                                navController.navigate(Screen.Chat)
+                            }
+                            "post_detail" -> {
+                                uiState.posts.firstOrNull()?.let { viewModel.onOpenPostDetail(it) }
+                                navController.navigate(Screen.PostDetail)
+                            }
+                            "home" -> {
+                                navController.navigate(Screen.Home) {
+                                    popUpTo(Screen.Home) { inclusive = false }
+                                }
+                            }
+                            else -> {
+                                navController.navigate(Screen.Notifications)
+                            }
+                        }
+                    }
                 )
             }
         }
