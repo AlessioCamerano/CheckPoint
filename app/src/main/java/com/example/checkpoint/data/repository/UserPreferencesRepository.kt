@@ -19,10 +19,12 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  */
 interface UserPreferencesRepository {
     val isLoggedIn: Flow<Boolean>
+    val hasCompletedOnboarding: Flow<Boolean>
     val userEmail: Flow<String?>
     val isDarkTheme: Flow<Boolean?>
     val searchHistory: Flow<List<String>>
     suspend fun saveSession(email: String)
+    suspend fun setOnboardingCompleted(completed: Boolean)
     suspend fun setTheme(isDark: Boolean)
     suspend fun saveSearchQuery(query: String)
     suspend fun clearSearchHistory()
@@ -36,6 +38,7 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
 
     private object PreferencesKeys {
         val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
+        val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
         val USER_EMAIL = stringPreferencesKey("user_email")
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
         val SEARCH_HISTORY = stringSetPreferencesKey("search_history")
@@ -49,6 +52,10 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
         preferences[PreferencesKeys.USER_EMAIL]
     } ?: emptyFlow()
 
+    override val hasCompletedOnboarding: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
+        preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] ?: false
+    } ?: emptyFlow()
+
     override val isDarkTheme: Flow<Boolean?> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.IS_DARK_THEME]
     } ?: emptyFlow()
@@ -60,7 +67,14 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
     override suspend fun saveSession(email: String) {
         context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_LOGGED_IN] = true
+            preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = true
             preferences[PreferencesKeys.USER_EMAIL] = email
+        }
+    }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        context?.dataStore?.edit { preferences ->
+            preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = completed
         }
     }
 

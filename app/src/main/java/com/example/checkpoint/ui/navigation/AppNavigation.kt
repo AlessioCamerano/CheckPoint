@@ -23,6 +23,7 @@ import com.example.checkpoint.ui.viewmodel.MainViewModel
  * Definizioni delle rotte per la navigazione dell'applicazione.
  */
 object Screen {
+    const val Onboarding = "onboarding"
     const val Login = "login"
     const val Signup = "signup"
     const val Home = "home"
@@ -39,6 +40,7 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
+    val hasCompletedOnboarding by viewModel.hasCompletedOnboarding.collectAsStateWithLifecycle()
     val isSessionLoaded by viewModel.isSessionLoaded.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -56,12 +58,27 @@ fun AppNavigation(
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = if (isLoggedIn) Screen.Home else Screen.Login,
+            startDestination = when {
+                isLoggedIn -> Screen.Home
+                hasCompletedOnboarding -> Screen.Login
+                else -> Screen.Onboarding
+            },
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
+            composable(Screen.Onboarding) {
+                OnboardingScreen(
+                    onContinueToLogin = {
+                        viewModel.onOnboardingCompleted()
+                        navController.navigate(Screen.Login) {
+                            popUpTo(Screen.Onboarding) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Screen.Login) {
                 LoginScreen(
                     onLoginSuccess = {
@@ -104,6 +121,9 @@ fun AppNavigation(
                     },
                     onNavigateToEditProfile = {
                         navController.navigate(Screen.EditProfile)
+                    },
+                    onNavigateToOnboarding = {
+                        navController.navigate(Screen.Onboarding)
                     },
                     onCreatePost = { title, message, uri, type, muted, tags ->
                         viewModel.onCreatePost(title, message, uri, type, muted, tags)

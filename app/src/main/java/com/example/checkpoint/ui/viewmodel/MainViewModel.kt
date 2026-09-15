@@ -52,6 +52,9 @@ class MainViewModel(
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
+    private val _hasCompletedOnboarding = MutableStateFlow(false)
+    val hasCompletedOnboarding: StateFlow<Boolean> = _hasCompletedOnboarding.asStateFlow()
+
     // Factory per creare il MainViewModel
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
@@ -81,6 +84,7 @@ class MainViewModel(
     init {
         checkSession()
         observeTheme()
+        observeOnboarding()
         observePosts()
         observeTags()
         observeTrendingTags()
@@ -234,6 +238,28 @@ class MainViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error loading theme: ${e.message}") }
+            }
+        }
+    }
+
+    private fun observeOnboarding() {
+        viewModelScope.launch {
+            try {
+                preferencesRepository.hasCompletedOnboarding.collectLatest { completed ->
+                    _hasCompletedOnboarding.value = completed
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error loading onboarding state: ${e.message}") }
+            }
+        }
+    }
+
+    fun onOnboardingCompleted() {
+        viewModelScope.launch {
+            try {
+                preferencesRepository.setOnboardingCompleted(true)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error saving onboarding state: ${e.message}") }
             }
         }
     }

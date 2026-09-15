@@ -54,6 +54,8 @@
     <string name="profile_menu_edit">Edit Profile</string>
     <string name="profile_menu_password">Change Password</string>
     <string name="profile_menu_follows">Followers / Following</string>
+    <string name="profile_menu_onboarding">How CheckPoint works</string>
+    <string name="profile_menu_onboarding_caption">Review the introduction slides and permissions guide any time.</string>
     <string name="profile_section_app">App Settings</string>
     <string name="profile_menu_dark_mode">Dark Mode</string>
     <string name="profile_menu_logout">Log Out</string>
@@ -110,4 +112,25 @@
     <!-- Misc -->
     <string name="support_title">Customer Support</string>
     <string name="support_message">Contact this email for customer support: %1$s</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_slide_1_title">Discover your next checkpoint</string>
+    <string name="onboarding_slide_1_subtitle">Explore trends, new content, and gaming moments curated for your style.</string>
+    <string name="onboarding_slide_2_title">Build your player circle</string>
+    <string name="onboarding_slide_2_subtitle">Follow creators and friends to keep your feed always fresh and relevant.</string>
+    <string name="onboarding_slide_3_title">Start conversations instantly</string>
+    <string name="onboarding_slide_3_subtitle">Share ideas, react to posts, and chat with your community in real time.</string>
+    <string name="onboarding_slide_4_title">Never miss important updates</string>
+    <string name="onboarding_slide_4_subtitle">Get signals on activity, interactions, and moments that matter to you.</string>
+    <string name="onboarding_permissions_title">Enable essential permissions</string>
+    <string name="onboarding_permissions_subtitle">To offer the full experience, we need access to position, contacts, and notifications.</string>
+    <string name="onboarding_permission_location">GPS location</string>
+    <string name="onboarding_permission_contacts">Phone contacts</string>
+    <string name="onboarding_permission_notifications">Notifications</string>
+    <string name="onboarding_permission_enabled">Enabled</string>
+    <string name="onboarding_permission_disabled">Not enabled</string>
+    <string name="onboarding_permissions_button">Grant permissions</string>
+    <string name="onboarding_permissions_retry">Try again</string>
+    <string name="onboarding_skip_button">Skip for now</string>
+    <string name="onboarding_start_button">Continue to login</string>
 </resources>
