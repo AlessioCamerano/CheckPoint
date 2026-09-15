@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.ui.theme.StatusOnline
+import com.example.checkpoint.ui.theme.spacing
 
 /**
  * Popup per la visualizzazione del profilo utente.
@@ -42,14 +44,14 @@ fun UserProfilePopup(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(28.dp),
+                .padding(horizontal = MaterialTheme.spacing.medium),
+            shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.background,
-            tonalElevation = 2.dp
+            tonalElevation = MaterialTheme.spacing.extraExtraSmall
         ) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(MaterialTheme.spacing.large)
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -88,13 +90,13 @@ fun UserProfilePopup(
                             .size(24.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.surface)
-                            .padding(3.dp)
+                            .padding(MaterialTheme.spacing.extraSmall - 1.dp)
                             .clip(CircleShape)
-                            .background(Color.Green)
+                            .background(StatusOnline)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 // Nome utente
                 Text(
@@ -111,23 +113,23 @@ fun UserProfilePopup(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
 
                 // Statistiche: Follower e Seguiti
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "$followingCount",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = stringResource(com.example.checkpoint.R.string.tab_following),
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
@@ -135,18 +137,18 @@ fun UserProfilePopup(
                         Text(
                             text = "$followersCount",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = stringResource(com.example.checkpoint.R.string.tab_followers),
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 // Biografia
                 if (user.bio.isNotBlank()) {
@@ -155,7 +157,7 @@ fun UserProfilePopup(
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 8.dp)
+                        modifier = Modifier.padding(horizontal = MaterialTheme.spacing.small)
                     )
                 } else {
                     Text(
@@ -166,19 +168,19 @@ fun UserProfilePopup(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
                 // Azioni profilo
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
                     val buttonColor = if (isFollowing) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
                     Button(
                         onClick = onFollowClick,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        shape = MaterialTheme.shapes.medium,
+                        contentPadding = PaddingValues(horizontal = MaterialTheme.spacing.small),
                         colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
                     ) {
                         Icon(
@@ -186,7 +188,7 @@ fun UserProfilePopup(
                             contentDescription = null, 
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(MaterialTheme.spacing.extraSmall))
                         Text(
                             text = if (isFollowing) stringResource(com.example.checkpoint.R.string.action_unfollow) else stringResource(com.example.checkpoint.R.string.action_follow), 
                             maxLines = 1, 
@@ -200,11 +202,11 @@ fun UserProfilePopup(
                             onMessageClick(user) 
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp)
+                        shape = MaterialTheme.shapes.medium,
+                        contentPadding = PaddingValues(horizontal = MaterialTheme.spacing.small)
                     ) {
                         Icon(Icons.AutoMirrored.Filled.Message, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(MaterialTheme.spacing.extraSmall))
                         Text(text = stringResource(com.example.checkpoint.R.string.action_message), maxLines = 1, softWrap = false)
                     }
                 }

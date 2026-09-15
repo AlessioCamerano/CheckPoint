@@ -16,9 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.ui.theme.spacing
 
 /**
  * Elemento lista utente
@@ -32,7 +32,7 @@ fun UserItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick(user) }
-            .padding(vertical = 8.dp),
+            .padding(vertical = MaterialTheme.spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -53,16 +53,17 @@ fun UserItem(
                 Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary)
             }
         }
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
         Column {
             Text(
                 text = user.username,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = user.email,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.secondary
             )
         }

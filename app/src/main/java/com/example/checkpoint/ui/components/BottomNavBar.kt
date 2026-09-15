@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.state.UserStatus
+import com.example.checkpoint.ui.theme.spacing
 
 @Composable
 fun BottomNavBar(
@@ -44,7 +45,7 @@ fun BottomNavBar(
         )
         NavigationBar(
             containerColor = MaterialTheme.colorScheme.background,
-            tonalElevation = 0.dp
+            tonalElevation = MaterialTheme.spacing.default
         ) {
             NavigationBarItem(
                 selected = currentRoute == "search",
@@ -124,7 +125,7 @@ fun BottomNavBar(
                         // Pallino stato in tempo reale
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(MaterialTheme.spacing.small)
                                 .offset(x = 1.dp, y = 1.dp)
                                 .clip(CircleShape)
                                 .background(userStatus.color)

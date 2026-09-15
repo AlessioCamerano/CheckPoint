@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -33,13 +32,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -62,7 +61,7 @@ fun SearchScreen(
     val focusManager = LocalFocusManager.current
 
     val topPadding by animateDpAsState(
-        targetValue = if (isSearched) 16.dp else 100.dp,
+        targetValue = if (isSearched) MaterialTheme.spacing.medium else 100.dp,
         animationSpec = tween(durationMillis = 600),
         label = "searchBarPosition"
     )
@@ -74,7 +73,7 @@ fun SearchScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = MaterialTheme.spacing.medium),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(topPadding))
@@ -88,10 +87,10 @@ fun SearchScreen(
                     Text(
                         text = stringResource(com.example.checkpoint.R.string.search_title),
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 24.sp,
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
                 }
             }
 
@@ -106,7 +105,7 @@ fun SearchScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(com.example.checkpoint.R.string.search_placeholder), color = MaterialTheme.colorScheme.secondary) },
+                placeholder = { Text(stringResource(com.example.checkpoint.R.string.search_placeholder), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodyMedium) },
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,
@@ -114,7 +113,7 @@ fun SearchScreen(
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 },
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
@@ -134,7 +133,7 @@ fun SearchScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             if (!isSearched) {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -148,16 +147,16 @@ fun SearchScreen(
                             Text(
                                 text = stringResource(com.example.checkpoint.R.string.search_recent),
                                 color = MaterialTheme.colorScheme.onBackground,
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             TextButton(onClick = onClearHistory) {
-                                Text(stringResource(com.example.checkpoint.R.string.search_clear), color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+                                Text(stringResource(com.example.checkpoint.R.string.search_clear), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium)
                             }
                         }
                         FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+                            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                         ) {
                             state.searchHistory.reversed().forEach { query ->
                                 AssistChip(
@@ -166,13 +165,13 @@ fun SearchScreen(
                                         isSearched = true
                                         onSearch(query)
                                     },
-                                    label = { Text(query) },
+                                    label = { Text(query, style = MaterialTheme.typography.labelMedium) },
                                     leadingIcon = { Icon(Icons.Default.History, null, modifier = Modifier.size(16.dp)) },
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = MaterialTheme.shapes.large
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
                     }
 
                     // Trending Tags
@@ -183,18 +182,18 @@ fun SearchScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                         Text(
                             text = stringResource(com.example.checkpoint.R.string.search_trending),
                             color = MaterialTheme.colorScheme.onBackground,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
                     FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+                        verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                     ) {
                         state.trendingTags.forEach { tag ->
                             TagItem(tag = tag) {
@@ -222,7 +221,7 @@ fun SearchScreen(
                             text = {
                                 Text(
                                     text = title,
-                                    fontSize = 14.sp,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
                                 )
                             }
@@ -230,13 +229,13 @@ fun SearchScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 // Search Results
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
                     when (selectedTab) {
                         0 -> { // Users
@@ -279,10 +278,10 @@ fun SearchScreen(
 fun TagItem(tag: String, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(MaterialTheme.shapes.large)
             .clickable { onClick() },
         color = MaterialTheme.colorScheme.tertiaryContainer,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         border = androidx.compose.foundation.BorderStroke(
             0.5.dp, 
             MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f)
@@ -290,9 +289,9 @@ fun TagItem(tag: String, onClick: () -> Unit) {
     ) {
         Text(
             text = "#$tag",
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = MaterialTheme.spacing.smallMedium, vertical = 6.dp),
             color = MaterialTheme.colorScheme.onTertiaryContainer,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold
         )
     }

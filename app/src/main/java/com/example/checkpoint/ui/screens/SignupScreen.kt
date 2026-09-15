@@ -21,11 +21,11 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.state.AuthUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.ui.viewmodel.AuthViewModel
 
 @Composable
@@ -73,29 +73,29 @@ fun SignupScreenContent(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(MaterialTheme.spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(com.example.checkpoint.R.string.app_name),
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 40.sp,
+                    style = MaterialTheme.typography.displayLarge,
                     fontWeight = FontWeight.Bold
                 )
                 
                 Text(
                     text = stringResource(com.example.checkpoint.R.string.signup_title),
                     color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = MaterialTheme.spacing.small, bottom = MaterialTheme.spacing.large)
                 )
 
                 if (uiState.errorMessage != null) {
                     Text(
                         text = uiState.errorMessage,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = MaterialTheme.spacing.medium)
                     )
                 }
 
@@ -106,11 +106,12 @@ fun SignupScreenContent(
                     placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_username)) },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
                     singleLine = true,
                     enabled = !uiState.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 OutlinedTextField(
                     value = email,
@@ -119,12 +120,13 @@ fun SignupScreenContent(
                     placeholder = { Text(stringResource(com.example.checkpoint.R.string.field_email)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     enabled = !uiState.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 OutlinedTextField(
                     value = password,
@@ -140,12 +142,13 @@ fun SignupScreenContent(
                     },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     enabled = !uiState.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 OutlinedTextField(
                     value = confirmPassword,
@@ -155,29 +158,31 @@ fun SignupScreenContent(
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     enabled = !uiState.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
                 Button(
                     onClick = { onSignup(email, username, password, confirmPassword) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(MaterialTheme.spacing.extraLarge),
+                    shape = MaterialTheme.shapes.extraLarge,
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     enabled = !uiState.isLoading
                 ) {
-                    Text(text = stringResource(com.example.checkpoint.R.string.signup_button), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(com.example.checkpoint.R.string.signup_button), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 Text(
                     text = stringResource(com.example.checkpoint.R.string.signup_login_hint),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable(enabled = !uiState.isLoading) { onNavigateToLogin() },
-                    fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
 

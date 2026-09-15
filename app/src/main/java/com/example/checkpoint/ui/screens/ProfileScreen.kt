@@ -19,11 +19,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.UserStatus
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 
 @Composable
 fun ProfileScreen(
@@ -46,18 +46,18 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = MaterialTheme.spacing.medium),
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraLarge))
 
         // Header con Avatar e Status
         ProfileHeader(userStatus, username, profilePictureUri, onStatusChange)
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.large + MaterialTheme.spacing.small))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 24.dp),
+            contentPadding = PaddingValues(bottom = MaterialTheme.spacing.large),
         ) {
             item {
                 SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_account))
@@ -73,13 +73,13 @@ fun ProfileScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                 SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_app))
                 ThemeSwitchMenuItem(isDarkTheme, onThemeChange)
             }
 
             item {
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.large + MaterialTheme.spacing.smallMedium))
                 LogoutMenuItem(onLogout)
             }
         }
@@ -98,7 +98,7 @@ fun ThemeSwitchMenuItem(
         )
         Row(
             modifier = Modifier
-                .padding(vertical = 12.dp, horizontal = 8.dp),
+                .padding(vertical = MaterialTheme.spacing.smallMedium, horizontal = MaterialTheme.spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -107,10 +107,10 @@ fun ThemeSwitchMenuItem(
                 tint = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.size(22.dp)
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
             Text(
                 text = stringResource(com.example.checkpoint.R.string.profile_menu_dark_mode),
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -181,7 +181,7 @@ fun ProfileHeader(
                         .size(28.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.background)
-                        .padding(4.dp)
+                        .padding(MaterialTheme.spacing.extraSmall)
                         .clickable { showStatusMenu = true }
                 ) {
                     Box(
@@ -197,11 +197,11 @@ fun ProfileHeader(
                     expanded = showStatusMenu,
                     onDismissRequest = { showStatusMenu = false },
                     // Offset per farlo apparire a destra (specchiato)
-                    offset = androidx.compose.ui.unit.DpOffset(x = 24.dp, y = 0.dp)
+                    offset = androidx.compose.ui.unit.DpOffset(x = MaterialTheme.spacing.medium, y = 0.dp)
                 ) {
                     UserStatus.entries.forEach { status ->
                         DropdownMenuItem(
-                            text = { Text(status.label) },
+                            text = { Text(status.label, style = MaterialTheme.typography.bodyMedium) },
                             onClick = {
                                 onStatusChange(status)
                                 showStatusMenu = false
@@ -209,7 +209,7 @@ fun ProfileHeader(
                             leadingIcon = {
                                 Box(
                                     modifier = Modifier
-                                        .size(12.dp)
+                                        .size(MaterialTheme.spacing.smallMedium)
                                         .clip(CircleShape)
                                         .background(status.color)
                                 )
@@ -220,11 +220,11 @@ fun ProfileHeader(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
         Text(
             text = username,
-            fontSize = 26.sp,
+            style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -235,10 +235,10 @@ fun ProfileHeader(
 fun SectionLabel(text: String) {
     Text(
         text = text,
-        fontSize = 13.sp,
+        style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
+        modifier = Modifier.padding(start = MaterialTheme.spacing.small, bottom = MaterialTheme.spacing.smallMedium)
     )
 }
 
@@ -259,7 +259,7 @@ fun ProfileMenuItem(
         )
         Row(
             modifier = Modifier
-                .padding(vertical = 16.dp, horizontal = 8.dp),
+                .padding(vertical = MaterialTheme.spacing.medium, horizontal = MaterialTheme.spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -268,10 +268,10 @@ fun ProfileMenuItem(
                 tint = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.size(22.dp)
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
             Text(
                 text = title,
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.weight(1f))
@@ -298,7 +298,7 @@ fun LogoutMenuItem(onLogout: () -> Unit) {
         )
         Row(
             modifier = Modifier
-                .padding(vertical = 16.dp, horizontal = 8.dp),
+                .padding(vertical = MaterialTheme.spacing.medium, horizontal = MaterialTheme.spacing.small),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -308,12 +308,12 @@ fun LogoutMenuItem(onLogout: () -> Unit) {
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(22.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
             Text(
                 text = stringResource(com.example.checkpoint.R.string.profile_menu_logout),
                 color = MaterialTheme.colorScheme.error,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                style = MaterialTheme.typography.bodyLarge
             )
             Spacer(modifier = Modifier.weight(1f))
         }

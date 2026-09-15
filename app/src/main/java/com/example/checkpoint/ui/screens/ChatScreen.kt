@@ -17,11 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -65,12 +64,12 @@ fun ChatScreen(
         bottomBar = {
             // Barra di input messaggi
             Surface(
-                tonalElevation = 8.dp,
+                tonalElevation = MaterialTheme.spacing.small,
                 color = MaterialTheme.colorScheme.surface
             ) {
                 Row(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = MaterialTheme.spacing.medium, vertical = MaterialTheme.spacing.small)
                         .navigationBarsPadding()
                         .imePadding(),
                     verticalAlignment = Alignment.CenterVertically
@@ -112,8 +111,8 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(MaterialTheme.spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
         ) {
             items(messages) { message ->
                 val isMe = message.senderEmail == currentUserEmail
@@ -138,25 +137,25 @@ fun ChatBubble(message: MessageEntity, isMe: Boolean) {
         Surface(
             color = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
             shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (isMe) 16.dp else 4.dp,
-                bottomEnd = if (isMe) 4.dp else 16.dp
+                topStart = MaterialTheme.spacing.medium,
+                topEnd = MaterialTheme.spacing.medium,
+                bottomStart = if (isMe) MaterialTheme.spacing.medium else MaterialTheme.spacing.extraSmall,
+                bottomEnd = if (isMe) MaterialTheme.spacing.extraSmall else MaterialTheme.spacing.medium
             ),
-            tonalElevation = 2.dp
+            tonalElevation = MaterialTheme.spacing.extraExtraSmall
         ) {
             Text(
                 text = message.content,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = MaterialTheme.spacing.smallMedium, vertical = MaterialTheme.spacing.small),
                 color = if (isMe) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 15.sp
+                style = MaterialTheme.typography.labelLarge
             )
         }
         Text(
             text = timeString,
-            fontSize = 10.sp,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = MaterialTheme.spacing.extraSmall, vertical = MaterialTheme.spacing.extraExtraSmall)
         )
     }
 }

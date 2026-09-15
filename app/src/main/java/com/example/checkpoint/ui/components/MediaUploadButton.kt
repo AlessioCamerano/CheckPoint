@@ -1,7 +1,6 @@
 package com.example.checkpoint.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -9,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.checkpoint.ui.theme.spacing
 
 @Composable
 fun MediaUploadButton(
@@ -22,7 +21,7 @@ fun MediaUploadButton(
         onClick = onClick,
         modifier = modifier
             .height(75.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         color = Color.Transparent,
         border = androidx.compose.foundation.BorderStroke(
             1.dp, 
@@ -40,10 +39,10 @@ fun MediaUploadButton(
                 tint = MaterialTheme.colorScheme.primary, 
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraSmall))
             Text(
                 text = label, 
-                fontSize = 11.sp, 
+                style = MaterialTheme.typography.labelSmall, 
                 color = MaterialTheme.colorScheme.secondary
             )
         }

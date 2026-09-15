@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.MessageEntity
@@ -34,6 +33,7 @@ import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 
 /**
  * Schermata che raccoglie le Chat Dirette e i Checkpoint salvati.
@@ -55,16 +55,16 @@ fun MessagesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = MaterialTheme.spacing.medium)
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
         Text(
             text = stringResource(com.example.checkpoint.R.string.messages_title),
-            fontSize = 24.sp,
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
         // Tab per passare tra Messaggi e Salvati
         SecondaryTabRow(
@@ -80,7 +80,7 @@ fun MessagesScreen(
                     text = {
                         Text(
                             text = title,
-                            fontSize = 14.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
                         )
                     }
@@ -88,7 +88,7 @@ fun MessagesScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
         if (selectedTab == 0) {
             // Sezione Messaggi Diretti
@@ -100,15 +100,15 @@ fun MessagesScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
                     items(uiState.chatPartners) { partner ->
                         Box(modifier = Modifier.fillMaxWidth()) {
                             UserItem(user = partner, onClick = onPartnerClick)
                             // Mostra il pallino se ci sono messaggi non letti
                             if (uiState.chatPartnersUnread.contains(partner.email)) {
-                                UnreadDot(modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp))
+                                UnreadDot(modifier = Modifier.align(Alignment.CenterEnd).padding(end = MaterialTheme.spacing.small))
                             }
                         }
                     }
@@ -125,8 +125,8 @@ fun MessagesScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
                     items(savedPosts) { postWithAuthor ->
                         CompactPostItem(
@@ -156,7 +156,7 @@ fun CompactPostItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         border = androidx.compose.foundation.BorderStroke(
             0.5.dp,
@@ -165,7 +165,7 @@ fun CompactPostItem(
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(MaterialTheme.spacing.smallMedium)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -190,20 +190,20 @@ fun CompactPostItem(
                 }
             }
             
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = postWithAuthor.post.title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = stringResource(com.example.checkpoint.R.string.post_by_author, postWithAuthor.author.username),
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.secondary,
                     maxLines = 1
                 )
@@ -212,7 +212,7 @@ fun CompactPostItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (postWithAuthor.hasUnreadComments) {
                     UnreadDot()
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
                 }
                 
                 IconButton(
@@ -235,7 +235,7 @@ fun CompactPostItem(
 fun UnreadDot(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .size(10.dp)
+            .size(MaterialTheme.spacing.small)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary)
     )
@@ -251,10 +251,10 @@ fun MessagesEmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, te
             Icon(
                 icon,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(MaterialTheme.spacing.extraLarge),
                 tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
             Text(
                 text = text,
                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)

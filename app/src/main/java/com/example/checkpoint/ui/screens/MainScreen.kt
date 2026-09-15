@@ -20,8 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.Post
@@ -31,6 +29,7 @@ import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 
 /**
  * Schermata principale del feed.
@@ -62,7 +61,7 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = MaterialTheme.spacing.medium)
         ) {
             // notifiche
             Box(modifier = Modifier.fillMaxWidth()) {
@@ -78,13 +77,13 @@ fun MainScreen(
                 }
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
             
             // Titolo
             Text(
                 text = stringResource(com.example.checkpoint.R.string.app_name),
                 color = MaterialTheme.colorScheme.primary,
-                fontSize = 32.sp,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
@@ -93,15 +92,15 @@ fun MainScreen(
             Text(
                 text = stringResource(com.example.checkpoint.R.string.main_relax_quote),
                 color = MaterialTheme.colorScheme.secondary,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = MaterialTheme.spacing.small),
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -111,7 +110,7 @@ fun MainScreen(
                 Text(
                     text = stringResource(com.example.checkpoint.R.string.main_feed_title),
                     color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium
                 )
 
@@ -159,30 +158,30 @@ fun MainScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             // Progress bar per feedback visivo
             if (state.isLoading && !state.isRefreshing) {
                 LinearProgressIndicator(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(2.dp)
-                        .padding(horizontal = 8.dp),
+                        .height(MaterialTheme.spacing.extraExtraSmall)
+                        .padding(horizontal = MaterialTheme.spacing.small),
                     color = MaterialTheme.colorScheme.primary,
                     trackColor = Color.Transparent
                 )
             } else {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraExtraSmall))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
             // feed
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
             ) {
                 items(
                     items = state.posts,
@@ -204,13 +203,13 @@ fun MainScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 24.dp),
+                            .padding(vertical = MaterialTheme.spacing.large),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = if (state.isLoading) stringResource(com.example.checkpoint.R.string.main_loading) else stringResource(com.example.checkpoint.R.string.main_no_more),
                             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.labelMedium,
                             fontStyle = FontStyle.Italic
                         )
                     }

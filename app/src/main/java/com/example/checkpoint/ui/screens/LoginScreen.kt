@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.AuthUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.ui.viewmodel.AuthViewModel
 
 @Composable
@@ -76,29 +77,28 @@ fun LoginScreenContent(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(MaterialTheme.spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(R.string.app_name),
                     color = MaterialTheme.colorScheme.primary,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.displayLarge
                 )
                 
                 Text(
                     text = stringResource(R.string.login_welcome),
                     color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 32.dp)
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = MaterialTheme.spacing.small, bottom = MaterialTheme.spacing.large)
                 )
 
                 if (uiState.errorMessage != null) {
                     Text(
                         text = uiState.errorMessage,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = MaterialTheme.spacing.medium)
                     )
                 }
 
@@ -109,11 +109,12 @@ fun LoginScreenContent(
                     placeholder = { Text(stringResource(R.string.field_login_identifier)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
                     singleLine = true,
                     enabled = !uiState.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 OutlinedTextField(
                     value = password,
@@ -129,60 +130,63 @@ fun LoginScreenContent(
                     },
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     enabled = !uiState.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
                 Button(
                     onClick = { onLogin(identifier, password) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(MaterialTheme.spacing.extraLarge),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    shape = MaterialTheme.shapes.extraLarge,
                     enabled = !uiState.isLoading && identifier.isNotBlank() && password.isNotBlank()
                 ) {
-                    Text(text = stringResource(R.string.login_button), color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(R.string.login_button), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
                 Text(
                     text = stringResource(R.string.login_signup_hint),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable(enabled = !uiState.isLoading) { onNavigateToSignup() },
-                    fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyMedium
                 )
 
                 if (uiState.errorMessage != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                     Text(
                         text = stringResource(R.string.login_forgot_password),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable { showSupportDialog = true },
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surface)
                     Text(
                         text = stringResource(R.string.login_or_divider),
                         color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        fontSize = 12.sp
+                        modifier = Modifier.padding(horizontal = MaterialTheme.spacing.small),
+                        style = MaterialTheme.typography.labelMedium
                     )
                     HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surface)
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
                 OutlinedButton(
                     onClick = { /* TODO */ },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(MaterialTheme.spacing.extraLarge),
+                    shape = MaterialTheme.shapes.extraLarge,
                     border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp),
                     enabled = !uiState.isLoading
                 ) {
@@ -196,7 +200,7 @@ fun LoginScreenContent(
                             tint = Color.Unspecified,
                             modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
                         Text(text = stringResource(R.string.login_google_button), color = MaterialTheme.colorScheme.onBackground)
                     }
                 }

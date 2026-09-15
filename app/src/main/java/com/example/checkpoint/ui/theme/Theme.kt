@@ -1,6 +1,5 @@
 package com.example.checkpoint.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -13,6 +12,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * Configurazione del tema scuro.
+ */
 private val DarkColorScheme = darkColorScheme(
     primary = CyanAccent,
     onPrimary = TextPrimary,
@@ -27,6 +29,9 @@ private val DarkColorScheme = darkColorScheme(
     onError = Color.White
 )
 
+/**
+ * Configurazione del tema chiaro.
+ */
 private val LightColorScheme = lightColorScheme(
     primary = CyanDark,
     onPrimary = Color.White,
@@ -43,10 +48,12 @@ private val LightColorScheme = lightColorScheme(
     onError = Color.White
 )
 
+/**
+ * Composable radice per il tema dell'applicazione.
+ */
 @Composable
 fun CheckPointTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -60,10 +67,12 @@ fun CheckPointTheme(
         else -> LightColorScheme
     }
 
+    // Forniamo le spaziature personalizzate tramite CompositionLocal
     CompositionLocalProvider(LocalSpacing provides Spacing()) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,
+            shapes = Shapes,
             content = content
         )
     }

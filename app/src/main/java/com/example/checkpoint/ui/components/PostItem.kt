@@ -28,6 +28,7 @@ import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.util.TimeUtils
 
 /**
@@ -49,9 +50,9 @@ fun PostItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = MaterialTheme.spacing.extraSmall)
             .clickable { author?.let { onPostClick(PostWithAuthor(post, it, tags, isLiked)) } },
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         border = androidx.compose.foundation.BorderStroke(
             0.5.dp,
@@ -59,7 +60,7 @@ fun PostItem(
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(MaterialTheme.spacing.medium)
         ) {
             // Header: Autore e Tempo
             Row(
@@ -91,35 +92,34 @@ fun PostItem(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
                 Column {
                     Text(
                         text = post.authorName,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = timeAgo,
-                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
 
             // Corpo: Titolo
             Text(
                 text = post.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
 
             // MEDIA SECTION
             if (post.mediaUri != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
                 when (post.mediaType) {
                     MediaType.IMAGE -> {
                         AsyncImage(
@@ -128,7 +128,7 @@ fun PostItem(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(250.dp)
-                                .clip(RoundedCornerShape(16.dp)),
+                                .clip(MaterialTheme.shapes.large),
                             contentScale = ContentScale.Crop
                         )
                     }
@@ -142,14 +142,13 @@ fun PostItem(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             // Messaggio
             Text(
                 text = post.initialMessage,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             // tags
@@ -158,16 +157,16 @@ fun PostItem(
                 val visibleTags = tags.take(maxVisibleTags)
                 val remainingCount = tags.size - maxVisibleTags
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     visibleTags.forEach { tagEntity ->
                         Surface(
                             color = MaterialTheme.colorScheme.tertiaryContainer,
-                            shape = RoundedCornerShape(16.dp),
+                            shape = MaterialTheme.shapes.large,
                             border = androidx.compose.foundation.BorderStroke(
                                 0.5.dp, 
                                 MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f)
@@ -176,7 +175,7 @@ fun PostItem(
                             Text(
                                 text = "#${tagEntity.tag}",
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                fontSize = 11.sp,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
@@ -186,7 +185,7 @@ fun PostItem(
                         Text(
                             text = "+$remainingCount...",
                             color = MaterialTheme.colorScheme.secondary,
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
@@ -194,7 +193,7 @@ fun PostItem(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
             // Footer: Interazioni (Flag per i preferiti)
             Row(
@@ -211,10 +210,10 @@ fun PostItem(
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                 Text(
                     text = "${post.favoriteCount}",
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.secondary
                 )

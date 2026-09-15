@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
@@ -20,13 +19,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.util.MediaStorageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +56,7 @@ fun EditProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(com.example.checkpoint.R.string.profile_menu_edit), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(com.example.checkpoint.R.string.profile_menu_edit), style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.example.checkpoint.R.string.action_back))
@@ -74,7 +72,7 @@ fun EditProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = MaterialTheme.spacing.large, vertical = MaterialTheme.spacing.medium),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -114,7 +112,7 @@ fun EditProfileScreen(
                         .size(32.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
-                        .padding(6.dp),
+                        .padding(MaterialTheme.spacing.extraSmall + 2.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -126,7 +124,7 @@ fun EditProfileScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             OutlinedTextField(
                 value = username,
@@ -134,11 +132,11 @@ fun EditProfileScreen(
                 label = { Text(stringResource(com.example.checkpoint.R.string.field_username)) },
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = { Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp)) },
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             OutlinedTextField(
                 value = bio,
@@ -147,7 +145,7 @@ fun EditProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 supportingText = {
                     Text(
                         text = "${bio.length} / $bioCharLimit",
@@ -157,14 +155,14 @@ fun EditProfileScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.large + MaterialTheme.spacing.small))
 
             Button(
                 onClick = { onSave(username, bio, profilePictureUri) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
@@ -172,8 +170,7 @@ fun EditProfileScreen(
                 Text(
                     text = stringResource(com.example.checkpoint.R.string.profile_edit_save),
                     color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
         }
