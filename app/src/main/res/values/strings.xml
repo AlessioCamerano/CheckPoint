@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">CheckPoint</string>
     <string name="checkpoint">Checkpoint</string>
+    <string name="default_web_client_id">38524467400-rtpa7d1v7lsahu1rl7sb38rqesab37g6.apps.googleusercontent.com</string>
 
     <!-- Login -->
     <string name="login_welcome">Welcome back, player!</string>

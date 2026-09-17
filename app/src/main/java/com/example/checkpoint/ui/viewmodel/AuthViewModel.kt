@@ -4,12 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.repository.AuthRepository
 import com.example.checkpoint.data.repository.AuthRepositoryImpl
 import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
-import com.example.checkpoint.data.local.AppDatabase
-import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.state.AuthUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +33,7 @@ class AuthViewModel(
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val database = AppDatabase.getDatabase(application)
-                
+
                 val authRepository = AuthRepositoryImpl(database.userDao())
                 val preferencesRepository = UserPreferencesRepositoryImpl(application)
                 
@@ -57,32 +56,16 @@ class AuthViewModel(
                 return@launch
             }
 
-            val passwordRegex = "^(?=.*[A-Za-z])(?=.*\\d).+$".toRegex()
-            if (!password.matches(passwordRegex)) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Password must contain at least one letter and one number") }
-                return@launch
-            }
-
-            if (!email.endsWith("@gmail.com", ignoreCase = true)) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Only @gmail.com addresses are allowed") }
-                return@launch
-            }
-
             try {
-                if (authRepository.isEmailTaken(email)) {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Email already taken") }
-                    return@launch
+                // Registrazione con Firebase.
+                val result = authRepository.signUpWithEmail(email, username, password)
+                
+                result.onSuccess { user ->
+                    preferencesRepository.saveSession(user.email)
+                    _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
                 }
-
-                if (authRepository.isUsernameTaken(username)) {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Username already taken") }
-                    return@launch
-                }
-
-                val newUser = UserEntity(email, username, password)
-                authRepository.registerUser(newUser)
-                preferencesRepository.saveSession(email)
-                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
@@ -93,12 +76,37 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val user = authRepository.loginUser(identifier)
-                if (user != null && user.password == password) {
+                // Firebase richiede email, se l'utente inserisce lo username si risale all'email tramite Room.
+                val email = if (!identifier.contains("@")) {
+                    authRepository.getUserByUsername(identifier)?.email ?: identifier
+                } else {
+                    identifier
+                }
+
+                val result = authRepository.signInWithEmail(email, password)
+                
+                result.onSuccess { user ->
                     preferencesRepository.saveSession(user.email)
                     _uiState.update { it.copy(isLoading = false, isSuccess = true) }
-                } else {
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Invalid credentials") }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Invalid credentials: ${e.message}") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+            }
+        }
+    }
+
+    fun onGoogleSignIn(idToken: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val result = authRepository.signInWithGoogle(idToken)
+                result.onSuccess { user ->
+                    preferencesRepository.saveSession(user.email)
+                    _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+                }.onFailure { e ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Google Sign-in failed: ${e.message}") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
@@ -109,6 +117,7 @@ class AuthViewModel(
     fun onLogout() {
         viewModelScope.launch {
             try {
+                authRepository.logout()
                 preferencesRepository.clearSession()
                 _uiState.update { it.copy(isSuccess = false) }
             } catch (e: Exception) {

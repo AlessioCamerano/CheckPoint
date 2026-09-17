@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +31,8 @@ import com.example.checkpoint.ui.state.AuthUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.ui.viewmodel.AuthViewModel
+import com.example.checkpoint.util.GoogleSignInHelper
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -38,6 +41,9 @@ fun LoginScreen(
     viewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val googleSignInHelper = remember { GoogleSignInHelper(context) }
 
     // Successo del login
     LaunchedEffect(uiState.isSuccess) {
@@ -50,6 +56,14 @@ fun LoginScreen(
     LoginScreenContent(
         uiState = uiState,
         onLogin = { id, pass -> viewModel.onLogin(id, pass) },
+        onGoogleLogin = {
+            coroutineScope.launch {
+                val idToken = googleSignInHelper.signIn()
+                if (idToken != null) {
+                    viewModel.onGoogleSignIn(idToken)
+                }
+            }
+        },
         onNavigateToSignup = onNavigateToSignup
     )
 }
@@ -58,6 +72,7 @@ fun LoginScreen(
 fun LoginScreenContent(
     uiState: AuthUiState,
     onLogin: (String, String) -> Unit,
+    onGoogleLogin: () -> Unit,
     onNavigateToSignup: () -> Unit
 ) {
     var identifier by remember { mutableStateOf("") }
@@ -184,7 +199,7 @@ fun LoginScreenContent(
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
                 OutlinedButton(
-                    onClick = { /* TODO */ },
+                    onClick = onGoogleLogin,
                     modifier = Modifier.fillMaxWidth().height(MaterialTheme.spacing.extraLarge),
                     shape = MaterialTheme.shapes.extraLarge,
                     border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp),
@@ -220,6 +235,7 @@ fun LoginScreenDarkPreview() {
         LoginScreenContent(
             uiState = AuthUiState(),
             onLogin = { _, _ -> },
+            onGoogleLogin = {},
             onNavigateToSignup = {}
         )
     }
@@ -232,6 +248,7 @@ fun LoginScreenLightPreview() {
         LoginScreenContent(
             uiState = AuthUiState(),
             onLogin = { _, _ -> },
+            onGoogleLogin = {},
             onNavigateToSignup = {}
         )
     }

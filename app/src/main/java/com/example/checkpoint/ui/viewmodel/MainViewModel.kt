@@ -286,14 +286,29 @@ class MainViewModel(
             try {
                 preferencesRepository.userEmail.collectLatest { email ->
                     if (!email.isNullOrBlank()) {
-                        val user = authRepository.getUser(email)
+                        var user = authRepository.getUser(email)
+                        
+                        // Se l'utente non è in Room, si prova a recuperarlo da Firebase e crearlo
+                        if (user == null) {
+                            val currentEmail = authRepository.getCurrentUserEmail()
+                            if (currentEmail == email) {
+                                // loggato su Firebase
+                                val newUser = UserEntity(
+                                    email = email,
+                                    username = email.split("@")[0]
+                                )
+                                authRepository.registerUser(newUser)
+                                user = newUser
+                            }
+                        }
+
                         if (user != null) {
                             _uiState.update { 
                                 it.copy(
                                     username = user.username,
                                     bio = user.bio,
                                     profilePictureUri = user.profilePictureUri,
-                                    currentUserEmail = email, // Salva email corrente
+                                    currentUserEmail = email,
                                     data = "Welcome back, ${user.username}!"
                                 ) 
                             }

@@ -12,9 +12,8 @@ import androidx.room.PrimaryKey
     indices = [Index(value = ["username"], unique = true)]
 )
 data class UserEntity(
-    @PrimaryKey val email: String, // chiave primaria
+    @PrimaryKey val email: String,
     val username: String,
-    val password: String,
     val bio: String = "",
     val profilePictureUri: String? = null
 )
