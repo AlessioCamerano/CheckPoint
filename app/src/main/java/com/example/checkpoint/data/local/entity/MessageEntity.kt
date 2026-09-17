@@ -10,9 +10,9 @@ import java.util.UUID
 @Entity(tableName = "messages")
 data class MessageEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
-    val senderEmail: String,
-    val receiverEmail: String,
-    val content: String,
+    val senderEmail: String = "",
+    val receiverEmail: String = "",
+    val content: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val isRead: Boolean = false
 )

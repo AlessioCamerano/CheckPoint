@@ -17,14 +17,14 @@ enum class MediaType {
 @Entity(tableName = "posts")
 data class Post(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
-    val authorName: String,
-    val authorEmail: String,
-    val title: String,
-    val initialMessage: String,
+    val authorName: String = "",
+    val authorEmail: String = "",
+    val title: String = "",
+    val initialMessage: String = "",
     val isFavorite: Boolean = false,
     val favoriteCount: Int = 0,
     val timestamp: Long = System.currentTimeMillis(),
     val mediaUri: String? = null,
     val mediaType: MediaType = MediaType.NONE,
-    val isMuted: Boolean = false // Flag per disattivare l'audio dei video
+    val isMuted: Boolean = false
 )

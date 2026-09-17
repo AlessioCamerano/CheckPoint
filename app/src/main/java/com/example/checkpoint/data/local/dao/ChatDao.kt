@@ -16,6 +16,9 @@ interface ChatDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: MessageEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMessages(messages: List<MessageEntity>)
+
     // Recupera la cronologia messaggi tra due utenti
     @Query("""
         SELECT * FROM messages 

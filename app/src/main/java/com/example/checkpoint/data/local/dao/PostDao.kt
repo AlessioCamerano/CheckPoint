@@ -19,6 +19,9 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPost(post: Post)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPosts(posts: List<Post>)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTags(tags: List<PostTagEntity>)
 

@@ -272,6 +272,11 @@ class MainViewModel(
                     _isLoggedIn.value = loggedIn
                     _isSessionLoaded.value = true
                     if (loggedIn) {
+                        val email = preferencesRepository.userEmail.first()
+                        if (email != null) {
+                            // Sincronizzazione automatica all'avvio se loggati
+                            mainRepository.syncDataFromFirestore(email)
+                        }
                         loadUserProfile()
                     }
                 }
@@ -465,6 +470,10 @@ class MainViewModel(
     fun onRefresh() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
+            val email = uiState.value.currentUserEmail
+            if (email != null) {
+                mainRepository.syncDataFromFirestore(email)
+            }
             loadUserProfile()
             kotlinx.coroutines.delay(1000.milliseconds)
             _uiState.update { it.copy(isRefreshing = false) }

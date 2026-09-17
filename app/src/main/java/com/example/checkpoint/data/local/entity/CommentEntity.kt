@@ -27,11 +27,11 @@ import java.util.UUID
 )
 data class CommentEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
-    val postId: String,
-    val authorEmail: String,
-    val authorName: String,
-    val content: String,
+    val postId: String = "",
+    val authorEmail: String = "",
+    val authorName: String = "",
+    val content: String = "",
     val timestamp: Long = System.currentTimeMillis(),
-    val parentCommentId: String? = null, // ID del commento a cui si risponde
-    val isRead: Boolean = false // Se il commento è stato letto dall'utente
+    val parentCommentId: String? = null,
+    val isRead: Boolean = false
 )

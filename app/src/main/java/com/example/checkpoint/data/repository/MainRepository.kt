@@ -1,5 +1,6 @@
 package com.example.checkpoint.data.repository
 
+import android.util.Log
 import com.example.checkpoint.data.local.dao.ChatDao
 import com.example.checkpoint.data.local.dao.CommentDao
 import com.example.checkpoint.data.local.dao.PostDao
@@ -8,14 +9,20 @@ import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.FollowEntity
 import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostLikeEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query as FirestoreQuery
+import kotlinx.coroutines.tasks.await
+import java.util.UUID
+
 /**
- * Repository per la gestione dei post e dei dati principali.
+ * Repository per la gestione dei post e dei dati principali su Firestore e Room.
  */
 interface MainRepository {
     fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>>
@@ -26,6 +33,9 @@ interface MainRepository {
     fun searchUsersByUsername(query: String): Flow<List<UserEntity>>
     suspend fun createPost(post: Post, tags: List<String>)
     suspend fun toggleLike(postId: String, userEmail: String)
+    
+    // Sincronizzazione manuale
+    suspend fun syncDataFromFirestore(currentUserEmail: String)
     
     // operazioni per follow
     fun isFollowing(followerEmail: String, followedEmail: String): Flow<Boolean>
@@ -53,7 +63,8 @@ class MainRepositoryImpl(
     private val postDao: PostDao, 
     private val userDao: UserDao,
     private val chatDao: ChatDao,
-    private val commentDao: CommentDao
+    private val commentDao: CommentDao,
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) : MainRepository {
     override fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>> {
         return postDao.getAllPostsWithAuthor(currentUserEmail)
@@ -79,13 +90,115 @@ class MainRepositoryImpl(
         return userDao.searchUsersByUsername(query)
     }
 
+    override suspend fun syncDataFromFirestore(currentUserEmail: String) {
+        try {
+            Log.d("CheckPointDebug", "Main: INIZIO SINCRONIZZAZIONE GLOBALE...")
+
+            // 1. UTENTI
+            try {
+                val usersSnapshot = firestore.collection("users").get().await()
+                val remoteUsers = usersSnapshot.toObjects(UserEntity::class.java)
+                userDao.insertUsers(remoteUsers)
+                Log.d("CheckPointDebug", "Main: Sincronizzati ${remoteUsers.size} utenti")
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Users fail: ${e.message}") }
+
+            // 2. POST
+            try {
+                val postsSnapshot = firestore.collection("posts")
+                    .orderBy("timestamp", FirestoreQuery.Direction.DESCENDING)
+                    .limit(50).get().await()
+                val remotePosts = postsSnapshot.toObjects(Post::class.java)
+                postDao.insertPosts(remotePosts)
+                Log.d("CheckPointDebug", "Main: Sincronizzati ${remotePosts.size} post")
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Posts fail: ${e.message}") }
+
+            // 3. LIKES
+            try {
+                val likesSnapshot = firestore.collection("likes").get().await()
+                likesSnapshot.documents.forEach { doc ->
+                    val postId = doc.getString("postId")
+                    val userEmail = doc.getString("userEmail")
+                    if (postId != null && userEmail != null) {
+                        postDao.insertLike(PostLikeEntity(postId, userEmail))
+                    }
+                }
+                Log.d("CheckPointDebug", "Main: Sincronizzati ${likesSnapshot.size()} likes")
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Likes fail: ${e.message}") }
+
+            // 4. FOLLOWS
+            try {
+                val followsSnapshot = firestore.collection("follows").get().await()
+                followsSnapshot.documents.forEach { doc ->
+                    val follower = doc.getString("followerEmail")
+                    val followed = doc.getString("followedEmail")
+                    if (follower != null && followed != null) {
+                        userDao.insertFollow(FollowEntity(follower, followed))
+                    }
+                }
+                Log.d("CheckPointDebug", "Main: Sincronizzati ${followsSnapshot.size()} follow")
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Follows fail: ${e.message}") }
+
+            // 5. MESSAGGI
+            try {
+                val messagesSnapshot = firestore.collection("messages")
+                    .whereIn("receiverEmail", listOf(currentUserEmail, "global")) // global per test
+                    .get().await()
+                val remoteMessages = messagesSnapshot.toObjects(MessageEntity::class.java)
+                chatDao.insertMessages(remoteMessages)
+                Log.d("CheckPointDebug", "Main: Sincronizzati ${remoteMessages.size} messaggi")
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Messages fail: ${e.message}") }
+
+            // 6. COMMENTI
+            try {
+                val commentsSnapshot = firestore.collection("comments").limit(100).get().await()
+                val remoteComments = commentsSnapshot.toObjects(CommentEntity::class.java)
+                commentDao.insertComments(remoteComments)
+                Log.d("CheckPointDebug", "Main: Sincronizzati ${remoteComments.size} commenti")
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Comments fail: ${e.message}") }
+
+            Log.d("CheckPointDebug", "Main: SINCRONIZZAZIONE COMPLETATA")
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Main: ERRORE FATALE sincronizzazione: ${e.message}", e)
+        }
+    }
+
     override suspend fun createPost(post: Post, tags: List<String>) {
-        val tagEntities = tags.map { PostTagEntity(post.id, it) }
-        postDao.insertPostWithTags(post, tagEntities)
+        Log.d("CheckPointDebug", "1. Tentativo di creazione post avviato: ${post.title}")
+        try {
+            // Si assicura che l'ID sia unico e presente
+            val postToUpload = if (post.id.isBlank()) post.copy(id = UUID.randomUUID().toString()) else post
+            
+            firestore.collection("posts").document(postToUpload.id).set(postToUpload).await()
+            Log.d("CheckPointDebug", "2. Post salvato con successo su FIRESTORE")
+
+            val tagEntities = tags.map { PostTagEntity(postToUpload.id, it) }
+            postDao.insertPostWithTags(postToUpload, tagEntities)
+            Log.d("CheckPointDebug", "3. Post salvato con successo in ROOM locale")
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "ERRORE durante createPost: ${e.message}", e)
+        }
     }
 
     override suspend fun toggleLike(postId: String, userEmail: String) {
-        postDao.toggleLike(postId, userEmail)
+        Log.d("CheckPointDebug", "Main: Toggle LIKE su FIRESTORE per post: $postId")
+        try {
+            // Aggiornamento Like su Firestore
+            val likeId = "${postId}_${userEmail}"
+            val likeRef = firestore.collection("likes").document(likeId)
+            val doc = likeRef.get().await()
+            
+            if (doc.exists()) {
+                likeRef.delete().await()
+                Log.d("CheckPointDebug", "Main: LIKE rimosso da FIRESTORE")
+            } else {
+                likeRef.set(mapOf("postId" to postId, "userEmail" to userEmail)).await()
+                Log.d("CheckPointDebug", "Main: LIKE aggiunto su FIRESTORE")
+            }
+            // Aggiorna locale
+            postDao.toggleLike(postId, userEmail)
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Main: ERRORE toggle LIKE FIRESTORE: ${e.message}", e)
+        }
     }
 
     override fun isFollowing(followerEmail: String, followedEmail: String): Flow<Boolean> {
@@ -93,11 +206,23 @@ class MainRepositoryImpl(
     }
 
     override suspend fun toggleFollow(followerEmail: String, followedEmail: String) {
-        val currentlyFollowing = userDao.isFollowing(followerEmail, followedEmail).first()
-        if (currentlyFollowing) {
-            userDao.deleteFollow(followerEmail, followedEmail)
-        } else {
-            userDao.insertFollow(FollowEntity(followerEmail, followedEmail))
+        Log.d("CheckPointDebug", "Main: Toggle FOLLOW su FIRESTORE da $followerEmail a $followedEmail")
+        try {
+            val followId = "${followerEmail}_${followedEmail}"
+            val followRef = firestore.collection("follows").document(followId)
+            val doc = followRef.get().await()
+            
+            if (doc.exists()) {
+                followRef.delete().await()
+                userDao.deleteFollow(followerEmail, followedEmail)
+                Log.d("CheckPointDebug", "Main: UNFOLLOW eseguito su FIRESTORE")
+            } else {
+                followRef.set(mapOf("followerEmail" to followerEmail, "followedEmail" to followedEmail)).await()
+                userDao.insertFollow(FollowEntity(followerEmail, followedEmail))
+                Log.d("CheckPointDebug", "Main: FOLLOW eseguito su FIRESTORE")
+            }
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Main: ERRORE toggle FOLLOW FIRESTORE: ${e.message}", e)
         }
     }
 
@@ -126,7 +251,14 @@ class MainRepositoryImpl(
     }
 
     override suspend fun sendMessage(message: MessageEntity) {
-        chatDao.insertMessage(message)
+        Log.d("CheckPointDebug", "Main: Invio MESSAGGIO su FIRESTORE da ${message.senderEmail}")
+        try {
+            firestore.collection("messages").document(message.id).set(message).await()
+            Log.d("CheckPointDebug", "Main: Messaggio inviato con successo su FIRESTORE")
+            chatDao.insertMessage(message)
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Main: ERRORE invio messaggio FIRESTORE: ${e.message}", e)
+        }
     }
 
     override suspend fun markAsRead(currentUserEmail: String, otherUserEmail: String) {
@@ -142,7 +274,14 @@ class MainRepositoryImpl(
     }
 
     override suspend fun addComment(comment: CommentEntity) {
-        commentDao.insertComment(comment)
+        Log.d("CheckPointDebug", "Main: Aggiunta COMMENTO su FIRESTORE per post ${comment.postId}")
+        try {
+            firestore.collection("comments").document(comment.id).set(comment).await()
+            Log.d("CheckPointDebug", "Main: Commento aggiunto con successo su FIRESTORE")
+            commentDao.insertComment(comment)
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Main: ERRORE aggiunta commento FIRESTORE: ${e.message}", e)
+        }
     }
 
     override fun getCommentCount(postId: String): Flow<Int> {
