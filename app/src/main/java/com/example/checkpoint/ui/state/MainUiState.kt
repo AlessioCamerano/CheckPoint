@@ -5,6 +5,7 @@ import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.GeoUser
 import com.example.checkpoint.data.local.model.PostWithAuthor
 
 enum class UserStatus(val color: Color, val label: String) {
@@ -43,6 +44,9 @@ data class MainUiState(
     val selectedUserFollowingCount: Int = 0,
     val followersList: List<UserEntity> = emptyList(),
     val followingList: List<UserEntity> = emptyList(),
+    val localUsers: List<GeoUser> = emptyList(),
+    val localUsersRadiusKm: Int = 25,
+    val isLocalUsersLoading: Boolean = false,
     val notifications: List<AppNotification> = emptyList(),
     
     // Chat e Messaggi

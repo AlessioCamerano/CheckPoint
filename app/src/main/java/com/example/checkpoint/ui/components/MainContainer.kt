@@ -48,6 +48,7 @@ fun MainContainer(
     onDismissUserPopup: () -> Unit,
     onToggleFollow: () -> Unit,
     onNavigateToFollowers: () -> Unit,
+    onNavigateToLocalUsers: () -> Unit,
     onPostClick: (PostWithAuthor) -> Unit,
     onPartnerClick: (UserEntity) -> Unit
 ) {
@@ -124,6 +125,7 @@ fun MainContainer(
                     onNavigateToEditProfile = onNavigateToEditProfile,
                     onNavigateToOnboarding = onNavigateToOnboarding,
                     onNavigateToFollowers = onNavigateToFollowers,
+                    onNavigateToLocalUsers = onNavigateToLocalUsers,
                     onCreatePost = onCreatePost,
                     onLogout = onLogout,
                     onUserClick = onUserClick,

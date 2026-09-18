@@ -17,6 +17,8 @@ import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.tasks.await
 import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
@@ -666,4 +668,32 @@ class MainViewModel(
             ) 
         }
     }
+
+    fun onLocalUsersRadiusChange(radiusKm: Int) {
+        _uiState.update { it.copy(localUsersRadiusKm = radiusKm) }
+    }
+
+    fun onSearchNearbyUsers(latitude: Double, longitude: Double) {
+        viewModelScope.launch {
+            val email = preferencesRepository.userEmail.first() ?: return@launch
+            _uiState.update { it.copy(isLocalUsersLoading = true, errorMessage = null) }
+            try {
+                mainRepository.updateUserLocation(email, latitude, longitude)
+                val users = mainRepository.findNearbyUsers(
+                    currentUserEmail = email,
+                    latitude = latitude,
+                    longitude = longitude,
+                    radiusKm = _uiState.value.localUsersRadiusKm
+                )
+                _uiState.update { it.copy(localUsers = users, isLocalUsersLoading = false) }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLocalUsersLoading = false,
+                        errorMessage = "Nearby users search failed: ${e.message}"
+                    )
+                }
+            }
+        }
 }
+    }

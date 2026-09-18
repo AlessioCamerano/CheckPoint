@@ -51,10 +51,11 @@
     <string name="post_add_media">Add Media</string>
 
     <!-- Profile -->
-    <string name="profile_section_account">Account Settings</string>
+    <string name="profile_section_account">Account Informations</string>
     <string name="profile_menu_edit">Edit Profile</string>
     <string name="profile_menu_password">Change Password</string>
     <string name="profile_menu_follows">Followers / Following</string>
+    <string name="profile_menu_find_local_users">Find Local Users</string>
     <string name="profile_menu_onboarding">How CheckPoint works</string>
     <string name="profile_menu_onboarding_caption">Review the introduction slides and permissions guide any time.</string>
     <string name="profile_section_app">App Settings</string>
@@ -82,6 +83,14 @@
     <string name="follows_title">Followers &amp; Following</string>
     <string name="followers_empty">No followers yet.</string>
     <string name="following_empty">You are not following anyone.</string>
+    <string name="local_users_title">Find Local Users</string>
+    <string name="local_users_radius_label">Search radius: %1$d km</string>
+    <string name="local_users_update_position">Update my position</string>
+    <string name="local_users_search">Search nearby users</string>
+    <string name="local_users_no_results">No nearby users found in this range.</string>
+    <string name="local_users_location_required">Location permission is required.</string>
+    <string name="local_users_updating_position">Updating your location...</string>
+    <string name="local_users_searching">Searching nearby users...</string>
 
     <!-- Common Fields -->
     <string name="field_title">Title</string>

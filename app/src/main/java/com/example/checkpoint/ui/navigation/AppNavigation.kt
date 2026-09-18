@@ -31,6 +31,7 @@ object Screen {
     const val Notifications = "notifications"
     const val EditProfile = "edit_profile"
     const val FollowersList = "followers_list"
+    const val LocalUsers = "local_users"
     const val Chat = "chat"
     const val PostDetail = "post_detail"
 }
@@ -156,6 +157,9 @@ fun AppNavigation(
                     onNavigateToFollowers = {
                         navController.navigate(Screen.FollowersList)
                     },
+                    onNavigateToLocalUsers = {
+                        navController.navigate(Screen.LocalUsers)
+                    },
                     onPostClick = { post ->
                         viewModel.onOpenPostDetail(post)
                         navController.navigate(Screen.PostDetail)
@@ -205,6 +209,16 @@ fun AppNavigation(
                     onUserClick = { user ->
                         viewModel.onOpenUserPopup(user)
                     }
+                )
+            }
+
+            composable(Screen.LocalUsers) {
+                LocalUsersScreen(
+                    state = uiState,
+                    onBack = { navController.popBackStack() },
+                    onRadiusChange = { viewModel.onLocalUsersRadiusChange(it) },
+                    onSearchNearbyUsers = { lat, lng -> viewModel.onSearchNearbyUsers(lat, lng) },
+                    onUserClick = { user -> viewModel.onOpenUserPopup(user) }
                 )
             }
 

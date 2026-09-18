@@ -12,7 +12,10 @@ import com.example.checkpoint.data.local.entity.Post
 import com.example.checkpoint.data.local.entity.PostLikeEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.GeoUser
 import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.firebase.geofire.GeoFireUtils
+import com.firebase.geofire.GeoLocation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -44,6 +47,8 @@ interface MainRepository {
     fun getFollowingCount(userEmail: String): Flow<Int>
     fun getFollowers(userEmail: String): Flow<List<UserEntity>>
     fun getFollowing(userEmail: String): Flow<List<UserEntity>>
+    suspend fun updateUserLocation(userEmail: String, latitude: Double, longitude: Double)
+    suspend fun findNearbyUsers(currentUserEmail: String, latitude: Double, longitude: Double, radiusKm: Int): List<GeoUser>
 
     // Operazioni per chat
     fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>>
@@ -240,6 +245,59 @@ class MainRepositoryImpl(
 
     override fun getFollowing(userEmail: String): Flow<List<UserEntity>> {
         return userDao.getFollowing(userEmail)
+    }
+
+    override suspend fun updateUserLocation(userEmail: String, latitude: Double, longitude: Double) {
+        val hash = GeoFireUtils.getGeoHashForLocation(GeoLocation(latitude, longitude))
+        firestore.collection("user_locations")
+            .document(userEmail)
+            .set(
+                mapOf(
+                    "userEmail" to userEmail,
+                    "lat" to latitude,
+                    "lng" to longitude,
+                    "geohash" to hash
+                )
+            )
+            .await()
+    }
+
+    override suspend fun findNearbyUsers(
+        currentUserEmail: String,
+        latitude: Double,
+        longitude: Double,
+        radiusKm: Int
+    ): List<GeoUser> {
+        val center = GeoLocation(latitude, longitude)
+        val radiusM = radiusKm * 1000.0
+        val bounds = GeoFireUtils.getGeoHashQueryBounds(center, radiusM)
+        val result = mutableMapOf<String, GeoUser>()
+
+        for (b in bounds) {
+            val snap = firestore.collection("user_locations")
+                .orderBy("geohash")
+                .startAt(b.startHash)
+                .endAt(b.endHash)
+                .get()
+                .await()
+
+            for (doc in snap.documents) {
+                val email = doc.getString("userEmail") ?: continue
+                if (email == currentUserEmail) continue
+                val lat = doc.getDouble("lat") ?: continue
+                val lng = doc.getDouble("lng") ?: continue
+                val distanceM = GeoFireUtils.getDistanceBetween(GeoLocation(lat, lng), center)
+                if (distanceM > radiusM) continue
+
+                val user = userDao.getUserByEmail(email) ?: continue
+                result[email] = GeoUser(
+                    user = user,
+                    distanceKm = distanceM / 1000.0
+                )
+            }
+        }
+
+        return result.values.sortedBy { it.distanceKm }
     }
 
     override fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>> {

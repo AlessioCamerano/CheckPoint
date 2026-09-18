@@ -35,6 +35,7 @@ fun ProfileScreen(
     onThemeChange: (Boolean) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {},
     onNavigateToFollowers: () -> Unit = {},
+    onNavigateToLocalUsers: () -> Unit = {},
     onNavigateToOnboarding: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
@@ -70,6 +71,9 @@ fun ProfileScreen(
                 }
                 ProfileMenuItem(Icons.Default.Group, stringResource(com.example.checkpoint.R.string.profile_menu_follows)) {
                     onNavigateToFollowers()
+                }
+                ProfileMenuItem(Icons.Default.LocationOn, stringResource(com.example.checkpoint.R.string.profile_menu_find_local_users)) {
+                    onNavigateToLocalUsers()
                 }
             }
 
