@@ -8,7 +8,7 @@ import androidx.room.ForeignKey
     primaryKeys = ["postId", "userEmail"],
     foreignKeys = [
         ForeignKey(
-            entity = Post::class,
+            entity = PostEntity::class,
             parentColumns = ["id"],
             childColumns = ["postId"],
             onDelete = ForeignKey.CASCADE

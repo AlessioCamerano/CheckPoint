@@ -5,7 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
+import com.example.checkpoint.data.local.entity.UserEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -20,6 +21,7 @@ class PostDaoTest {
 
     private lateinit var database: AppDatabase
     private lateinit var postDao: PostDao
+    private lateinit var userDao: UserDao
 
     @Before
     fun setup() {
@@ -28,6 +30,7 @@ class PostDaoTest {
             AppDatabase::class.java
         ).allowMainThreadQueries().build()
         postDao = database.postDao()
+        userDao = database.userDao()
     }
 
     @After
@@ -37,8 +40,13 @@ class PostDaoTest {
 
     @Test
     fun insertAndGetAllPosts() = runBlocking {
-        val post1 = Post(
-            authorName = "User1",
+        // Inserimento utenti per soddisfare le Foreign Key
+        val user1 = UserEntity("user1@gmail.com", "User1")
+        val user2 = UserEntity("user2@gmail.com", "User2")
+        userDao.insertUser(user1)
+        userDao.insertUser(user2)
+
+        val post1 = PostEntity(
             authorEmail = "user1@gmail.com",
             title = "Title 1",
             initialMessage = "Message 1",
@@ -47,8 +55,7 @@ class PostDaoTest {
             mediaType = MediaType.IMAGE,
             isMuted = false
         )
-        val post2 = Post(
-            authorName = "User2",
+        val post2 = PostEntity(
             authorEmail = "user2@gmail.com",
             title = "Title 2",
             initialMessage = "Message 2",
@@ -61,19 +68,21 @@ class PostDaoTest {
         postDao.insertPost(post1)
         postDao.insertPost(post2)
 
-        val allPosts = postDao.getAllPosts().first()
+        val allPosts = postDao.getAllPostsWithAuthor("user1@gmail.com").first()
 
         assertEquals(2, allPosts.size)
-        // controlla l'ordine, in base al timestamp
-        assertEquals("Title 2", allPosts[0].title)
-        assertEquals("Title 1", allPosts[1].title)
+        // controlla l'ordine, in base al timestamp decrescente (come da query DAO)
+        assertEquals("Title 2", allPosts[0].post.title)
+        assertEquals("Title 1", allPosts[1].post.title)
     }
 
     @Test
     fun deletePost() = runBlocking {
-        val post = Post(
+        val user = UserEntity("user@gmail.com", "User")
+        userDao.insertUser(user)
+
+        val post = PostEntity(
             id = "test-id",
-            authorName = "User",
             authorEmail = "user@gmail.com",
             title = "Title",
             initialMessage = "Message"
@@ -82,7 +91,7 @@ class PostDaoTest {
         
         postDao.deletePost("test-id")
         
-        val allPosts = postDao.getAllPosts().first()
+        val allPosts = postDao.getAllPostsWithAuthor("user@gmail.com").first()
         assertTrue(allPosts.isEmpty())
     }
 }

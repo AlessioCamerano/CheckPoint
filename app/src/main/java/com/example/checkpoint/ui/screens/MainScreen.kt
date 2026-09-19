@@ -21,8 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.state.MainUiState
@@ -50,7 +51,9 @@ fun MainScreen(
 
     // Scorrimento automatico verso l'alto
     LaunchedEffect(state.sortOrder) {
-        listState.animateScrollToItem(0)
+        if (state.posts.isNotEmpty()) {
+            listState.animateScrollToItem(0)
+        }
     }
 
     PullToRefreshBox(
@@ -71,7 +74,7 @@ fun MainScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.NotificationsNone,
-                        contentDescription = stringResource(com.example.checkpoint.R.string.notifications),
+                        contentDescription = stringResource(R.string.notifications),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -81,7 +84,7 @@ fun MainScreen(
             
             // Titolo
             Text(
-                text = stringResource(com.example.checkpoint.R.string.app_name),
+                text = stringResource(R.string.app_name),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
@@ -90,7 +93,7 @@ fun MainScreen(
             )
 
             Text(
-                text = stringResource(com.example.checkpoint.R.string.main_relax_quote),
+                text = stringResource(R.string.main_relax_quote),
                 color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
@@ -108,7 +111,7 @@ fun MainScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(com.example.checkpoint.R.string.main_feed_title),
+                    text = stringResource(R.string.main_feed_title),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium
@@ -118,7 +121,7 @@ fun MainScreen(
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
-                            contentDescription = stringResource(com.example.checkpoint.R.string.action_sort),
+                            contentDescription = stringResource(R.string.action_sort),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -131,7 +134,7 @@ fun MainScreen(
                         DropdownMenuItem(
                             text = { 
                                 Text(
-                                    text = stringResource(com.example.checkpoint.R.string.main_sort_trending),
+                                    text = stringResource(R.string.main_sort_trending),
                                     fontWeight = if (state.sortOrder == PostSortOrder.TRENDING) FontWeight.Bold else FontWeight.Normal
                                 ) 
                             },
@@ -144,7 +147,7 @@ fun MainScreen(
                         DropdownMenuItem(
                             text = { 
                                 Text(
-                                    text = stringResource(com.example.checkpoint.R.string.main_sort_newest),
+                                    text = stringResource(R.string.main_sort_newest),
                                     fontWeight = if (state.sortOrder == PostSortOrder.NEWEST) FontWeight.Bold else FontWeight.Normal
                                 ) 
                             },
@@ -192,6 +195,7 @@ fun MainScreen(
                         author = postWithAuthor.author,
                         tags = postWithAuthor.tags,
                         isLiked = postWithAuthor.isLikedByCurrentUser,
+                        favoriteCount = postWithAuthor.favoriteCount,
                         onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
                         onAuthorClick = onUserClick,
                         onPostClick = onPostClick
@@ -207,7 +211,8 @@ fun MainScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (state.isLoading) stringResource(com.example.checkpoint.R.string.main_loading) else stringResource(com.example.checkpoint.R.string.main_no_more),
+                            text = if (state.isLoading) stringResource(R.string.main_loading) else stringResource(
+                                R.string.main_no_more),
                             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
                             style = MaterialTheme.typography.labelMedium,
                             fontStyle = FontStyle.Italic
@@ -222,20 +227,22 @@ fun MainScreen(
 @Preview(showSystemUi = true, name = "Home Feed Dark")
 @Composable
 fun MainScreenDarkPreview() {
-    val author = UserEntity("user1@gmail.com", "User Test 1", "pass")
+    val author = UserEntity("user1@gmail.com", "User Test 1")
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.background) {
             MainScreen(
                 state = MainUiState(
                     posts = listOf(
                         PostWithAuthor(
-                            post = Post("1", "User Test 1", "user1@gmail.com", "Hello!", "Welcome to the dark side.", true, 10, System.currentTimeMillis(), "https://example.com/dark.jpg", MediaType.IMAGE),
+                            post = PostEntity("1", "user1@gmail.com", "Hello!", "Welcome to the dark side.", System.currentTimeMillis(), "https://example.com/dark.jpg", MediaType.IMAGE),
                             author = author,
-                            isLikedByCurrentUser = true
+                            isLikedByCurrentUser = true,
+                            favoriteCount = 10
                         ),
                         PostWithAuthor(
-                            post = Post("2", "User Test 2", "user2@gmail.com", "Morning", "Coffee is ready.", false, 5, System.currentTimeMillis()),
-                            author = UserEntity("user2@gmail.com", "User Test 2", "pass")
+                            post = PostEntity("2", "user2@gmail.com", "Morning", "Coffee is ready.", System.currentTimeMillis()),
+                            author = UserEntity("user2@gmail.com", "User Test 2"),
+                            favoriteCount = 5
                         )
                     ),
                     isDarkTheme = true
@@ -248,20 +255,22 @@ fun MainScreenDarkPreview() {
 @Preview(showSystemUi = true, name = "Home Feed Light")
 @Composable
 fun MainScreenLightPreview() {
-    val author = UserEntity("user1@gmail.com", "User Test 1", "pass")
+    val author = UserEntity("user1@gmail.com", "User Test 1")
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.background) {
             MainScreen(
                 state = MainUiState(
                     posts = listOf(
                         PostWithAuthor(
-                            post = Post("1", "User Test 1", "user1@gmail.com", "Hello!", "Welcome to the light side.", true, 10, System.currentTimeMillis(), "https://example.com/light.jpg", MediaType.IMAGE),
+                            post = PostEntity("1", "user1@gmail.com", "Hello!", "Welcome to the light side.", System.currentTimeMillis(), "https://example.com/light.jpg", MediaType.IMAGE),
                             author = author,
-                            isLikedByCurrentUser = true
+                            isLikedByCurrentUser = true,
+                            favoriteCount = 10
                         ),
                         PostWithAuthor(
-                            post = Post("2", "User Test 2", "user2@gmail.com", "Morning", "Coffee is ready.", false, 5, System.currentTimeMillis()),
-                            author = UserEntity("user2@gmail.com", "User Test 2", "pass")
+                            post = PostEntity("2", "user2@gmail.com", "Morning", "Coffee is ready.", System.currentTimeMillis()),
+                            author = UserEntity("user2@gmail.com", "User Test 2"),
+                            favoriteCount = 5
                         )
                     ),
                     isDarkTheme = false

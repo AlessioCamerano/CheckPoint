@@ -51,6 +51,16 @@ class AuthViewModel(
                 return@launch
             }
 
+            if (!email.endsWith("@gmail.com")) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Only @gmail.com addresses are allowed") }
+                return@launch
+            }
+
+            if (!password.any { it.isLetter() } || !password.any { it.isDigit() }) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Password must contain at least one letter and one number") }
+                return@launch
+            }
+
             if (password != confirmPassword) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Passwords do not match") }
                 return@launch

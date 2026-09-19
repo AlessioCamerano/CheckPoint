@@ -66,9 +66,15 @@ class AuthViewModelTest {
         override suspend fun isEmailTaken(email: String) = users.any { it.email == email }
         override suspend fun isUsernameTaken(username: String) = users.any { it.username == username }
         override suspend fun registerUser(user: UserEntity) { users.add(user) }
-        override suspend fun loginUser(identifier: String) = users.find { it.email == identifier || it.username == identifier }
         override suspend fun updateUser(user: UserEntity) {}
         override suspend fun getUser(email: String) = users.find { it.email == email }
+        override suspend fun getUserByUsername(username: String) = users.find { it.username == username }
+        
+        override suspend fun signUpWithEmail(email: String, username: String, password: String): Result<UserEntity> = Result.success(UserEntity(email, username))
+        override suspend fun signInWithEmail(email: String, password: String): Result<UserEntity> = Result.success(UserEntity(email, "user"))
+        override suspend fun signInWithGoogle(idToken: String): Result<UserEntity> = Result.success(UserEntity("test@gmail.com", "user"))
+        override suspend fun logout() {}
+        override fun getCurrentUserEmail(): String? = null
     }
 
     class FakeUserPreferencesRepository : UserPreferencesRepository {
@@ -77,10 +83,13 @@ class AuthViewModelTest {
         override val userEmail: Flow<String?> = emptyFlow()
         override val isDarkTheme: Flow<Boolean?> = emptyFlow()
         override val searchHistory: Flow<List<String>> = emptyFlow()
+        override val hasCompletedOnboarding: Flow<Boolean> = MutableStateFlow(true)
+        
         override suspend fun saveSession(email: String) { _isLoggedIn.value = true }
         override suspend fun setTheme(isDark: Boolean) {}
         override suspend fun saveSearchQuery(query: String) {}
         override suspend fun clearSearchHistory() {}
         override suspend fun clearSession() { _isLoggedIn.value = false }
+        override suspend fun setOnboardingCompleted(completed: Boolean) {}
     }
 }

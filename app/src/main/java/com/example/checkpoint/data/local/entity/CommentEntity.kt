@@ -12,7 +12,7 @@ import java.util.UUID
     tableName = "comments",
     foreignKeys = [
         ForeignKey(
-            entity = Post::class,
+            entity = PostEntity::class,
             parentColumns = ["id"],
             childColumns = ["postId"],
             onDelete = ForeignKey.CASCADE
@@ -29,9 +29,7 @@ data class CommentEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val postId: String = "",
     val authorEmail: String = "",
-    val authorName: String = "",
     val content: String = "",
     val timestamp: Long = System.currentTimeMillis(),
-    val parentCommentId: String? = null,
-    val isRead: Boolean = false
+    val parentCommentId: String? = null
 )

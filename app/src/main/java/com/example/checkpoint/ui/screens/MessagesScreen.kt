@@ -1,5 +1,6 @@
 package com.example.checkpoint.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,9 +27,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.MessageEntity
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.components.UserItem
@@ -48,8 +51,8 @@ fun MessagesScreen(
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf(
-        stringResource(com.example.checkpoint.R.string.tab_directs),
-        stringResource(com.example.checkpoint.R.string.tab_saved)
+        stringResource(R.string.tab_directs),
+        stringResource(R.string.tab_saved)
     )
 
     Column(
@@ -59,7 +62,7 @@ fun MessagesScreen(
     ) {
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
         Text(
-            text = stringResource(com.example.checkpoint.R.string.messages_title),
+            text = stringResource(R.string.messages_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -95,7 +98,7 @@ fun MessagesScreen(
             if (uiState.chatPartners.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.AutoMirrored.Filled.Chat,
-                    text = stringResource(com.example.checkpoint.R.string.messages_empty)
+                    text = stringResource(R.string.messages_empty)
                 )
             } else {
                 LazyColumn(
@@ -104,13 +107,7 @@ fun MessagesScreen(
                     verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
                     items(uiState.chatPartners) { partner ->
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            UserItem(user = partner, onClick = onPartnerClick)
-                            // Mostra il pallino se ci sono messaggi non letti
-                            if (uiState.chatPartnersUnread.contains(partner.email)) {
-                                UnreadDot(modifier = Modifier.align(Alignment.CenterEnd).padding(end = MaterialTheme.spacing.small))
-                            }
-                        }
+                        UserItem(user = partner, onClick = onPartnerClick)
                     }
                 }
             }
@@ -120,7 +117,7 @@ fun MessagesScreen(
             if (savedPosts.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.Default.Flag,
-                    text = stringResource(com.example.checkpoint.R.string.saves_empty)
+                    text = stringResource(R.string.saves_empty)
                 )
             } else {
                 LazyColumn(
@@ -158,7 +155,7 @@ fun CompactPostItem(
             .clickable { onClick() },
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             0.5.dp,
             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
         )
@@ -202,47 +199,30 @@ fun CompactPostItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = stringResource(com.example.checkpoint.R.string.post_by_author, postWithAuthor.author.username),
+                    text = stringResource(R.string.post_by_author, postWithAuthor.author.username),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.secondary,
                     maxLines = 1
                 )
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (postWithAuthor.hasUnreadComments) {
-                    UnreadDot()
-                    Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
-                }
-                
-                IconButton(
-                    onClick = { onToggleLike(postWithAuthor.post.id) },
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Flag, 
-                        contentDescription = null, 
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+            IconButton(
+                onClick = { onToggleLike(postWithAuthor.post.id) },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    Icons.Default.Flag, 
+                    contentDescription = null, 
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-fun UnreadDot(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(MaterialTheme.spacing.small)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary)
-    )
-}
-
-@Composable
-fun MessagesEmptyState(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+fun MessagesEmptyState(icon: ImageVector, text: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

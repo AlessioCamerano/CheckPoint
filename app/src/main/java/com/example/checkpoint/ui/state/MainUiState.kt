@@ -1,10 +1,10 @@
 package com.example.checkpoint.ui.state
 
 import androidx.compose.ui.graphics.Color
-import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MessageEntity
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.CommentWithAuthor
 import com.example.checkpoint.data.local.model.GeoUser
 import com.example.checkpoint.data.local.model.PostWithAuthor
 
@@ -43,7 +43,7 @@ data class MainUiState(
     val selectedUserFollowersCount: Int = 0,
     val selectedUserFollowingCount: Int = 0,
     val followersList: List<UserEntity> = emptyList(),
-    val followingList: List<UserEntity> = emptyList(),
+    val followingList: List<UserEntity> = emptySet<UserEntity>().toList(),
     val localUsers: List<GeoUser> = emptyList(),
     val localUsersRadiusKm: Int = 25,
     val isLocalUsersLoading: Boolean = false,
@@ -51,13 +51,12 @@ data class MainUiState(
     
     // Chat e Messaggi
     val chatPartners: List<UserEntity> = emptyList(),
-    val chatPartnersUnread: Set<String> = emptySet(),
     val currentChatMessages: List<MessageEntity> = emptyList(),
     val selectedChatPartner: UserEntity? = null,
     
     // Commenti
     val selectedPost: PostWithAuthor? = null,
-    val currentPostComments: List<CommentEntity> = emptyList()
+    val currentPostComments: List<CommentWithAuthor> = emptyList()
 )
 
 data class AppNotification(
@@ -65,6 +64,5 @@ data class AppNotification(
     val title: String,
     val body: String,
     val route: String,
-    val time: String,
-    val unread: Boolean = true
+    val time: String
 )

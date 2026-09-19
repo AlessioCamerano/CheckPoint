@@ -14,7 +14,7 @@ import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.MessageEntity
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.google.android.gms.location.LocationServices
@@ -23,6 +23,8 @@ import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,11 +44,10 @@ class MainViewModel(
 
     private val _sortOrder = MutableStateFlow(PostSortOrder.NEWEST)
 
-    private var searchJob: kotlinx.coroutines.Job? = null
-    private var followJob: kotlinx.coroutines.Job? = null
-    private var chatJob: kotlinx.coroutines.Job? = null
-    private var commentJob: kotlinx.coroutines.Job? = null
-    private val chatUnreadJobs = mutableMapOf<String, kotlinx.coroutines.Job>()
+    private var searchJob: Job? = null
+    private var followJob: Job? = null
+    private var chatJob: Job? = null
+    private var commentJob: Job? = null
 
     // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
@@ -93,39 +94,16 @@ class MainViewModel(
         observeTrendingTags()
         observeSearchHistory()
         observeCurrentUserFollows() // Osserva follower/following dell'utente loggato
-        observeChatPartners()       // Osserva le chat attive e i messaggi non letti
+        observeChatPartners()       // Osserva le chat attive
     }
 
-    // Gestione reattiva dei partner di chat e notifiche (pallino rosso)
+    // Gestione reattiva dei partner di chat
     private fun observeChatPartners() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
                 if (email != null) {
                     mainRepository.getChatPartners(email).collectLatest { partners ->
                         _uiState.update { it.copy(chatPartners = partners) }
-                        
-                        // Gestione job per notifiche unread: cancella job per partner non più presenti
-                        val currentEmails = partners.map { it.email }.toSet()
-                        chatUnreadJobs.keys.filter { it !in currentEmails }.forEach { 
-                            chatUnreadJobs[it]?.cancel()
-                            chatUnreadJobs.remove(it)
-                            _uiState.update { state -> state.copy(chatPartnersUnread = state.chatPartnersUnread - it) }
-                        }
-
-                        // Avvia job di osservazione per ogni partner per aggiornare il pallino delle notifiche
-                        partners.forEach { partner ->
-                            if (partner.email !in chatUnreadJobs) {
-                                chatUnreadJobs[partner.email] = launch {
-                                    mainRepository.hasUnreadMessages(email, partner.email).collectLatest { hasUnread ->
-                                        _uiState.update { state ->
-                                            val newSet = if (hasUnread) state.chatPartnersUnread + partner.email 
-                                                         else state.chatPartnersUnread - partner.email
-                                            state.copy(chatPartnersUnread = newSet)
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -371,10 +349,8 @@ class MainViewModel(
             try {
                 _uiState.update { it.copy(isLoading = true) }
                 val email = preferencesRepository.userEmail.first()
-                val currentUsername = _uiState.value.username
                 if (email != null) {
-                    val newPost = Post(
-                        authorName = currentUsername,
+                    val newPost = PostEntity(
                         authorEmail = email,
                         title = title,
                         initialMessage = message,
@@ -408,7 +384,7 @@ class MainViewModel(
                         mainRepository.getAllPosts(email).collectLatest { result ->
                             val sortedList = when (sortOrder) {
                                 PostSortOrder.NEWEST -> result.sortedByDescending { it.post.timestamp }
-                                PostSortOrder.TRENDING -> result.sortedByDescending { it.post.favoriteCount }
+                                PostSortOrder.TRENDING -> result.sortedByDescending { it.favoriteCount }
                             }
                             _uiState.update {
                                 it.copy(
@@ -436,7 +412,7 @@ class MainViewModel(
                 _uiState.update { it.copy(isLoading = true) }
                 
                 // Piccolo delay simulato
-                kotlinx.coroutines.delay(600.milliseconds)
+                delay(600.milliseconds)
                 
                 _sortOrder.value = newOrder
                 // Il caricamento viene rimosso appena viene caricata la nuova lista
@@ -477,7 +453,7 @@ class MainViewModel(
                 mainRepository.syncDataFromFirestore(email)
             }
             loadUserProfile()
-            kotlinx.coroutines.delay(1000.milliseconds)
+            delay(1000.milliseconds)
             _uiState.update { it.copy(isRefreshing = false) }
         }
     }
@@ -571,14 +547,13 @@ class MainViewModel(
         }
     }
 
-    // Logica Chat: apre la chat con un utente e segna i messaggi come letti
+    // Logica Chat: apre la chat con un utente
     fun onOpenChat(partner: UserEntity) {
         val currentEmail = _uiState.value.currentUserEmail ?: return
         _uiState.update { it.copy(selectedChatPartner = partner) }
         
         chatJob?.cancel()
         chatJob = viewModelScope.launch {
-            mainRepository.markAsRead(currentEmail, partner.email)
             mainRepository.getChatMessages(currentEmail, partner.email).collectLatest { messages ->
                 _uiState.update { it.copy(currentChatMessages = messages) }
             }
@@ -611,16 +586,12 @@ class MainViewModel(
         _uiState.update { it.copy(selectedChatPartner = null, currentChatMessages = emptyList()) }
     }
 
-    // Logica Commenti: apre il dettaglio del post e segna i commenti come letti
+    // Logica Commenti: apre il dettaglio del post
     fun onOpenPostDetail(postWithAuthor: PostWithAuthor) {
         _uiState.update { it.copy(selectedPost = postWithAuthor) }
-        val currentEmail = _uiState.value.currentUserEmail
         
         commentJob?.cancel()
         commentJob = viewModelScope.launch {
-            if (currentEmail != null) {
-                mainRepository.markCommentsAsRead(postWithAuthor.post.id, currentEmail)
-            }
             mainRepository.getCommentsForPost(postWithAuthor.post.id).collectLatest { comments ->
                 _uiState.update { it.copy(currentPostComments = comments) }
             }
@@ -631,7 +602,6 @@ class MainViewModel(
     fun onAddComment(content: String, parentCommentId: String? = null) {
         if (content.isBlank()) return
         val currentEmail = _uiState.value.currentUserEmail ?: return
-        val currentName = _uiState.value.username
         val postId = _uiState.value.selectedPost?.post?.id ?: return
         
         viewModelScope.launch {
@@ -639,7 +609,6 @@ class MainViewModel(
                 val comment = CommentEntity(
                     postId = postId,
                     authorEmail = currentEmail,
-                    authorName = currentName,
                     content = content,
                     parentCommentId = parentCommentId
                 )

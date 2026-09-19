@@ -8,10 +8,11 @@ import com.example.checkpoint.data.local.dao.UserDao
 import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.FollowEntity
 import com.example.checkpoint.data.local.entity.MessageEntity
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.PostLikeEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.CommentWithAuthor
 import com.example.checkpoint.data.local.model.GeoUser
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.firebase.geofire.GeoFireUtils
@@ -34,7 +35,7 @@ interface MainRepository {
     fun searchPostsByTitle(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
     fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
     fun searchUsersByUsername(query: String): Flow<List<UserEntity>>
-    suspend fun createPost(post: Post, tags: List<String>)
+    suspend fun createPost(post: PostEntity, tags: List<String>)
     suspend fun toggleLike(postId: String, userEmail: String)
     
     // Sincronizzazione manuale
@@ -54,14 +55,11 @@ interface MainRepository {
     fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>>
     fun getChatMessages(user1: String, user2: String): Flow<List<MessageEntity>>
     suspend fun sendMessage(message: MessageEntity)
-    suspend fun markAsRead(currentUserEmail: String, otherUserEmail: String)
-    fun hasUnreadMessages(currentUserEmail: String, otherUserEmail: String): Flow<Boolean>
 
     // Operazioni per commenti
-    fun getCommentsForPost(postId: String): Flow<List<CommentEntity>>
+    fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>>
     suspend fun addComment(comment: CommentEntity)
     fun getCommentCount(postId: String): Flow<Int>
-    suspend fun markCommentsAsRead(postId: String, currentUserEmail: String)
 }
 
 class MainRepositoryImpl(
@@ -112,7 +110,7 @@ class MainRepositoryImpl(
                 val postsSnapshot = firestore.collection("posts")
                     .orderBy("timestamp", FirestoreQuery.Direction.DESCENDING)
                     .limit(50).get().await()
-                val remotePosts = postsSnapshot.toObjects(Post::class.java)
+                val remotePosts = postsSnapshot.toObjects(PostEntity::class.java)
                 postDao.insertPosts(remotePosts)
                 Log.d("CheckPointDebug", "Main: Sincronizzati ${remotePosts.size} post")
             } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Posts fail: ${e.message}") }
@@ -167,7 +165,7 @@ class MainRepositoryImpl(
         }
     }
 
-    override suspend fun createPost(post: Post, tags: List<String>) {
+    override suspend fun createPost(post: PostEntity, tags: List<String>) {
         Log.d("CheckPointDebug", "1. Tentativo di creazione post avviato: ${post.title}")
         try {
             // Si assicura che l'ID sia unico e presente
@@ -319,15 +317,7 @@ class MainRepositoryImpl(
         }
     }
 
-    override suspend fun markAsRead(currentUserEmail: String, otherUserEmail: String) {
-        chatDao.markAsRead(currentUserEmail, otherUserEmail)
-    }
-
-    override fun hasUnreadMessages(currentUserEmail: String, otherUserEmail: String): Flow<Boolean> {
-        return chatDao.hasUnreadMessages(currentUserEmail, otherUserEmail)
-    }
-
-    override fun getCommentsForPost(postId: String): Flow<List<CommentEntity>> {
+    override fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>> {
         return commentDao.getCommentsForPost(postId)
     }
 
@@ -344,9 +334,5 @@ class MainRepositoryImpl(
 
     override fun getCommentCount(postId: String): Flow<Int> {
         return commentDao.getCommentCount(postId)
-    }
-
-    override suspend fun markCommentsAsRead(postId: String, currentUserEmail: String) {
-        commentDao.markCommentsAsRead(postId, currentUserEmail)
     }
 }

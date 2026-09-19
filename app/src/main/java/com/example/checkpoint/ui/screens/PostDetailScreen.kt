@@ -22,9 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.CommentEntity
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.CommentWithAuthor
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.theme.CheckPointTheme
@@ -37,23 +39,24 @@ import com.example.checkpoint.util.TimeUtils
 @Composable
 fun PostDetailScreen(
     postWithAuthor: PostWithAuthor,
-    comments: List<CommentEntity>,
+    comments: List<CommentWithAuthor>,
     onBack: () -> Unit,
     onAddComment: (String, String?) -> Unit,
     onToggleLike: (String) -> Unit
 ) {
     var commentText by remember { mutableStateOf("") }
-    var replyingTo by remember { mutableStateOf<CommentEntity?>(null) }
+    var replyingTo by remember { mutableStateOf<CommentWithAuthor?>(null) }
     // Stato per gestire i commenti espansi/collassati
     val expandedComments = remember { mutableStateOf(setOf<String>()) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(com.example.checkpoint.R.string.post_detail_title), fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.post_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.example.checkpoint.R.string.action_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(
+                            R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -78,7 +81,7 @@ fun PostDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = stringResource(com.example.checkpoint.R.string.replying_to_label, replyingTo?.authorName ?: ""),
+                                text = stringResource(R.string.replying_to_label, replyingTo?.author?.username ?: ""),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -86,7 +89,7 @@ fun PostDetailScreen(
                                 onClick = { replyingTo = null },
                                 modifier = Modifier.size(18.dp)
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(com.example.checkpoint.R.string.action_cancel), modifier = Modifier.size(14.dp))
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel), modifier = Modifier.size(14.dp))
                             }
                         }
                     }
@@ -99,7 +102,8 @@ fun PostDetailScreen(
                             value = commentText,
                             onValueChange = { commentText = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text(if (replyingTo != null) stringResource(com.example.checkpoint.R.string.reply_placeholder) else stringResource(com.example.checkpoint.R.string.comment_placeholder)) },
+                            placeholder = { Text(if (replyingTo != null) stringResource(R.string.reply_placeholder) else stringResource(
+                                R.string.comment_placeholder)) },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent
@@ -108,14 +112,15 @@ fun PostDetailScreen(
                         IconButton(
                             onClick = {
                                 if (commentText.isNotBlank()) {
-                                    onAddComment(commentText, replyingTo?.id)
+                                    onAddComment(commentText, replyingTo?.comment?.id)
                                     commentText = ""
                                     replyingTo = null
                                 }
                             },
                             enabled = commentText.isNotBlank()
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(com.example.checkpoint.R.string.action_send))
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(
+                                R.string.action_send))
                         }
                     }
                 }
@@ -125,14 +130,14 @@ fun PostDetailScreen(
     ) { padding ->
         // Logica per ricostruire l'albero dei commenti e filtrare quelli visibili (espansi)
         val visibleComments = remember(comments, expandedComments.value) {
-            val roots = comments.filter { it.parentCommentId == null }
-            val map = comments.groupBy { it.parentCommentId }
+            val roots = comments.filter { it.comment.parentCommentId == null }
+            val map = comments.groupBy { it.comment.parentCommentId }
             
-            val result = mutableListOf<Pair<CommentEntity, Int>>()
-            fun addRecursive(parent: CommentEntity, depth: Int) {
+            val result = mutableListOf<Pair<CommentWithAuthor, Int>>()
+            fun addRecursive(parent: CommentWithAuthor, depth: Int) {
                 result.add(parent to depth)
-                if (expandedComments.value.contains(parent.id)) {
-                    map[parent.id]?.forEach { child ->
+                if (expandedComments.value.contains(parent.comment.id)) {
+                    map[parent.comment.id]?.forEach { child ->
                         addRecursive(child, depth + 1)
                     }
                 }
@@ -153,13 +158,14 @@ fun PostDetailScreen(
                     author = postWithAuthor.author,
                     tags = postWithAuthor.tags,
                     isLiked = postWithAuthor.isLikedByCurrentUser,
+                    favoriteCount = postWithAuthor.favoriteCount,
                     onFavoriteClick = { onToggleLike(postWithAuthor.post.id) }
                 )
             }
             
             item {
                 Text(
-                    text = stringResource(com.example.checkpoint.R.string.post_detail_comments_count, comments.size),
+                    text = stringResource(R.string.post_detail_comments_count, comments.size),
                     modifier = Modifier.padding(16.dp),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -168,19 +174,19 @@ fun PostDetailScreen(
             }
 
             // Lista dei commenti nidificati
-            items(visibleComments) { (comment, depth) ->
-                val hasReplies = comments.any { it.parentCommentId == comment.id }
-                val isExpanded = expandedComments.value.contains(comment.id)
+            items(visibleComments) { (commentWithAuthor, depth) ->
+                val hasReplies = comments.any { it.comment.parentCommentId == commentWithAuthor.comment.id }
+                val isExpanded = expandedComments.value.contains(commentWithAuthor.comment.id)
                 
                 CommentItem(
-                    comment = comment,
+                    commentWithAuthor = commentWithAuthor,
                     depth = depth,
                     isExpanded = isExpanded,
                     hasReplies = hasReplies,
                     onReplyClick = { replyingTo = it },
                     onToggleExpand = {
                         val current = expandedComments.value
-                        expandedComments.value = if (isExpanded) current - comment.id else current + comment.id
+                        expandedComments.value = if (isExpanded) current - commentWithAuthor.comment.id else current + commentWithAuthor.comment.id
                     }
                 )
             }
@@ -193,13 +199,16 @@ fun PostDetailScreen(
  */
 @Composable
 fun CommentItem(
-    comment: CommentEntity,
+    commentWithAuthor: CommentWithAuthor,
     depth: Int = 0,
     isExpanded: Boolean = false,
     hasReplies: Boolean = false,
-    onReplyClick: (CommentEntity) -> Unit,
+    onReplyClick: (CommentWithAuthor) -> Unit,
     onToggleExpand: () -> Unit
 ) {
+    val comment = commentWithAuthor.comment
+    val author = commentWithAuthor.author
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -238,7 +247,7 @@ fun CommentItem(
                         Spacer(modifier = Modifier.width(4.dp))
                     }
                     Text(
-                        text = comment.authorName,
+                        text = author.username,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -251,12 +260,12 @@ fun CommentItem(
                     )
                 }
                 IconButton(
-                    onClick = { onReplyClick(comment) },
+                    onClick = { onReplyClick(commentWithAuthor) },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Reply,
-                        contentDescription = stringResource(com.example.checkpoint.R.string.action_reply),
+                        contentDescription = stringResource(R.string.action_reply),
                         tint = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(16.dp)
                     )
@@ -280,17 +289,23 @@ fun CommentItem(
 @Preview(showSystemUi = true, name = "Post Detail Dark")
 @Composable
 fun PostDetailScreenDarkPreview() {
-    val author = UserEntity("author@gmail.com", "Author", "pass")
-    val post = Post(authorName = "Author", authorEmail = "author@gmail.com", title = "Discussion Post", initialMessage = "What do you think?")
+    val author = UserEntity("author@gmail.com", "Author")
+    val post = PostEntity(authorEmail = "author@gmail.com", title = "Discussion Post", initialMessage = "What do you think?")
     val comments = listOf(
-        CommentEntity(id = "1", postId = post.id, authorEmail = "u1@g.com", authorName = "User 1", content = "Great post!"),
-        CommentEntity(id = "2", postId = post.id, authorEmail = "u2@g.com", authorName = "User 2", content = "I agree.", parentCommentId = "1")
+        CommentWithAuthor(
+            comment = CommentEntity(id = "1", postId = post.id, authorEmail = "u1@g.com", content = "Great post!"),
+            author = UserEntity("u1@g.com", "User 1")
+        ),
+        CommentWithAuthor(
+            comment = CommentEntity(id = "2", postId = post.id, authorEmail = "u2@g.com", content = "I agree.", parentCommentId = "1"),
+            author = UserEntity("u2@g.com", "User 2")
+        )
     )
     
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         Surface {
             PostDetailScreen(
-                postWithAuthor = PostWithAuthor(post, author),
+                postWithAuthor = PostWithAuthor(post, author, favoriteCount = 5),
                 comments = comments,
                 onBack = {},
                 onAddComment = { _, _ -> },

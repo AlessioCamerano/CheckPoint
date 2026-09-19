@@ -66,7 +66,7 @@
     <string name="profile_picture">Profile Picture</string>
 
     <!-- Messages & Chat -->
-    <string name="messages_title">Messages &amp; Saves</string>
+    <string name="messages_title">Messages</string>
     <string name="messages_empty">No messages yet.</string>
     <string name="saves_empty">No saved checkpoints.</string>
     <string name="chat_placeholder">Write a message...</string>
@@ -117,6 +117,7 @@
     <string name="action_remove">Remove</string>
     <string name="action_sort">Sort</string>
     <string name="notifications">Notifications</string>
+    <string name="notifications_title">Notifications</string>
     <string name="notifications_empty">No notifications yet</string>
 
     <!-- Misc -->

@@ -9,7 +9,7 @@ import androidx.room.Index
     primaryKeys = ["postId", "tag"],
     foreignKeys = [
         ForeignKey(
-            entity = Post::class,
+            entity = PostEntity::class,
             parentColumns = ["id"],
             childColumns = ["postId"],
             onDelete = ForeignKey.CASCADE

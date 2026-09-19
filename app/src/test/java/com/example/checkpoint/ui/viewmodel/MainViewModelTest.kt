@@ -3,9 +3,13 @@ package com.example.checkpoint.ui.viewmodel
 import com.example.checkpoint.data.repository.AuthRepository
 import com.example.checkpoint.data.repository.MainRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.MessageEntity
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.CommentWithAuthor
+import com.example.checkpoint.data.local.model.GeoUser
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,7 +59,7 @@ class MainViewModelTest {
     @Test
     fun loadData_updatesUiState() = runTest {
         // Verifica che il caricamento dati aggiorni lo stato della UI
-        val post = Post(authorName = "Author", authorEmail = "test@gmail.com", title = "T", initialMessage = "M")
+        val post = PostEntity(authorEmail = "test@gmail.com", title = "T", initialMessage = "M")
         fakeMainRepository.createPost(post, emptyList())
         
         val state = viewModel.uiState.value
@@ -83,7 +87,7 @@ class MainViewModelTest {
 
     // Classi Fake per il testing
     class FakeMainRepository : MainRepository {
-        val posts = mutableListOf<Post>()
+        val posts = mutableListOf<PostEntity>()
         private val _postsFlow = MutableStateFlow<List<PostWithAuthor>>(emptyList())
         
         override fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>> = _postsFlow
@@ -94,24 +98,44 @@ class MainViewModelTest {
         override fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>> = _postsFlow
         override fun searchUsersByUsername(query: String): Flow<List<UserEntity>> = emptyFlow()
 
-        override suspend fun createPost(post: Post, tags: List<String>) {
+        override suspend fun createPost(post: PostEntity, tags: List<String>) {
             posts.add(post)
-            val author = UserEntity(post.authorEmail, post.authorName, "pass")
+            val author = UserEntity(post.authorEmail, "user")
             val currentPosts = _postsFlow.value.toMutableList()
-            currentPosts.add(PostWithAuthor(post, author, emptyList(), false))
+            currentPosts.add(PostWithAuthor(post, author, emptyList(), false, 0))
             _postsFlow.value = currentPosts
         }
 
         override suspend fun toggleLike(postId: String, userEmail: String) {}
+        override suspend fun syncDataFromFirestore(currentUserEmail: String) {}
+        override fun isFollowing(followerEmail: String, followedEmail: String): Flow<Boolean> = emptyFlow()
+        override suspend fun toggleFollow(followerEmail: String, followedEmail: String) {}
+        override fun getFollowersCount(userEmail: String): Flow<Int> = emptyFlow()
+        override fun getFollowingCount(userEmail: String): Flow<Int> = emptyFlow()
+        override fun getFollowers(userEmail: String): Flow<List<UserEntity>> = emptyFlow()
+        override fun getFollowing(userEmail: String): Flow<List<UserEntity>> = emptyFlow()
+        override suspend fun updateUserLocation(userEmail: String, latitude: Double, longitude: Double) {}
+        override suspend fun findNearbyUsers(currentUserEmail: String, latitude: Double, longitude: Double, radiusKm: Int): List<GeoUser> = emptyList()
+        override fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>> = emptyFlow()
+        override fun getChatMessages(user1: String, user2: String): Flow<List<MessageEntity>> = emptyFlow()
+        override suspend fun sendMessage(message: MessageEntity) {}
+        override fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>> = emptyFlow()
+        override suspend fun addComment(comment: CommentEntity) {}
+        override fun getCommentCount(postId: String): Flow<Int> = emptyFlow()
     }
 
     class FakeAuthRepository : AuthRepository {
         override suspend fun registerUser(user: UserEntity) {}
         override suspend fun updateUser(user: UserEntity) {}
-        override suspend fun getUser(email: String): UserEntity = UserEntity(email, "user", "pass")
+        override suspend fun getUser(email: String): UserEntity = UserEntity(email, "user")
+        override suspend fun getUserByUsername(username: String): UserEntity? = null
         override suspend fun isEmailTaken(email: String) = false
         override suspend fun isUsernameTaken(username: String) = false
-        override suspend fun loginUser(identifier: String): UserEntity? = null
+        override suspend fun signUpWithEmail(email: String, username: String, password: String): Result<UserEntity> = Result.success(UserEntity(email, username))
+        override suspend fun signInWithEmail(email: String, password: String): Result<UserEntity> = Result.success(UserEntity(email, "user"))
+        override suspend fun signInWithGoogle(idToken: String): Result<UserEntity> = Result.success(UserEntity("test@gmail.com", "user"))
+        override suspend fun logout() {}
+        override fun getCurrentUserEmail(): String? = "test@gmail.com"
     }
 
     class FakeUserPreferencesRepository : UserPreferencesRepository {
@@ -120,6 +144,7 @@ class MainViewModelTest {
         override val isDarkTheme = MutableStateFlow(true)
         val historyList = mutableListOf<String>()
         override val searchHistory = MutableStateFlow<List<String>>(emptyList())
+        override val hasCompletedOnboarding = MutableStateFlow(true)
         
         override suspend fun saveSession(email: String) {}
         override suspend fun setTheme(isDark: Boolean) {}
@@ -132,5 +157,6 @@ class MainViewModelTest {
             searchHistory.value = emptyList()
         }
         override suspend fun clearSession() {}
+        override suspend fun setOnboardingCompleted(completed: Boolean) {}
     }
 }

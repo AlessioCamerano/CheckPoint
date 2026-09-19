@@ -250,6 +250,7 @@ fun SearchScreen(
                                     author = postWithAuthor.author,
                                     tags = postWithAuthor.tags,
                                     isLiked = postWithAuthor.isLikedByCurrentUser,
+                                    favoriteCount = postWithAuthor.favoriteCount,
                                     onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
                                     onAuthorClick = onUserClick
                                 )
@@ -262,6 +263,7 @@ fun SearchScreen(
                                     author = postWithAuthor.author,
                                     tags = postWithAuthor.tags,
                                     isLiked = postWithAuthor.isLikedByCurrentUser,
+                                    favoriteCount = postWithAuthor.favoriteCount,
                                     onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
                                     onAuthorClick = onUserClick
                                 )

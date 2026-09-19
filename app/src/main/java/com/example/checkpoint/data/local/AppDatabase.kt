@@ -11,25 +11,25 @@ import com.example.checkpoint.data.local.dao.UserDao
 import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.FollowEntity
 import com.example.checkpoint.data.local.entity.MessageEntity
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.PostLikeEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 
 /**
- * Punto cdi accesso a Room
+ * Punto di accesso a Room
  */
 @Database(
     entities = [
         UserEntity::class, 
-        Post::class, 
+        PostEntity::class, 
         PostLikeEntity::class, 
         PostTagEntity::class, 
         FollowEntity::class,
         MessageEntity::class,
         CommentEntity::class
     ], 
-    version = 11, 
+    version = 13, 
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

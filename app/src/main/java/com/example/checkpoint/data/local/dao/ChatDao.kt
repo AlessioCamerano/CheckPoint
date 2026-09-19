@@ -9,7 +9,7 @@ import com.example.checkpoint.data.local.entity.UserEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
- * DAO per la gestione dei messaggi diretti.
+ * Data Access Object per la gestione delle chat e messaggi.
  */
 @Dao
 interface ChatDao {
@@ -19,7 +19,9 @@ interface ChatDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessages(messages: List<MessageEntity>)
 
-    // Recupera la cronologia messaggi tra due utenti
+    /**
+     * Recupera la cronologia dei messaggi tra due utenti.
+     */
     @Query("""
         SELECT * FROM messages 
         WHERE (senderEmail = :user1 AND receiverEmail = :user2) 
@@ -28,20 +30,14 @@ interface ChatDao {
     """)
     fun getChatMessages(user1: String, user2: String): Flow<List<MessageEntity>>
 
-    // Recupera l'elenco degli utenti con cui si ha una chat attiva
+    /**
+     * Recupera l'elenco degli utenti con cui l'utente corrente ha scambiato messaggi.
+     */
     @Query("""
-        SELECT DISTINCT u.* FROM users u
-        INNER JOIN messages m ON (u.email = m.senderEmail OR u.email = m.receiverEmail)
-        WHERE (m.senderEmail = :currentUserEmail OR m.receiverEmail = :currentUserEmail)
-          AND u.email != :currentUserEmail
+        SELECT DISTINCT users.* FROM users 
+        INNER JOIN messages ON users.email = messages.senderEmail OR users.email = messages.receiverEmail
+        WHERE (messages.senderEmail = :currentUserEmail OR messages.receiverEmail = :currentUserEmail)
+          AND users.email != :currentUserEmail
     """)
     fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>>
-
-    // Segna i messaggi come letti
-    @Query("UPDATE messages SET isRead = 1 WHERE receiverEmail = :currentUserEmail AND senderEmail = :otherUserEmail")
-    suspend fun markAsRead(currentUserEmail: String, otherUserEmail: String)
-
-    // Verifica se ci sono nuovi messaggi non letti
-    @Query("SELECT EXISTS(SELECT 1 FROM messages WHERE receiverEmail = :currentUserEmail AND senderEmail = :otherUserEmail AND isRead = 0)")
-    fun hasUnreadMessages(currentUserEmail: String, otherUserEmail: String): Flow<Boolean>
 }

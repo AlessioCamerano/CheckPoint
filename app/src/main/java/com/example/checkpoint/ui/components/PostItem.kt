@@ -1,5 +1,6 @@
 package com.example.checkpoint.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,8 +23,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.Post
+import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
@@ -37,10 +39,11 @@ import com.example.checkpoint.util.TimeUtils
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PostItem(
-    post: Post,
+    post: PostEntity,
     author: UserEntity? = null,
     tags: List<PostTagEntity> = emptyList(),
     isLiked: Boolean = false,
+    favoriteCount: Int = 0,
     onFavoriteClick: () -> Unit = {},
     onAuthorClick: (UserEntity) -> Unit = {},
     onPostClick: (PostWithAuthor) -> Unit = {}
@@ -51,10 +54,10 @@ fun PostItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = MaterialTheme.spacing.extraSmall)
-            .clickable { author?.let { onPostClick(PostWithAuthor(post, it, tags, isLiked)) } },
+            .clickable { author?.let { onPostClick(PostWithAuthor(post, it, tags, isLiked, favoriteCount)) } },
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             0.5.dp,
             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
         )
@@ -95,7 +98,7 @@ fun PostItem(
                 Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
                 Column {
                     Text(
-                        text = post.authorName,
+                        text = author?.username ?: "Unknown",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -205,14 +208,14 @@ fun PostItem(
                 ) {
                     Icon(
                         imageVector = if (isLiked) Icons.Default.Flag else Icons.Outlined.Flag,
-                        contentDescription = stringResource(com.example.checkpoint.R.string.action_favorite),
+                        contentDescription = stringResource(R.string.action_favorite),
                         tint = if (isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(MaterialTheme.spacing.small))
                 Text(
-                    text = "${post.favoriteCount}",
+                    text = "$favoriteCount",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.secondary
@@ -227,24 +230,24 @@ fun PostItem(
 fun PostItemDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.background) {
+            val author = UserEntity(email = "user1@gmail.com", username = "User Test 1")
             PostItem(
-                post = Post(
+                post = PostEntity(
                     id = "1",
-                    authorName = "User Test 1",
                     authorEmail = "user1@gmail.com",
                     title = "My first checkpoint!",
                     initialMessage = "This is a sample message for the preview.",
-                    favoriteCount = 12,
-                    isFavorite = true,
                     timestamp = System.currentTimeMillis() - 7200000,
                     mediaUri = "https://example.com/image.jpg",
                     mediaType = MediaType.IMAGE
                 ),
+                author = author,
                 tags = listOf(
                     PostTagEntity("1", "gaming"),
                     PostTagEntity("1", "coding")
                 ),
-                isLiked = true
+                isLiked = true,
+                favoriteCount = 12
             )
         }
     }
@@ -255,24 +258,24 @@ fun PostItemDarkPreview() {
 fun PostItemLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.background) {
+            val author = UserEntity(email = "user1@gmail.com", username = "User Test 1")
             PostItem(
-                post = Post(
+                post = PostEntity(
                     id = "1",
-                    authorName = "User Test 1",
                     authorEmail = "user1@gmail.com",
                     title = "My first checkpoint!",
                     initialMessage = "This is a sample message for the preview.",
-                    favoriteCount = 12,
-                    isFavorite = false,
                     timestamp = System.currentTimeMillis() - 300000,
                     mediaUri = "https://example.com/image.jpg",
                     mediaType = MediaType.IMAGE
                 ),
+                author = author,
                 tags = listOf(
                     PostTagEntity("1", "relax"),
                     PostTagEntity("1", "nature")
                 ),
-                isLiked = false
+                isLiked = false,
+                favoriteCount = 12
             )
         }
     }
