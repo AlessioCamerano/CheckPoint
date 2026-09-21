@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.checkpoint.ui.components.MainContainer
 import com.example.checkpoint.ui.components.UserProfilePopup
@@ -35,6 +37,7 @@ object Screen {
     const val Chat = "chat"
     const val PostDetail = "post_detail"
     const val MyCheckpoints = "my_checkpoints"
+    const val TagResults = "tag_results/{tag}"
 }
 
 @Composable
@@ -161,6 +164,11 @@ fun AppNavigation(
                     onNavigateToMyCheckpoints = {
                         navController.navigate(Screen.MyCheckpoints)
                     },
+                    onTagClick = { tag ->
+                        viewModel.onSearchByTag(tag)
+                        navController.navigate("tag_results/$tag")
+                    },
+                    onSearchSortChange = { viewModel.onSearchSortOrderChange(it) },
                     onNavigateToLocalUsers = {
                         navController.navigate(Screen.LocalUsers)
                     },
@@ -211,6 +219,24 @@ fun AppNavigation(
                     posts = myPosts,
                     onBack = { navController.popBackStack() },
                     onDeletePost = { viewModel.onDeletePost(it) },
+                    onPostClick = { post ->
+                        viewModel.onOpenPostDetail(post)
+                        navController.navigate(Screen.PostDetail)
+                    }
+                )
+            }
+
+            composable(
+                route = Screen.TagResults,
+                arguments = listOf(navArgument("tag") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val tag = backStackEntry.arguments?.getString("tag") ?: ""
+                TagResultsScreen(
+                    tag = tag,
+                    posts = uiState.tagResults,
+                    onBack = { navController.popBackStack() },
+                    onToggleLike = { viewModel.onToggleLike(it) },
+                    onUserClick = { viewModel.onOpenUserPopup(it) },
                     onPostClick = { post ->
                         viewModel.onOpenPostDetail(post)
                         navController.navigate(Screen.PostDetail)

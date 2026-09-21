@@ -42,6 +42,7 @@ interface MainRepository {
     fun searchPostsByTitle(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
     fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
     fun searchUsersByUsername(query: String): Flow<List<UserEntity>>
+    fun searchUniqueTags(query: String): Flow<List<String>>
     suspend fun createPost(post: PostEntity, tags: List<String>)
     suspend fun deletePost(postId: String)
     suspend fun toggleLike(postId: String, userEmail: String)
@@ -94,7 +95,7 @@ class MainRepositoryImpl(
     }
 
     override fun getAllUniqueTags(): Flow<List<String>> {
-        return postDao.getAllUniqueTags()
+        return postDao.searchUniqueTags("")
     }
 
     override fun getTrendingTags(): Flow<List<String>> {
@@ -113,6 +114,10 @@ class MainRepositoryImpl(
         return userDao.searchUsersByUsername(query)
     }
 
+    override fun searchUniqueTags(query: String): Flow<List<String>> {
+        return postDao.searchUniqueTags(query)
+    }
+
     override suspend fun syncDataFromFirestore(currentUserEmail: String) {
         try {
             Log.d("CheckPointDebug", "Main: INIZIO SINCRONIZZAZIONE GLOBALE...")
@@ -125,7 +130,7 @@ class MainRepositoryImpl(
                 Log.d("CheckPointDebug", "Main: Sincronizzati ${remoteUsers.size} utenti")
             } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Users fail: ${e.message}") }
 
-            // 2. POST
+            // 2. POST & TAGS
             try {
                 val postsSnapshot = firestore.collection("posts")
                     .orderBy("timestamp", FirestoreQuery.Direction.DESCENDING)
@@ -133,7 +138,18 @@ class MainRepositoryImpl(
                 val remotePosts = postsSnapshot.toObjects(PostEntity::class.java)
                 postDao.insertPosts(remotePosts)
                 Log.d("CheckPointDebug", "Main: Sincronizzati ${remotePosts.size} post")
-            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Posts fail: ${e.message}") }
+                
+                // Sincronizzati anche i TAG dei post scaricati
+                remotePosts.forEach { post ->
+                    val tagsSnapshot = firestore.collection("posts").document(post.id).get().await()
+                    @Suppress("UNCHECKED_CAST")
+                    val tags = tagsSnapshot.get("tags") as? List<String>
+                    if (tags != null) {
+                        val tagEntities = tags.map { PostTagEntity(post.id, it) }
+                        postDao.insertTags(tagEntities)
+                    }
+                }
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Posts/Tags fail: ${e.message}") }
 
             // 3. LIKES
             try {
@@ -197,10 +213,21 @@ class MainRepositoryImpl(
     override suspend fun createPost(post: PostEntity, tags: List<String>) {
         Log.d("CheckPointDebug", "1. Tentativo di creazione post avviato: ${post.title}")
         try {
-            // Si assicura che l'ID sia unico e presente
             val postToUpload = if (post.id.isBlank()) post.copy(id = UUID.randomUUID().toString()) else post
             
-            firestore.collection("posts").document(postToUpload.id).set(postToUpload).await()
+            // oggetto mappa per includere i TAG in Firestore
+            val postData = hashMapOf(
+                "id" to postToUpload.id,
+                "authorEmail" to postToUpload.authorEmail,
+                "title" to postToUpload.title,
+                "initialMessage" to postToUpload.initialMessage,
+                "timestamp" to postToUpload.timestamp,
+                "mediaUri" to postToUpload.mediaUri,
+                "mediaType" to postToUpload.mediaType,
+                "tags" to tags
+            )
+            
+            firestore.collection("posts").document(postToUpload.id).set(postData).await()
             Log.d("CheckPointDebug", "2. Post salvato con successo su FIRESTORE")
 
             val tagEntities = tags.map { PostTagEntity(postToUpload.id, it) }

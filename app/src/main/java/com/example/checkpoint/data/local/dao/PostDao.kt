@@ -59,8 +59,8 @@ interface PostDao {
         }
     }
 
-    @Query("SELECT DISTINCT tag FROM post_tags")
-    fun getAllUniqueTags(): Flow<List<String>>
+    @Query("SELECT DISTINCT tag FROM post_tags WHERE tag LIKE '%' || :query || '%'")
+    fun searchUniqueTags(query: String): Flow<List<String>>
 
     @Query("""
         SELECT tag

@@ -49,6 +49,8 @@ fun MainContainer(
     onToggleFollow: () -> Unit,
     onNavigateToFollowers: () -> Unit,
     onNavigateToMyCheckpoints: () -> Unit,
+    onTagClick: (String) -> Unit,
+    onSearchSortChange: (PostSortOrder) -> Unit,
     onNavigateToLocalUsers: () -> Unit,
     onPostClick: (PostWithAuthor) -> Unit,
     onPartnerClick: (UserEntity) -> Unit
@@ -127,6 +129,8 @@ fun MainContainer(
                     onNavigateToOnboarding = onNavigateToOnboarding,
                     onNavigateToFollowers = onNavigateToFollowers,
                     onNavigateToMyCheckpoints = onNavigateToMyCheckpoints,
+                    onTagClick = onTagClick,
+                    onSearchSortChange = onSearchSortChange,
                     onNavigateToLocalUsers = onNavigateToLocalUsers,
                     onCreatePost = onCreatePost,
                     onLogout = onLogout,

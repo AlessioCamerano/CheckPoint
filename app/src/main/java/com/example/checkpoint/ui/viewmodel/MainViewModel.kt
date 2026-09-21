@@ -179,8 +179,8 @@ class MainViewModel(
                 
                 // Tags search
                 launch {
-                    mainRepository.searchPostsByTag(query, email).collectLatest { posts ->
-                        _uiState.update { it.copy(searchResultsTags = posts) }
+                    mainRepository.searchUniqueTags(query).collectLatest { tags ->
+                        _uiState.update { it.copy(searchResultsTags = tags) }
                     }
                 }
             } catch (e: Exception) {
@@ -196,6 +196,15 @@ class MainViewModel(
                 preferencesRepository.saveSearchQuery(query)
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to save search: ${e.message}") }
+            }
+        }
+    }
+
+    fun onSearchByTag(tag: String) {
+        viewModelScope.launch {
+            val email = preferencesRepository.userEmail.first() ?: return@launch
+            mainRepository.searchPostsByTag(tag, email).collectLatest { posts ->
+                _uiState.update { it.copy(tagResults = posts) }
             }
         }
     }
@@ -433,6 +442,10 @@ class MainViewModel(
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Error sorting posts: ${e.message}") }
             }
         }
+    }
+
+    fun onSearchSortOrderChange(newOrder: PostSortOrder) {
+        _uiState.update { it.copy(searchSortOrder = newOrder) }
     }
 
     fun onToggleLike(postId: String) {

@@ -37,6 +37,8 @@ fun MainTabPager(
     onNavigateToEditProfile: () -> Unit,
     onNavigateToFollowers: () -> Unit,
     onNavigateToMyCheckpoints: () -> Unit,
+    onTagClick: (String) -> Unit,
+    onSearchSortChange: (PostSortOrder) -> Unit,
     onNavigateToLocalUsers: () -> Unit,
     onNavigateToOnboarding: () -> Unit,
     onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit,
@@ -57,7 +59,9 @@ fun MainTabPager(
                 onSaveSearch = onSaveSearch,
                 onClearHistory = onClearHistory,
                 onToggleLike = onToggleLike,
-                onUserClick = onUserClick
+                onUserClick = onUserClick,
+                onTagClick = onTagClick,
+                onSortChange = onSearchSortChange
             )
             "add" -> CreatePostScreen(
                 state = uiState,

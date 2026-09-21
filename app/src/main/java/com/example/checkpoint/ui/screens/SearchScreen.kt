@@ -14,10 +14,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,14 +36,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     state: MainUiState,
@@ -48,11 +53,15 @@ fun SearchScreen(
     onSaveSearch: (String) -> Unit = {},
     onClearHistory: () -> Unit = {},
     onToggleLike: (String) -> Unit = {},
-    onUserClick: (UserEntity) -> Unit = {}
+    onUserClick: (UserEntity) -> Unit = {},
+    onTagClick: (String) -> Unit = {},
+    onSortChange: (PostSortOrder) -> Unit = {}
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var isSearched by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showSortMenu by remember { mutableStateOf(false) }
+
     val tabs = listOf(
         stringResource(com.example.checkpoint.R.string.tab_users),
         stringResource(com.example.checkpoint.R.string.tab_checkpoints),
@@ -207,25 +216,68 @@ fun SearchScreen(
                     }
                 }
             } else {
-                // Search Tabs
-                SecondaryTabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    divider = {}
+                // Search Tabs & Sort
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    tabs.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            text = {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
-                        )
+                    SecondaryScrollableTabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        edgePadding = 0.dp,
+                        divider = {},
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    // Tasto Ordinamento
+                    Box {
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.FilterList,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.main_sort_trending)) },
+                                onClick = { 
+                                    onSortChange(PostSortOrder.TRENDING)
+                                    showSortMenu = false 
+                                },
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, null) }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.main_sort_newest)) },
+                                onClick = { 
+                                    onSortChange(PostSortOrder.NEWEST)
+                                    showSortMenu = false 
+                                },
+                                leadingIcon = { Icon(Icons.Default.Update, null) }
+                            )
+                        }
                     }
                 }
 
@@ -239,12 +291,20 @@ fun SearchScreen(
                 ) {
                     when (selectedTab) {
                         0 -> { // Users
-                            items(state.searchResultsUsers) { user ->
+                            val sortedUsers = when (state.searchSortOrder) {
+                                PostSortOrder.NEWEST -> state.searchResultsUsers.sortedByDescending { it.username }
+                                PostSortOrder.TRENDING -> state.searchResultsUsers.sortedBy { it.username }
+                            }
+                            items(sortedUsers) { user ->
                                 UserItem(user, onClick = onUserClick)
                             }
                         }
                         1 -> { // Checkpoints
-                            items(state.searchResultsPosts) { postWithAuthor ->
+                            val sortedPosts = when (state.searchSortOrder) {
+                                PostSortOrder.NEWEST -> state.searchResultsPosts.sortedByDescending { it.post.timestamp }
+                                PostSortOrder.TRENDING -> state.searchResultsPosts.sortedByDescending { it.favoriteCount }
+                            }
+                            items(sortedPosts) { postWithAuthor ->
                                 PostItem(
                                     post = postWithAuthor.post,
                                     author = postWithAuthor.author,
@@ -256,22 +316,62 @@ fun SearchScreen(
                                 )
                             }
                         }
-                        2 -> { // Tags
-                            items(state.searchResultsTags) { postWithAuthor ->
-                                PostItem(
-                                    post = postWithAuthor.post,
-                                    author = postWithAuthor.author,
-                                    tags = postWithAuthor.tags,
-                                    isLiked = postWithAuthor.isLikedByCurrentUser,
-                                    favoriteCount = postWithAuthor.favoriteCount,
-                                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
-                                    onAuthorClick = onUserClick
-                                )
+                        2 -> { // Tags (LISTA TAG, NON POST)
+                            val sortedTags = when (state.searchSortOrder) {
+                                PostSortOrder.NEWEST -> state.searchResultsTags.sortedDescending()
+                                PostSortOrder.TRENDING -> state.searchResultsTags.sorted()
+                            }
+                            items(sortedTags) { tag ->
+                                TagSearchItem(tag = tag, onClick = { onTagClick(tag) })
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun TagSearchItem(tag: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = MaterialTheme.spacing.medium, horizontal = MaterialTheme.spacing.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "#",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
+            Text(
+                text = tag,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForwardIos,
+                null,
+                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
+                modifier = Modifier.size(16.dp)
+            )
         }
     }
 }
