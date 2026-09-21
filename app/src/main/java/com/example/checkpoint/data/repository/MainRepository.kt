@@ -60,6 +60,7 @@ interface MainRepository {
     fun getFollowers(userEmail: String): Flow<List<UserEntity>>
     fun getFollowing(userEmail: String): Flow<List<UserEntity>>
     suspend fun updateUserLocation(userEmail: String, latitude: Double, longitude: Double)
+    suspend fun deleteUserLocation(userEmail: String)
     suspend fun findNearbyUsers(currentUserEmail: String, latitude: Double, longitude: Double, radiusKm: Int): List<GeoUser>
 
     // Operazioni per chat
@@ -327,6 +328,15 @@ class MainRepositoryImpl(
                 )
             )
             .await()
+    }
+
+    override suspend fun deleteUserLocation(userEmail: String) {
+        Log.d("CheckPointDebug", "Main: Eliminazione posizione utente $userEmail")
+        try {
+            firestore.collection("user_locations").document(userEmail).delete().await()
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Error deleting user location: ${e.message}")
+        }
     }
 
     override suspend fun findNearbyUsers(

@@ -1,5 +1,10 @@
 package com.example.checkpoint.ui.viewmodel
 
+import android.Manifest
+import android.app.Application
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,6 +23,7 @@ import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.tasks.await
 import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
@@ -35,6 +41,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
+    private val application: Application,
     private val mainRepository: MainRepository,
     private val authRepository: AuthRepository,
     private val preferencesRepository: UserPreferencesRepository
@@ -80,6 +87,7 @@ class MainViewModel(
                 )
 
                 return MainViewModel(
+                    application = application,
                     mainRepository = mainRepository,
                     authRepository = authRepository,
                     preferencesRepository = preferencesRepository
@@ -477,6 +485,12 @@ class MainViewModel(
             val email = uiState.value.currentUserEmail
             if (email != null) {
                 mainRepository.syncDataFromFirestore(email)
+
+                val isGranted = ContextCompat.checkSelfPermission(
+                    application,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+                refreshUserLocation(isGranted)
             }
             loadUserProfile()
             delay(1000.milliseconds)
@@ -528,6 +542,11 @@ class MainViewModel(
         viewModelScope.launch {
             try {
                 stopPeriodicSync()
+                searchJob?.cancel()
+                followJob?.cancel()
+                chatJob?.cancel()
+                commentJob?.cancel()
+                _uiState.value = MainUiState(isDarkTheme = _uiState.value.isDarkTheme)
                 mainRepository.clearLocalData()
                 preferencesRepository.clearSession()
             } catch (e: Exception) {
@@ -715,5 +734,35 @@ class MainViewModel(
                 }
             }
         }
-}
     }
+
+    /**
+     * Aggiorna o rimuove la posizione dell'utente in base ai permessi.
+     */
+    fun refreshUserLocation(isPermissionGranted: Boolean) {
+        viewModelScope.launch {
+            val email = preferencesRepository.userEmail.first() ?: return@launch
+            if (isPermissionGranted) {
+                try {
+                    val client = LocationServices.getFusedLocationProviderClient(application)
+                    // Controllo di sicurezza per Android
+                    if (PackageManager.PERMISSION_GRANTED ==
+                        ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                        
+                        val location = client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+                        if (location != null) {
+                            mainRepository.updateUserLocation(email, location.latitude, location.longitude)
+                            Log.d("CheckPointDebug", "GPS: Posizione aggiornata all'avvio")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("CheckPointDebug", "GPS: Errore aggiornamento posizione: ${e.message}")
+                }
+            } else {
+                // Se i permessi sono stati rimossi, pulisce i dati online
+                mainRepository.deleteUserLocation(email)
+                Log.d("CheckPointDebug", "GPS: Posizione rimossa (permessi negati)")
+            }
+        }
+    }
+}

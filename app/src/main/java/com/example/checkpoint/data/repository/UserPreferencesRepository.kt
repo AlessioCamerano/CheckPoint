@@ -41,7 +41,6 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
         val USER_EMAIL = stringPreferencesKey("user_email")
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
-        val SEARCH_HISTORY = stringSetPreferencesKey("search_history")
     }
 
     override val isLoggedIn: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
@@ -61,7 +60,13 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
     } ?: emptyFlow()
 
     override val searchHistory: Flow<List<String>> = context?.dataStore?.data?.map { preferences ->
-        preferences[PreferencesKeys.SEARCH_HISTORY]?.toList()?.sorted() ?: emptyList()
+        val email = preferences[PreferencesKeys.USER_EMAIL]
+        if (email.isNullOrBlank()) {
+            emptyList()
+        } else {
+            val key = stringSetPreferencesKey("search_history_$email")
+            preferences[key]?.toList()?.sorted() ?: emptyList()
+        }
     } ?: emptyFlow()
 
     override suspend fun saveSession(email: String) {
@@ -86,7 +91,10 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
 
     override suspend fun saveSearchQuery(query: String) {
         context?.dataStore?.edit { preferences ->
-            val currentHistory = preferences[PreferencesKeys.SEARCH_HISTORY] ?: emptySet()
+            val email = preferences[PreferencesKeys.USER_EMAIL]
+            if (email.isNullOrBlank()) return@edit
+            val key = stringSetPreferencesKey("search_history_$email")
+            val currentHistory = preferences[key] ?: emptySet()
             val newHistory = currentHistory.toMutableSet()
             if (newHistory.contains(query)) {
                 newHistory.remove(query)
@@ -97,20 +105,28 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
                 val oldest = newHistory.first()
                 newHistory.remove(oldest)
             }
-            preferences[PreferencesKeys.SEARCH_HISTORY] = newHistory
+            preferences[key] = newHistory
         }
     }
 
     override suspend fun clearSearchHistory() {
         context?.dataStore?.edit { preferences ->
-            preferences.remove(PreferencesKeys.SEARCH_HISTORY)
+            val email = preferences[PreferencesKeys.USER_EMAIL]
+            if (email.isNullOrBlank()) return@edit
+            val key = stringSetPreferencesKey("search_history_$email")
+            preferences.remove(key)
         }
     }
 
     override suspend fun clearSession() {
         context?.dataStore?.edit { preferences ->
+            val email = preferences[PreferencesKeys.USER_EMAIL]
+            if (!email.isNullOrBlank()) {
+                val key = stringSetPreferencesKey("search_history_$email")
+                preferences.remove(key)
+            }
             preferences[PreferencesKeys.IS_LOGGED_IN] = false
-            preferences[PreferencesKeys.USER_EMAIL] = ""
+            preferences.remove(PreferencesKeys.USER_EMAIL)
         }
     }
 }
