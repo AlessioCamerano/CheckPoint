@@ -347,7 +347,6 @@ class MainViewModel(
         message: String, 
         mediaUri: String? = null, 
         mediaType: MediaType = MediaType.NONE,
-        isMuted: Boolean = false,
         tags: List<String> = emptyList()
     ) {
         viewModelScope.launch {
@@ -360,14 +359,23 @@ class MainViewModel(
                         title = title,
                         initialMessage = message,
                         mediaUri = mediaUri,
-                        mediaType = mediaType,
-                        isMuted = isMuted
+                        mediaType = mediaType
                     )
                     mainRepository.createPost(newPost, tags)
                     _uiState.update { it.copy(isLoading = false, postSuccess = true) }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Error creating post: ${e.message}") }
+            }
+        }
+    }
+
+    fun onDeletePost(postId: String) {
+        viewModelScope.launch {
+            try {
+                mainRepository.deletePost(postId)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Error deleting post: ${e.message}") }
             }
         }
     }

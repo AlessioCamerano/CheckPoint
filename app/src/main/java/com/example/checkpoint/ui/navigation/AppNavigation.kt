@@ -34,6 +34,7 @@ object Screen {
     const val LocalUsers = "local_users"
     const val Chat = "chat"
     const val PostDetail = "post_detail"
+    const val MyCheckpoints = "my_checkpoints"
 }
 
 @Composable
@@ -141,8 +142,8 @@ fun AppNavigation(
                     onNavigateToOnboarding = {
                         navController.navigate(Screen.OnboardingReview)
                     },
-                    onCreatePost = { title, message, uri, type, muted, tags ->
-                        viewModel.onCreatePost(title, message, uri, type, muted, tags)
+                    onCreatePost = { title, message, uri, type, tags ->
+                        viewModel.onCreatePost(title, message, uri, type, tags)
                     },
                     onPostSuccessReset = { viewModel.resetPostSuccess() },
                     onLogout = {
@@ -156,6 +157,9 @@ fun AppNavigation(
                     onToggleFollow = { viewModel.onToggleFollow() },
                     onNavigateToFollowers = {
                         navController.navigate(Screen.FollowersList)
+                    },
+                    onNavigateToMyCheckpoints = {
+                        navController.navigate(Screen.MyCheckpoints)
                     },
                     onNavigateToLocalUsers = {
                         navController.navigate(Screen.LocalUsers)
@@ -199,6 +203,19 @@ fun AppNavigation(
                         onToggleLike = { viewModel.onToggleLike(it) }
                     )
                 }
+            }
+
+            composable(Screen.MyCheckpoints) {
+                val myPosts = uiState.posts.filter { it.post.authorEmail == uiState.currentUserEmail }
+                MyCheckpointsScreen(
+                    posts = myPosts,
+                    onBack = { navController.popBackStack() },
+                    onDeletePost = { viewModel.onDeletePost(it) },
+                    onPostClick = { post ->
+                        viewModel.onOpenPostDetail(post)
+                        navController.navigate(Screen.PostDetail)
+                    }
+                )
             }
 
             composable(Screen.FollowersList) {

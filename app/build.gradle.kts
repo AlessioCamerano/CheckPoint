@@ -59,9 +59,12 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
 
-    // Media3 (ExoPlayer)
+    // Media3 (ExoPlayer & Transformer)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+    implementation(libs.media3.transformer)
+    implementation(libs.media3.effect)
+    implementation(libs.media3.common)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
@@ -79,6 +82,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.geofire.android.common)
     implementation(libs.play.services.auth)
+    implementation(libs.ucrop)
     
     // Credentials
     implementation(libs.androidx.credentials)

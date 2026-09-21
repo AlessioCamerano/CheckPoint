@@ -43,6 +43,7 @@ interface MainRepository {
     fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
     fun searchUsersByUsername(query: String): Flow<List<UserEntity>>
     suspend fun createPost(post: PostEntity, tags: List<String>)
+    suspend fun deletePost(postId: String)
     suspend fun toggleLike(postId: String, userEmail: String)
     
     // Sincronizzazione manuale
@@ -207,6 +208,18 @@ class MainRepositoryImpl(
             Log.d("CheckPointDebug", "3. Post salvato con successo in ROOM locale")
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "ERRORE durante createPost: ${e.message}", e)
+        }
+    }
+
+    override suspend fun deletePost(postId: String) {
+        Log.d("CheckPointDebug", "Main: Eliminazione post $postId")
+        try {
+            // Elimina da Firestore
+            firestore.collection("posts").document(postId).delete().await()
+            postDao.deletePost(postId)
+            Log.d("CheckPointDebug", "Main: Post $postId eliminato con successo")
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Error deleting post: ${e.message}")
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.checkpoint.util
 
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import java.io.File
@@ -60,5 +61,17 @@ object MediaStorageManager {
     fun isVideo(context: Context, uri: Uri): Boolean {
         val extension = getFileExtension(context, uri)
         return ALLOWED_VIDEO_EXTENSIONS.contains(extension)
+    }
+
+    fun getVideoDuration(context: Context, uri: Uri): Long {
+        return try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            retriever.release()
+            time?.toLong() ?: 0L
+        } catch (e: Exception) {
+            0L
+        }
     }
 }

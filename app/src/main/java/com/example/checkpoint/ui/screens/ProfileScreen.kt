@@ -1,5 +1,8 @@
 package com.example.checkpoint.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,11 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.checkpoint.R
 import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.UserStatus
 import com.example.checkpoint.ui.theme.CheckPointTheme
@@ -35,11 +40,13 @@ fun ProfileScreen(
     onThemeChange: (Boolean) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {},
     onNavigateToFollowers: () -> Unit = {},
+    onNavigateToMyCheckpoints: () -> Unit = {},
     onNavigateToLocalUsers: () -> Unit = {},
     onNavigateToOnboarding: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     var showSupportDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     if (showSupportDialog) {
         SupportDialog(onDismiss = { showSupportDialog = false })
@@ -75,12 +82,21 @@ fun ProfileScreen(
                 ProfileMenuItem(Icons.Default.LocationOn, stringResource(com.example.checkpoint.R.string.profile_menu_find_local_users)) {
                     onNavigateToLocalUsers()
                 }
+                ProfileMenuItem(Icons.Default.PostAdd, stringResource(R.string.profile_my_checkpoints)) {
+                    onNavigateToMyCheckpoints()
+                }
             }
 
             item {
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                 SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_app))
                 ThemeSwitchMenuItem(isDarkTheme, onThemeChange)
+                ProfileMenuItem(Icons.Default.Settings, stringResource(R.string.profile_menu_android_settings)) {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }
                 ProfileMenuItem(Icons.Default.Slideshow, stringResource(com.example.checkpoint.R.string.profile_menu_onboarding)) {
                     onNavigateToOnboarding()
                 }

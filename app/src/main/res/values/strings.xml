@@ -50,12 +50,20 @@
     <string name="post_button">POST CHECKPOINT</string>
     <string name="post_add_media">Add Media</string>
 
+    <string name="video_edit_title">Edit Video</string>
+    <string name="video_edit_trim">Trim video</string>
+    <string name="video_edit_mute">Remove Audio</string>
+    <string name="video_edit_processing">Processing video...</string>
+    <string name="video_edit_save">Save Changes</string>
+
     <!-- Profile -->
     <string name="profile_section_account">Account Informations</string>
     <string name="profile_menu_edit">Edit Profile</string>
     <string name="profile_menu_password">Change Password</string>
     <string name="profile_menu_follows">Followers / Following</string>
+    <string name="profile_my_checkpoints">My Checkpoints</string>
     <string name="profile_menu_find_local_users">Find Local Users</string>
+    <string name="profile_menu_android_settings">Android Permissions</string>
     <string name="profile_menu_onboarding">How CheckPoint works</string>
     <string name="profile_menu_onboarding_caption">Review the introduction slides and permissions guide any time.</string>
     <string name="profile_section_app">App Settings</string>
@@ -78,6 +86,9 @@
     <string name="comment_placeholder">Add a comment...</string>
     <string name="reply_placeholder">Write a reply...</string>
     <string name="replying_to_label">Replying to %1$s</string>
+    <string name="delete_post_title">Delete Checkpoint</string>
+    <string name="delete_post_confirm">Are you sure you want to delete this checkpoint? This action cannot be undone.</string>
+    <string name="my_posts_empty">You haven\'t posted any checkpoints yet.</string>
 
     <!-- Followers -->
     <string name="follows_title">Followers &amp; Following</string>
@@ -116,6 +127,7 @@
     <string name="action_reply">Reply</string>
     <string name="action_remove">Remove</string>
     <string name="action_sort">Sort</string>
+    <string name="action_delete">Delete</string>
     <string name="notifications">Notifications</string>
     <string name="notifications_title">Notifications</string>
     <string name="notifications_empty">No notifications yet</string>
