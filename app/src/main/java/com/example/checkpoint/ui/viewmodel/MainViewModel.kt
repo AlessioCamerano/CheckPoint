@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
     private val mainRepository: MainRepository,
@@ -48,6 +49,7 @@ class MainViewModel(
     private var followJob: Job? = null
     private var chatJob: Job? = null
     private var commentJob: Job? = null
+    private var periodicSyncJob: Job? = null
 
     // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
@@ -73,7 +75,8 @@ class MainViewModel(
                     database.postDao(), 
                     database.userDao(),
                     database.chatDao(),
-                    database.commentDao()
+                    database.commentDao(),
+                    database // Passaggio dell'istanza DB
                 )
 
                 return MainViewModel(
@@ -254,10 +257,12 @@ class MainViewModel(
                     if (loggedIn) {
                         val email = preferencesRepository.userEmail.first()
                         if (email != null) {
-                            // Sincronizzazione automatica all'avvio se loggati
-                            mainRepository.syncDataFromFirestore(email)
+                            // Avvia sincronizzazione automatica e real-time
+                            startPeriodicSync(email)
                         }
                         loadUserProfile()
+                    } else {
+                        stopPeriodicSync()
                     }
                 }
             } catch (e: Exception) {
@@ -458,6 +463,29 @@ class MainViewModel(
         }
     }
 
+    private fun startPeriodicSync(email: String) {
+        periodicSyncJob?.cancel()
+        periodicSyncJob = viewModelScope.launch {
+            mainRepository.syncDataFromFirestore(email)
+            
+            while (true) {
+                delay(60.seconds)
+                mainRepository.syncHighPriorityData(email)
+            }
+        }
+        mainRepository.startRealtimeSync(email)
+    }
+
+    private fun stopPeriodicSync() {
+        periodicSyncJob?.cancel()
+        mainRepository.stopRealtimeSync()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        stopPeriodicSync()
+    }
+
     /**
      * Helper per verificare l'esistenza dell'utente durante le interazioni.
      * Restituisce true se l'utente esiste, false se è stato fatto il logout forzato.
@@ -478,6 +506,8 @@ class MainViewModel(
     fun onLogout() {
         viewModelScope.launch {
             try {
+                stopPeriodicSync()
+                mainRepository.clearLocalData()
                 preferencesRepository.clearSession()
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error logging out: ${e.message}") }
