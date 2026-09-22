@@ -67,7 +67,11 @@ class AuthRepositoryImpl(
         // Anche se lo trova in locale, prova a sincronizzarlo su Firestore
         // per essere sicuro che il cloud sia aggiornato
         if (localUser != null) {
-            syncUserToFirestore(localUser)
+            try {
+                syncUserToFirestore(localUser)
+            } catch (e: Exception) {
+                Log.e("CheckPointDebug", "Auth: Errore sync background utente su Firestore: ${e.message}")
+            }
             return localUser
         }
 

@@ -148,6 +148,8 @@ class MainViewModelTest {
         override fun observeNotifications(currentUserEmail: String): Flow<List<AppNotification>> = _notificationsFlow
         override suspend fun createNotification(recipientEmail: String, title: String, body: String, route: String, type: String, senderEmail: String?, targetId: String?) {}
         override suspend fun deleteNotification(notificationId: String) {}
+        override suspend fun markNotificationAsRead(notificationId: String) {}
+        override suspend fun clearAllNotifications(currentUserEmail: String) {}
         override suspend fun saveFcmToken(userEmail: String, token: String) {}
         override fun startRealtimeSync(currentUserEmail: String) {}
         override fun stopRealtimeSync() {}

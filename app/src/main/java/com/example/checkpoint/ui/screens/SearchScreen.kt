@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.UserEntity
+import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.MainUiState
@@ -54,6 +55,7 @@ fun SearchScreen(
     onClearHistory: () -> Unit = {},
     onToggleLike: (String) -> Unit = {},
     onUserClick: (UserEntity) -> Unit = {},
+    onPostClick: (PostWithAuthor) -> Unit = {},
     onTagClick: (String) -> Unit = {},
     onSortChange: (PostSortOrder) -> Unit = {}
 ) {
@@ -307,12 +309,13 @@ fun SearchScreen(
                             items(sortedPosts) { postWithAuthor ->
                                 PostItem(
                                     post = postWithAuthor.post,
-                                    author = postWithAuthor.author,
+                                    author = postWithAuthor.safeAuthor,
                                     tags = postWithAuthor.tags,
                                     isLiked = postWithAuthor.isLikedByCurrentUser,
                                     favoriteCount = postWithAuthor.favoriteCount,
                                     onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
-                                    onAuthorClick = onUserClick
+                                    onAuthorClick = onUserClick,
+                                    onPostClick = onPostClick
                                 )
                             }
                         }

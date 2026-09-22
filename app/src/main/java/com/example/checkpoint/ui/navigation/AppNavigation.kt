@@ -63,44 +63,65 @@ fun AppNavigation(
     // Flag per evitare di gestire l'intent iniziale più volte
     var initialIntentHandled by remember { mutableStateOf(false) }
 
-    LaunchedEffect(isSessionLoaded, isLoggedIn, initialRoute, uiState.chatPartners, uiState.posts) {
+    LaunchedEffect(isSessionLoaded, isLoggedIn, initialRoute) {
         if (!isSessionLoaded || !isLoggedIn || initialRoute.isNullOrBlank() || initialIntentHandled) return@LaunchedEffect
 
-        val dataReady = when (initialRoute) {
-            Screen.Chat -> uiState.chatPartners.any { it.email == initialTargetId }
-            Screen.PostDetail -> uiState.posts.any { it.post.id == initialTargetId }
-            else -> true
+        if (!initialNotificationId.isNullOrBlank()) {
+            viewModel.onNotificationClickedById(initialNotificationId)
         }
-
-        if (dataReady) {
-            if (!initialNotificationId.isNullOrBlank()) {
-                viewModel.onNotificationClickedById(initialNotificationId)
-            }
-            
-            when (initialRoute) {
-                Screen.Chat -> {
-                    if (!initialTargetId.isNullOrBlank()) {
-                        viewModel.onOpenChatByEmail(initialTargetId)
-                        navController.navigate(Screen.Chat) {
-                            popUpTo(Screen.Home) { inclusive = false }
-                        }
-                    }
-                }
-                Screen.PostDetail -> {
-                    if (!initialTargetId.isNullOrBlank()) {
-                        viewModel.onOpenPostDetailById(initialTargetId)
-                        navController.navigate(Screen.PostDetail) {
-                            popUpTo(Screen.Home) { inclusive = false }
-                        }
-                    }
-                }
-                else -> {
-                    navController.navigate(initialRoute) {
+        
+        when (initialRoute) {
+            Screen.Chat -> {
+                if (!initialTargetId.isNullOrBlank()) {
+                    viewModel.onOpenChatByEmail(initialTargetId)
+                    navController.navigate(Screen.Chat) {
                         popUpTo(Screen.Home) { inclusive = false }
                     }
                 }
             }
-            initialIntentHandled = true
+            Screen.PostDetail -> {
+                if (!initialTargetId.isNullOrBlank()) {
+                    viewModel.onOpenPostDetailById(initialTargetId)
+                    navController.navigate(Screen.PostDetail) {
+                        popUpTo(Screen.Home) { inclusive = false }
+                    }
+                }
+            }
+            else -> {
+                try {
+                    navController.navigate(initialRoute) {
+                        popUpTo(Screen.Home) { inclusive = false }
+                    }
+                } catch (_: Exception) {
+                    // Ignora route non valide
+                }
+            }
+        }
+        initialIntentHandled = true
+    }
+
+    val pendingNav by viewModel.pendingNavigation.collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingNav, isLoggedIn) {
+        val nav = pendingNav
+        if (isLoggedIn && nav != null) {
+            val (route, _, _) = nav
+            when (route) {
+                Screen.Chat -> {
+                    navController.navigate(Screen.Chat) {
+                        popUpTo(Screen.Home) { inclusive = false }
+                    }
+                }
+                Screen.PostDetail -> {
+                    navController.navigate(Screen.PostDetail) {
+                        popUpTo(Screen.Home) { inclusive = false }
+                    }
+                }
+                Screen.Notifications -> {
+                    navController.navigate(Screen.Notifications)
+                }
+            }
+            viewModel.consumePendingNavigation()
         }
     }
 
@@ -237,7 +258,8 @@ fun AppNavigation(
             }
 
             composable(Screen.Chat) {
-                uiState.selectedChatPartner?.let { partner ->
+                val partner = uiState.selectedChatPartner
+                if (partner != null) {
                     ChatScreen(
                         currentUserEmail = uiState.currentUserEmail,
                         partner = partner,
@@ -248,11 +270,19 @@ fun AppNavigation(
                         },
                         onSendMessage = { viewModel.onSendMessage(it) }
                     )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
 
             composable(Screen.PostDetail) {
-                uiState.selectedPost?.let { post ->
+                val post = uiState.selectedPost
+                if (post != null) {
                     PostDetailScreen(
                         postWithAuthor = post,
                         comments = uiState.currentPostComments,
@@ -261,8 +291,16 @@ fun AppNavigation(
                             navController.popBackStack()
                         },
                         onAddComment = { content, parentId -> viewModel.onAddComment(content, parentId) },
-                        onToggleLike = { viewModel.onToggleLike(it) }
+                        onToggleLike = { viewModel.onToggleLike(it) },
+                        onUserClick = { viewModel.onOpenUserPopup(it) }
                     )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
 

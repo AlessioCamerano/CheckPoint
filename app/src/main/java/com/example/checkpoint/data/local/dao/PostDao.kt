@@ -101,6 +101,9 @@ interface PostDao {
     @Query("DELETE FROM posts WHERE id = :postId")
     suspend fun deletePost(postId: String)
 
+    @Query("DELETE FROM posts WHERE id NOT IN (:validPostIds)")
+    suspend fun deletePostsNotIn(validPostIds: List<String>)
+
     @Transaction
     @Query("""
         SELECT posts.*, 

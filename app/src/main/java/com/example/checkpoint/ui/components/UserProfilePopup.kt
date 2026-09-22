@@ -1,5 +1,6 @@
 package com.example.checkpoint.ui.components
 
+import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,9 +69,23 @@ fun UserProfilePopup(
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (user.profilePictureUri != null) {
+                        if (!user.profilePictureUri.isNullOrBlank()) {
+                            val avatarModel: Any? = remember(user.profilePictureUri) {
+                                val uri = user.profilePictureUri
+                                if (uri != null && uri.startsWith("data:")) {
+                                    try {
+                                        val base64Data = uri.substringAfter("base64,")
+                                        Base64.decode(base64Data, Base64.DEFAULT)
+                                    } catch (_: Exception) {
+                                        uri
+                                    }
+                                } else {
+                                    uri
+                                }
+                            }
+
                             AsyncImage(
-                                model = user.profilePictureUri,
+                                model = avatarModel,
                                 contentDescription = null,
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
@@ -83,17 +99,6 @@ fun UserProfilePopup(
                             )
                         }
                     }
-                    
-                    // Indicatore di stato (default: Online)
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(MaterialTheme.spacing.extraSmall - 1.dp)
-                            .clip(CircleShape)
-                            .background(StatusOnline)
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))

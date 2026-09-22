@@ -3,6 +3,7 @@ package com.example.checkpoint.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -59,8 +60,8 @@ fun ProfileScreen(
     ) {
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraLarge))
 
-        // Header con Avatar e Status
-        ProfileHeader(userStatus, username, profilePictureUri, onStatusChange)
+        // Header con Avatar
+        ProfileHeader(username, profilePictureUri)
 
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large + MaterialTheme.spacing.small))
 
@@ -162,18 +163,14 @@ fun ThemeSwitchMenuItem(
 
 @Composable
 fun ProfileHeader(
-    userStatus: UserStatus,
     username: String,
-    profilePictureUri: String?,
-    onStatusChange: (UserStatus) -> Unit
+    profilePictureUri: String?
 ) {
-    var showStatusMenu by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Avatar con status
+        // Avatar
         Box(contentAlignment = Alignment.BottomEnd) {
             Box(
                 modifier = Modifier
@@ -182,9 +179,22 @@ fun ProfileHeader(
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (profilePictureUri != null) {
+                if (!profilePictureUri.isNullOrBlank()) {
+                    val avatarModel: Any? = remember(profilePictureUri) {
+                        if (profilePictureUri.startsWith("data:")) {
+                            try {
+                                val base64Data = profilePictureUri.substringAfter("base64,")
+                                Base64.decode(base64Data, Base64.DEFAULT)
+                            } catch (_: Exception) {
+                                profilePictureUri
+                            }
+                        } else {
+                            profilePictureUri
+                        }
+                    }
+
                     AsyncImage(
-                        model = profilePictureUri,
+                        model = avatarModel,
                         contentDescription = stringResource(com.example.checkpoint.R.string.profile_picture),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -196,51 +206,6 @@ fun ProfileHeader(
                         modifier = Modifier.size(65.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
-                }
-            }
-            
-            // Pallino status
-            Box(modifier = Modifier.wrapContentSize()) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(MaterialTheme.spacing.extraSmall)
-                        .clickable { showStatusMenu = true }
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .background(userStatus.color)
-                    )
-                }
-
-                // Menù a tendina
-                DropdownMenu(
-                    expanded = showStatusMenu,
-                    onDismissRequest = { showStatusMenu = false },
-                    // Offset per farlo apparire a destra (specchiato)
-                    offset = androidx.compose.ui.unit.DpOffset(x = MaterialTheme.spacing.medium, y = 0.dp)
-                ) {
-                    UserStatus.entries.forEach { status ->
-                        DropdownMenuItem(
-                            text = { Text(status.label, style = MaterialTheme.typography.bodyMedium) },
-                            onClick = {
-                                onStatusChange(status)
-                                showStatusMenu = false
-                            },
-                            leadingIcon = {
-                                Box(
-                                    modifier = Modifier
-                                        .size(MaterialTheme.spacing.smallMedium)
-                                        .clip(CircleShape)
-                                        .background(status.color)
-                                )
-                            }
-                        )
-                    }
                 }
             }
         }

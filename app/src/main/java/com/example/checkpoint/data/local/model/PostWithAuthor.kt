@@ -12,7 +12,7 @@ data class PostWithAuthor(
         parentColumn = "authorEmail",
         entityColumn = "email"
     )
-    val author: UserEntity,
+    val author: UserEntity? = null,
     
     @Relation(
         parentColumn = "id",
@@ -22,4 +22,7 @@ data class PostWithAuthor(
     
     val isLikedByCurrentUser: Boolean = false,
     val favoriteCount: Int = 0
-)
+) {
+    val safeAuthor: UserEntity
+        get() = author ?: UserEntity(email = post.authorEmail)
+}

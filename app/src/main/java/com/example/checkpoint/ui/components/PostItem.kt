@@ -1,5 +1,6 @@
 package com.example.checkpoint.ui.components
 
+import android.util.Base64
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,7 +12,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,12 +50,20 @@ fun PostItem(
     onPostClick: (PostWithAuthor) -> Unit = {}
 ) {
     val timeAgo = TimeUtils.getTimeAgo(post.timestamp)
+    var showFullScreenImage by remember { mutableStateOf(false) }
+
+    if (showFullScreenImage && !post.mediaUri.isNullOrBlank()) {
+        FullScreenImageDialog(
+            imageUri = post.mediaUri,
+            onDismiss = { showFullScreenImage = false }
+        )
+    }
     
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = MaterialTheme.spacing.extraSmall)
-            .clickable { author?.let { onPostClick(PostWithAuthor(post, it, tags, isLiked, favoriteCount)) } },
+            .clickable { onPostClick(PostWithAuthor(post, author ?: UserEntity(email = post.authorEmail), tags, isLiked, favoriteCount)) },
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f),
         border = BorderStroke(
@@ -79,9 +88,23 @@ fun PostItem(
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (author?.profilePictureUri != null) {
+                    if (!author?.profilePictureUri.isNullOrBlank()) {
+                        val avatarModel: Any? = remember(author?.profilePictureUri) {
+                            val uri = author?.profilePictureUri
+                            if (uri != null && uri.startsWith("data:")) {
+                                try {
+                                    val base64Data = uri.substringAfter("base64,")
+                                    Base64.decode(base64Data, Base64.DEFAULT)
+                                } catch (e: Exception) {
+                                    uri
+                                }
+                            } else {
+                                uri
+                            }
+                        }
+
                         AsyncImage(
-                            model = author.profilePictureUri,
+                            model = avatarModel,
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -121,28 +144,32 @@ fun PostItem(
             )
 
             // MEDIA SECTION
-            if (post.mediaUri != null) {
+            if (!post.mediaUri.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
-                when (post.mediaType) {
-                    MediaType.IMAGE -> {
-                        AsyncImage(
-                            model = post.mediaUri,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(250.dp)
-                                .clip(MaterialTheme.shapes.large),
-                            contentScale = ContentScale.Crop
-                        )
+                val imageModel: Any? = remember(post.mediaUri) {
+                    val uri = post.mediaUri
+                    if (uri != null && uri.startsWith("data:")) {
+                        try {
+                            val base64Data = uri.substringAfter("base64,")
+                            Base64.decode(base64Data, Base64.DEFAULT)
+                        } catch (_: Exception) {
+                            uri
+                        }
+                    } else {
+                        uri
                     }
-                    MediaType.VIDEO -> {
-                        VideoPlayer(
-                            videoUri = post.mediaUri,
-                            isMuted = post.isMuted
-                        )
-                    }
-                    else -> {}
                 }
+
+                AsyncImage(
+                    model = imageModel,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 300.dp)
+                        .clip(MaterialTheme.shapes.large)
+                        .clickable { showFullScreenImage = true },
+                    contentScale = ContentScale.Crop
+                )
             }
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))

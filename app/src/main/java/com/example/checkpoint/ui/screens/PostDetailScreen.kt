@@ -42,7 +42,8 @@ fun PostDetailScreen(
     comments: List<CommentWithAuthor>,
     onBack: () -> Unit,
     onAddComment: (String, String?) -> Unit,
-    onToggleLike: (String) -> Unit
+    onToggleLike: (String) -> Unit,
+    onUserClick: (UserEntity) -> Unit = {}
 ) {
     var commentText by remember { mutableStateOf("") }
     var replyingTo by remember { mutableStateOf<CommentWithAuthor?>(null) }
@@ -155,11 +156,12 @@ fun PostDetailScreen(
             item {
                 PostItem(
                     post = postWithAuthor.post,
-                    author = postWithAuthor.author,
+                    author = postWithAuthor.safeAuthor,
                     tags = postWithAuthor.tags,
                     isLiked = postWithAuthor.isLikedByCurrentUser,
                     favoriteCount = postWithAuthor.favoriteCount,
-                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) }
+                    onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
+                    onAuthorClick = { onUserClick(postWithAuthor.safeAuthor) }
                 )
             }
             
@@ -207,7 +209,7 @@ fun CommentItem(
     onToggleExpand: () -> Unit
 ) {
     val comment = commentWithAuthor.comment
-    val author = commentWithAuthor.author
+    val author = commentWithAuthor.safeAuthor
 
     Row(
         modifier = Modifier

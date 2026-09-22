@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
  */
 @Entity(
     tableName = "users",
-    indices = [Index(value = ["username"], unique = true)]
+    indices = [Index(value = ["username"])]
 )
 data class UserEntity(
     @PrimaryKey val email: String = "",

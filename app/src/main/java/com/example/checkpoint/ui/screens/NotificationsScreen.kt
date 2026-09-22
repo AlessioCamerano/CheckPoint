@@ -50,7 +50,7 @@ fun NotificationsScreen(
                 actions = {
                     if (notifications.isNotEmpty()) {
                         TextButton(onClick = onClearAll) {
-                            Text("Cancella tutto", color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.notification_clear_all), color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 },

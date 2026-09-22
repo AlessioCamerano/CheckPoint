@@ -1,7 +1,7 @@
 package com.example.checkpoint.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.UUID
 
@@ -10,19 +10,9 @@ import java.util.UUID
  */
 @Entity(
     tableName = "comments",
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["postId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["email"],
-            childColumns = ["authorEmail"],
-            onDelete = ForeignKey.CASCADE
-        )
+    indices = [
+        Index(value = ["postId"]),
+        Index(value = ["authorEmail"])
     ]
 )
 data class CommentEntity(

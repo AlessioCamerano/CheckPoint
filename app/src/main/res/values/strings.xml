@@ -131,6 +131,16 @@
     <string name="notifications">Notifications</string>
     <string name="notifications_title">Notifications</string>
     <string name="notifications_empty">No notifications yet</string>
+    <string name="notification_like_title">New like</string>
+    <string name="notification_like_body">%1$s liked your checkpoint</string>
+    <string name="notification_follow_title">New follower</string>
+    <string name="notification_follow_body">%1$s is now following you</string>
+    <string name="notification_message_title">New message</string>
+    <string name="notification_comment_title">New comment</string>
+    <string name="notification_reply_title">New reply</string>
+    <string name="notification_clear_all">Clear all</string>
+    <string name="notification_time_now">Just now</string>
+    <string name="checkpoint_created_success">Checkpoint created successfully!</string>
 
     <!-- Misc -->
     <string name="support_title">Customer Support</string>
@@ -142,7 +152,7 @@
     <string name="onboarding_slide_2_title">Build your player circle</string>
     <string name="onboarding_slide_2_subtitle">Follow creators and friends to keep your feed always fresh and relevant.</string>
     <string name="onboarding_slide_3_title">Start conversations instantly</string>
-    <string name="onboarding_slide_3_subtitle">Share ideas, react to posts, and chat with your community in real time.</string>
+    <string name="onboarding_slide_3_subtitle">Share ideas, react to checkpoints, and chat with your community in real time.</string>
     <string name="onboarding_slide_4_title">Never miss important updates</string>
     <string name="onboarding_slide_4_subtitle">Get signals on activity, interactions, and moments that matter to you.</string>
     <string name="onboarding_permissions_title">Enable essential permissions</string>

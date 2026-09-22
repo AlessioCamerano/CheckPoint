@@ -120,17 +120,7 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
 
     override suspend fun clearSession() {
         context?.dataStore?.edit { preferences ->
-            val email = preferences[PreferencesKeys.USER_EMAIL]
-            if (!email.isNullOrBlank()) {
-                val key = stringSetPreferencesKey("search_history_$email")
-                preferences.remove(key)
-            }
-
-            // Resetta tutti i flag di sessione e onboarding
-            preferences[PreferencesKeys.IS_LOGGED_IN] = false
-            preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = false
-            preferences.remove(PreferencesKeys.USER_EMAIL)
-            preferences.remove(PreferencesKeys.IS_DARK_THEME)
+            preferences.clear()
         }
     }
 }

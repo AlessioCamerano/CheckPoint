@@ -1,24 +1,14 @@
 package com.example.checkpoint.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
+import androidx.room.Index
 
 @Entity(
     tableName = "post_likes",
     primaryKeys = ["postId", "userEmail"],
-    foreignKeys = [
-        ForeignKey(
-            entity = PostEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["postId"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["email"],
-            childColumns = ["userEmail"],
-            onDelete = ForeignKey.CASCADE
-        )
+    indices = [
+        Index(value = ["postId"]),
+        Index(value = ["userEmail"])
     ]
 )
 data class PostLikeEntity(

@@ -95,6 +95,8 @@ interface MainRepository {
         targetId: String? = null
     )
     suspend fun deleteNotification(notificationId: String)
+    suspend fun markNotificationAsRead(notificationId: String)
+    suspend fun clearAllNotifications(currentUserEmail: String)
 }
 
 class MainRepositoryImpl(
@@ -171,6 +173,10 @@ class MainRepositoryImpl(
                     .orderBy("timestamp", FirestoreQuery.Direction.DESCENDING)
                     .limit(50).get().await()
                 val remotePosts = postsSnapshot.toObjects(PostEntity::class.java)
+                val remoteIds = remotePosts.map { it.id }
+                if (remoteIds.isNotEmpty()) {
+                    postDao.deletePostsNotIn(remoteIds)
+                }
                 postDao.insertPosts(remotePosts)
                 Log.d("CheckPointDebug", "Main: Sincronizzati ${remotePosts.size} post")
                 
@@ -258,7 +264,7 @@ class MainRepositoryImpl(
                 "initialMessage" to postToUpload.initialMessage,
                 "timestamp" to postToUpload.timestamp,
                 "mediaUri" to postToUpload.mediaUri,
-                "mediaType" to postToUpload.mediaType,
+                "mediaType" to postToUpload.mediaType.name,
                 "tags" to tags
             )
             
@@ -306,7 +312,7 @@ class MainRepositoryImpl(
                     createNotificationInternal(
                         recipientEmail = recipientEmail,
                         title = "Nuovo like",
-                        body = "$userEmail ha messo like al tuo post",
+                        body = "$userEmail ha messo like al tuo checkpoint",
                         route = "post_detail",
                         type = "like",
                         senderEmail = userEmail,
@@ -461,6 +467,18 @@ class MainRepositoryImpl(
             firestore.collection("messages").document(message.id).set(message).await()
             Log.d("CheckPointDebug", "Main: Messaggio inviato con successo su FIRESTORE")
             chatDao.insertMessage(message)
+
+            if (message.receiverEmail.isNotBlank() && message.receiverEmail != "global" && message.receiverEmail != message.senderEmail) {
+                createNotificationInternal(
+                    recipientEmail = message.receiverEmail,
+                    title = "Nuovo messaggio",
+                    body = message.content,
+                    route = "chat",
+                    type = "message",
+                    senderEmail = message.senderEmail,
+                    targetId = message.senderEmail
+                )
+            }
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "Main: ERRORE invio messaggio FIRESTORE: ${e.message}", e)
         }
@@ -527,15 +545,20 @@ class MainRepositoryImpl(
                 }
             }
 
-        // Listener per nuovi post (ultimi 20)
+        // Listener per nuovi post (inclusi inserimenti, modifiche e rimozioni)
         postsListener = firestore.collection("posts")
             .orderBy("timestamp", FirestoreQuery.Direction.DESCENDING)
             .limit(20)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) return@addSnapshotListener
-                val posts = snapshot?.toObjects(PostEntity::class.java) ?: emptyList()
-                if (posts.isNotEmpty()) {
-                    repositoryScope.launch { postDao.insertPosts(posts) }
+                snapshot?.documentChanges?.forEach { change ->
+                    val post = change.document.toObject(PostEntity::class.java)
+                    repositoryScope.launch {
+                        when (change.type) {
+                            DocumentChange.Type.ADDED, DocumentChange.Type.MODIFIED -> postDao.insertPost(post)
+                            DocumentChange.Type.REMOVED -> postDao.deletePost(change.document.id)
+                        }
+                    }
                 }
             }
 
@@ -617,6 +640,20 @@ class MainRepositoryImpl(
             firestore.collection("comments").document(comment.id).set(comment).await()
             Log.d("CheckPointDebug", "Main: Commento aggiunto con successo su FIRESTORE")
             commentDao.insertComment(comment)
+
+            val postDoc = firestore.collection("posts").document(comment.postId).get().await()
+            val recipientEmail = postDoc.getString("authorEmail")
+            if (!recipientEmail.isNullOrBlank() && recipientEmail != comment.authorEmail) {
+                createNotificationInternal(
+                    recipientEmail = recipientEmail,
+                    title = "Nuovo commento",
+                    body = "${comment.authorEmail} ha commentato il tuo checkpoint",
+                    route = "post_detail",
+                    type = "comment",
+                    senderEmail = comment.authorEmail,
+                    targetId = comment.postId
+                )
+            }
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "Main: ERRORE aggiunta commento FIRESTORE: ${e.message}", e)
         }
@@ -674,6 +711,32 @@ class MainRepositoryImpl(
             firestore.collection("notifications").document(notificationId).delete().await()
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "Error deleting notification: ${e.message}", e)
+        }
+    }
+
+    override suspend fun markNotificationAsRead(notificationId: String) {
+        if (notificationId.isBlank()) return
+        try {
+            firestore.collection("notifications").document(notificationId)
+                .update("isRead", true).await()
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Error marking notification as read: ${e.message}", e)
+        }
+    }
+
+    override suspend fun clearAllNotifications(currentUserEmail: String) {
+        if (currentUserEmail.isBlank()) return
+        try {
+            val snapshot = firestore.collection("notifications")
+                .whereEqualTo("recipientEmail", currentUserEmail)
+                .get().await()
+            val batch = firestore.batch()
+            snapshot.documents.forEach { doc ->
+                batch.delete(doc.reference)
+            }
+            batch.commit().await()
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Error clearing all notifications: ${e.message}", e)
         }
     }
 

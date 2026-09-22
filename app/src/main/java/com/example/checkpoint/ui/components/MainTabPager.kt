@@ -60,6 +60,7 @@ fun MainTabPager(
                 onClearHistory = onClearHistory,
                 onToggleLike = onToggleLike,
                 onUserClick = onUserClick,
+                onPostClick = onPostClick,
                 onTagClick = onTagClick,
                 onSortChange = onSearchSortChange
             )

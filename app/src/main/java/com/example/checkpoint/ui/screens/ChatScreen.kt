@@ -127,7 +127,7 @@ fun ChatScreen(
  */
 @Composable
 fun ChatBubble(message: MessageEntity, isMe: Boolean) {
-    val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    val timeFormatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     val timeString = timeFormatter.format(Date(message.timestamp))
 
     Column(

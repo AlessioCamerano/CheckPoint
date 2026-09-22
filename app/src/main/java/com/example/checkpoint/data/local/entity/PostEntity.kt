@@ -1,7 +1,6 @@
 package com.example.checkpoint.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.UUID
@@ -18,14 +17,6 @@ enum class MediaType {
  */
 @Entity(
     tableName = "posts",
-    foreignKeys = [
-        ForeignKey(
-            entity = UserEntity::class,
-            parentColumns = ["email"],
-            childColumns = ["authorEmail"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
     indices = [Index(value = ["authorEmail"])]
 )
 data class PostEntity(

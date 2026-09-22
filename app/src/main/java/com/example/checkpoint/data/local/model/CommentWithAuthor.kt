@@ -11,5 +11,8 @@ data class CommentWithAuthor(
         parentColumn = "authorEmail",
         entityColumn = "email"
     )
-    val author: UserEntity
-)
+    val author: UserEntity? = null
+) {
+    val safeAuthor: UserEntity
+        get() = author ?: UserEntity(email = comment.authorEmail)
+}

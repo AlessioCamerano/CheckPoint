@@ -21,8 +21,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.navigation.AppNavigation
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.viewmodel.MainViewModel
+import com.example.checkpoint.util.NotificationHelper
 
 class MainActivity : ComponentActivity() {
+    private var mainViewModel: MainViewModel? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,6 +36,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
+            mainViewModel = viewModel
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -74,6 +78,11 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        recreate()
+        val route = intent.getStringExtra(NotificationHelper.EXTRA_TARGET_ROUTE)
+        val targetId = intent.getStringExtra(NotificationHelper.EXTRA_TARGET_ID)
+        val notifId = intent.getStringExtra(NotificationHelper.EXTRA_NOTIFICATION_ID)
+        if (!route.isNullOrBlank()) {
+            mainViewModel?.handleNotificationIntent(route, targetId, notifId)
+        }
     }
 }

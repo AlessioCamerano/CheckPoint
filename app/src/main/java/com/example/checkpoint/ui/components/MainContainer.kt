@@ -16,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
@@ -63,11 +65,13 @@ fun MainContainer(
     val homeIndex = 2
     val pagerState = rememberPagerState(initialPage = homeIndex) { tabs.size }
 
+    val successMessage = stringResource(R.string.checkpoint_created_success)
+
     // Feedback per la creazione del post
     LaunchedEffect(uiState.postSuccess) {
         if (uiState.postSuccess) {
             scope.launch {
-                snackbarHostState.showSnackbar("Checkpoint created successfully!")
+                snackbarHostState.showSnackbar(successMessage)
             }
             pagerState.animateScrollToPage(homeIndex)
             onPostSuccessReset()

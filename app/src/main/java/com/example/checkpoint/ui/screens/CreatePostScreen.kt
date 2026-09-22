@@ -45,7 +45,6 @@ import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.components.MediaUploadButton
-import com.example.checkpoint.ui.components.VideoEditDialog
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.util.MediaEditHelper
@@ -74,18 +73,27 @@ fun CreatePostScreenContent(
     val selectedTags = remember { mutableStateListOf<String>() }
     var mediaUri by remember { mutableStateOf<String?>(null) }
     var mediaType by remember { mutableStateOf(MediaType.NONE) }
-    
-    var showVideoEditDialog by remember { mutableStateOf(false) }
 
-    if (showVideoEditDialog && mediaUri != null) {
-        VideoEditDialog(
-            videoUri = Uri.parse(mediaUri),
-            onDismiss = { showVideoEditDialog = false },
-            onVideoEdited = { editedUri ->
-                mediaUri = editedUri.toString()
-                showVideoEditDialog = false
-            }
-        )
+    LaunchedEffect(state.postSuccess) {
+        if (state.postSuccess) {
+            title = ""
+            initialMessage = ""
+            currentTag = ""
+            selectedTags.clear()
+            mediaUri = null
+            mediaType = MediaType.NONE
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            title = ""
+            initialMessage = ""
+            currentTag = ""
+            selectedTags.clear()
+            mediaUri = null
+            mediaType = MediaType.NONE
+        }
     }
 
     // Suggerimenti Tag
@@ -105,6 +113,7 @@ fun CreatePostScreenContent(
                 val resultUri = result.data?.let { UCrop.getOutput(it) }
                 if (resultUri != null) {
                     mediaUri = resultUri.toString()
+                    mediaType = MediaType.IMAGE
                 }
             }
         }
@@ -114,11 +123,10 @@ fun CreatePostScreenContent(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             uri?.let {
-                val isVideo = MediaStorageManager.isVideo(context, it)
                 val savedUri = MediaStorageManager.saveMediaToInternalStorage(context, it)
                 if (savedUri != null) {
                     mediaUri = savedUri.toString()
-                    mediaType = if (isVideo) MediaType.VIDEO else MediaType.IMAGE
+                    mediaType = MediaType.IMAGE
                 }
             }
         }
@@ -185,7 +193,7 @@ fun CreatePostScreenContent(
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
-            // Anteprima Media con Tasto Modifica
+            // Anteprima Immagine con Tasto Ritaglio
             if (mediaUri != null) {
                 Box(
                     modifier = Modifier
@@ -195,48 +203,25 @@ fun CreatePostScreenContent(
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (mediaType == MediaType.IMAGE) {
-                        AsyncImage(
-                            model = mediaUri,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                        
-                        // Tasto Modifica Immagine
-                        IconButton(
-                            onClick = { 
-                                val intent = MediaEditHelper.startImageCrop(context, Uri.parse(mediaUri)).getIntent(context)
-                                cropLauncher.launch(intent)
-                            },
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(MaterialTheme.spacing.small)
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
-                        ) {
-                            Icon(Icons.Default.Edit, "Modifica", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                        }
-                    } else {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Videocam, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
-                            Text(stringResource(R.string.post_video_selected), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.labelMedium)
-                            Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
-                            
-                            // Tasto Modifica Video (Trimming/Mute)
-                            Button(
-                                onClick = { showVideoEditDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-                                    contentColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = MaterialTheme.shapes.extraLarge,
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(stringResource(R.string.video_edit_title), style = MaterialTheme.typography.labelMedium)
-                            }
-                        }
+                    AsyncImage(
+                        model = mediaUri,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    
+                    // Tasto Modifica Immagine
+                    IconButton(
+                        onClick = { 
+                            val intent = MediaEditHelper.startImageCrop(context, Uri.parse(mediaUri)).getIntent(context)
+                            cropLauncher.launch(intent)
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(MaterialTheme.spacing.small)
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+                    ) {
+                        Icon(Icons.Default.Edit, "Modifica", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
                     
                     // Tasto Chiudi
@@ -258,11 +243,17 @@ fun CreatePostScreenContent(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = { 
                         mediaPickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     }
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
+            }
+
+            LaunchedEffect(currentTag) {
+                if (currentTag.isNotEmpty()) {
+                    scrollState.animateScrollTo(scrollState.maxValue)
+                }
             }
 
             // Campo Tag
@@ -394,6 +385,8 @@ fun CreatePostScreenContent(
             ) {
                 Text(stringResource(R.string.post_button), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
             }
+
+            Spacer(modifier = Modifier.height(150.dp))
         }
     }
 }

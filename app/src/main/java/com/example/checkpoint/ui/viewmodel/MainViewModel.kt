@@ -26,6 +26,7 @@ import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
+import com.example.checkpoint.util.MediaStorageManager
 import com.example.checkpoint.util.NotificationHelper
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Job
@@ -138,106 +139,41 @@ class MainViewModel(
                     }
                 }
 
-                // 1. ascolta local messages in tempo reale
+                // 1. ascolta local messages per la UI
                 launch {
-                    mainRepository.getAllMessagesFlow().collectLatest { messages ->
-                        if (isFirstMessageLoad) {
-                            isFirstMessageLoad = false
-                            return@collectLatest
-                        }
-
-                        val lastMessage = messages.firstOrNull() ?: return@collectLatest
-                        if (lastMessage.receiverEmail == email && !notifiedNotificationIds.contains(lastMessage.id)) {
-                            notifiedNotificationIds.add(lastMessage.id)
-                            
-                            val newNotif = AppNotification(
-                                id = lastMessage.id,
-                                title = "Nuovo messaggio",
-                                body = lastMessage.content,
-                                route = "chat",
-                                time = "Ora",
-                                type = "message",
-                                senderEmail = lastMessage.senderEmail,
-                                targetId = lastMessage.senderEmail,
-                                timestamp = lastMessage.timestamp,
-                                isRead = false
-                            )
-                            
-                            localNotifications.update { (listOf(newNotif) + it).distinctBy { n -> n.id } }
-                            if (application != null) {
-                                NotificationHelper.showSystemNotification(
-                                    application,
-                                    newNotif.title,
-                                    newNotif.body,
-                                    newNotif.route,
-                                    newNotif.targetId,
-                                    notificationDocumentId = newNotif.id
-                                )
-                            }
-                        }
+                    mainRepository.getAllMessagesFlow().collectLatest { _ ->
+                        // I messaggi aggiornano le chat in tempo reale tramite UI state
                     }
                 }
 
-                // 2. ascolta local comments in tempo reale
+                // 2. ascolta local comments per la UI
                 launch {
-                    mainRepository.getAllCommentsFlow().collectLatest { comments ->
-                        if (isFirstCommentLoad) {
-                            isFirstCommentLoad = false
-                            return@collectLatest
-                        }
-
-                        val lastCommentWithAuthor = comments.firstOrNull() ?: return@collectLatest
-                        val lastComment = lastCommentWithAuthor.comment
-                        
-                        // Evita le notifiche per i propri commenti
-                        if (lastComment.authorEmail == email) return@collectLatest
-                        
-                        if (!notifiedNotificationIds.contains(lastComment.id)) {
-                            // Controlla se il commento è per un post dell'utente corrente
-                            val postAuthorEmail = _uiState.value.posts.firstOrNull { it.post.id == lastComment.postId }?.post?.authorEmail
-                            
-                            val isForMe = postAuthorEmail == email || 
-                                          (!lastComment.parentCommentId.isNullOrBlank() && comments.any { it.comment.id == lastComment.parentCommentId && it.comment.authorEmail == email })
-
-                            if (isForMe) {
-                                notifiedNotificationIds.add(lastComment.id)
-                                val title = if (lastComment.parentCommentId.isNullOrBlank()) "Nuovo commento" else "Nuova risposta"
-                                val body = "${lastCommentWithAuthor.author.username}: ${lastComment.content}"
-                                
-                                val newNotif = AppNotification(
-                                    id = lastComment.id,
-                                    title = title,
-                                    body = body,
-                                    route = "post_detail",
-                                    time = "Ora",
-                                    type = if (lastComment.parentCommentId.isNullOrBlank()) "comment" else "reply",
-                                    senderEmail = lastComment.authorEmail,
-                                    targetId = lastComment.postId,
-                                    timestamp = lastComment.timestamp,
-                                    isRead = false
-                                )
-
-                                localNotifications.update { (listOf(newNotif) + it).distinctBy { n -> n.id } }
-                                if (application != null) {
-                                    NotificationHelper.showSystemNotification(
-                                        application,
-                                        newNotif.title,
-                                        newNotif.body,
-                                        newNotif.route,
-                                        newNotif.targetId,
-                                        notificationDocumentId = newNotif.id
-                                    )
-                                }
-                            }
-                        }
+                    mainRepository.getAllCommentsFlow().collectLatest { _ ->
+                        // I commenti aggiornano i dettagli post in tempo reale tramite UI state
                     }
                 }
 
-                // 3. ascolta notifiche Firestore da repository
+                // 3. ascolta notifiche Firestore da repository per la barra di stato ed il centro notifiche
                 launch {
                     mainRepository.observeNotifications(email).collectLatest { remoteNotifs ->
                         localNotifications.update { current ->
                             (remoteNotifs + current).distinctBy { n -> n.id }
+                        }
+                        remoteNotifs.forEach { notif ->
+                            if (notif.id.isNotBlank() && !notif.isRead && !notifiedNotificationIds.contains(notif.id)) {
+                                notifiedNotificationIds.add(notif.id)
+                                if (application != null) {
+                                    NotificationHelper.showSystemNotification(
+                                        application,
+                                        notif.title,
+                                        notif.body,
+                                        notif.route,
+                                        notif.targetId,
+                                        notificationDocumentId = notif.id
+                                    )
+                                }
+                                mainRepository.markNotificationAsRead(notif.id)
+                            }
                         }
                     }
                 }
@@ -245,20 +181,81 @@ class MainViewModel(
         }
     }
 
+    val pendingNavigation = MutableStateFlow<Triple<String, String?, String?>?>(null)
+
+    fun handleNotificationIntent(route: String, targetId: String?, notificationId: String?) {
+        viewModelScope.launch {
+            if (!notificationId.isNullOrBlank()) {
+                try {
+                    mainRepository.deleteNotification(notificationId)
+                } catch (e: Exception) {
+                    Log.e("CheckPointDebug", "Error deleting notification: ${e.message}")
+                }
+            }
+            when (route) {
+                "chat" -> {
+                    if (!targetId.isNullOrBlank()) {
+                        val partner = try {
+                            _uiState.value.chatPartners.firstOrNull { it.email == targetId }
+                                ?: authRepository.getUser(targetId)
+                                ?: UserEntity(email = targetId, username = targetId.split("@")[0])
+                        } catch (e: Exception) {
+                            Log.e("CheckPointDebug", "Error resolving chat partner: ${e.message}")
+                            UserEntity(email = targetId, username = targetId.split("@")[0])
+                        }
+                        onOpenChat(partner)
+                    }
+                }
+                "post_detail" -> {
+                    if (!targetId.isNullOrBlank()) {
+                        val post = try {
+                            _uiState.value.posts.firstOrNull { it.post.id == targetId }
+                                ?: mainRepository.getPostById(targetId, _uiState.value.currentUserEmail ?: "")
+                        } catch (e: Exception) {
+                            Log.e("CheckPointDebug", "Error resolving post detail: ${e.message}")
+                            null
+                        }
+                        if (post != null) {
+                            onOpenPostDetail(post)
+                        }
+                    }
+                }
+            }
+            pendingNavigation.value = Triple(route, targetId, notificationId)
+        }
+    }
+
+    fun consumePendingNavigation() {
+        pendingNavigation.value = null
+    }
+
     fun onNotificationClicked(notification: AppNotification) {
         if (notification.id.isBlank()) return
         localNotifications.update { it.filterNot { n -> n.id == notification.id } }
         notifiedNotificationIds.remove(notification.id)
+        viewModelScope.launch {
+            mainRepository.deleteNotification(notification.id)
+        }
     }
 
     fun onNotificationClickedById(notificationId: String) {
         if (notificationId.isBlank()) return
         localNotifications.update { it.filterNot { n -> n.id == notificationId } }
         notifiedNotificationIds.remove(notificationId)
+        viewModelScope.launch {
+            mainRepository.deleteNotification(notificationId)
+        }
     }
 
     fun onClearAllNotifications() {
+        val currentEmail = _uiState.value.currentUserEmail ?: ""
         localNotifications.value = emptyList()
+        notifiedNotificationIds.clear()
+        if (currentEmail.isNotBlank()) {
+            viewModelScope.launch {
+                mainRepository.clearAllNotifications(currentEmail)
+            }
+        }
     }
 
     // Gestione reattiva dei partner di chat
@@ -446,6 +443,11 @@ class MainViewModel(
             try {
                 preferencesRepository.userEmail.collectLatest { email ->
                     if (!email.isNullOrBlank()) {
+                        val previousEmail = _uiState.value.currentUserEmail
+                        if (previousEmail != null && previousEmail != email) {
+                            Log.d("CheckPointDebug", "Cambio utente rilevato ($previousEmail -> $email): reset dati locali Room")
+                            mainRepository.clearLocalData()
+                        }
                         var user = authRepository.getUser(email)
                         
                         // Se l'utente non è in Room, si prova a recuperarlo da Firebase e crearlo
@@ -501,17 +503,21 @@ class MainViewModel(
                 if (email != null) {
                     val currentUser = authRepository.getUser(email)
                     if (currentUser != null) {
+                        val processedPic = if (application != null && !newProfilePictureUri.isNullOrBlank()) {
+                            MediaStorageManager.convertUriToBase64(application, newProfilePictureUri)
+                        } else newProfilePictureUri
+
                         val updatedUser = currentUser.copy(
                             username = newUsername,
                             bio = newBio,
-                            profilePictureUri = newProfilePictureUri
+                            profilePictureUri = processedPic
                         )
                         authRepository.updateUser(updatedUser)
                         _uiState.update { 
                             it.copy(
                                 username = newUsername,
                                 bio = newBio,
-                                profilePictureUri = newProfilePictureUri,
+                                profilePictureUri = processedPic,
                                 errorMessage = null
                             ) 
                         }
@@ -535,12 +541,18 @@ class MainViewModel(
                 _uiState.update { it.copy(isLoading = true) }
                 val email = preferencesRepository.userEmail.first()
                 if (email != null) {
+                    val resolvedMediaType = if (!mediaUri.isNullOrBlank()) MediaType.IMAGE else MediaType.NONE
+
+                    val processedMediaUri = if (application != null && !mediaUri.isNullOrBlank()) {
+                        MediaStorageManager.convertUriToBase64(application, mediaUri)
+                    } else mediaUri
+
                     val newPost = PostEntity(
                         authorEmail = email,
                         title = title,
                         initialMessage = message,
-                        mediaUri = mediaUri,
-                        mediaType = mediaType
+                        mediaUri = processedMediaUri,
+                        mediaType = resolvedMediaType
                     )
                     mainRepository.createPost(newPost, tags)
                     _uiState.update { it.copy(isLoading = false, postSuccess = true) }
@@ -580,9 +592,13 @@ class MainViewModel(
                                 PostSortOrder.NEWEST -> result.sortedByDescending { it.post.timestamp }
                                 PostSortOrder.TRENDING -> result.sortedByDescending { it.favoriteCount }
                             }
-                            _uiState.update {
-                                it.copy(
+                            _uiState.update { currentState ->
+                                val updatedSelectedPost = currentState.selectedPost?.let { current ->
+                                    result.firstOrNull { it.post.id == current.post.id } ?: current
+                                }
+                                currentState.copy(
                                     posts = sortedList,
+                                    selectedPost = updatedSelectedPost,
                                     sortOrder = sortOrder,
                                     isLoading = false,
                                     isRefreshing = false
@@ -611,7 +627,7 @@ class MainViewModel(
                 _sortOrder.value = newOrder
                 // Il caricamento viene rimosso appena viene caricata la nuova lista
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Error sorting posts: ${e.message}") }
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Error sorting checkpoints: ${e.message}") }
             }
         }
     }
@@ -625,10 +641,31 @@ class MainViewModel(
             try {
                 val email = preferencesRepository.userEmail.first()
                 if (email != null) {
+                    _uiState.update { state ->
+                        val updatedPosts = state.posts.map { item ->
+                            if (item.post.id == postId) {
+                                val newIsLiked = !item.isLikedByCurrentUser
+                                val newCount = if (newIsLiked) item.favoriteCount + 1 else (item.favoriteCount - 1).coerceAtLeast(0)
+                                item.copy(isLikedByCurrentUser = newIsLiked, favoriteCount = newCount)
+                            } else {
+                                item
+                            }
+                        }
+                        val updatedSelected = state.selectedPost?.let { item ->
+                            if (item.post.id == postId) {
+                                val newIsLiked = !item.isLikedByCurrentUser
+                                val newCount = if (newIsLiked) item.favoriteCount + 1 else (item.favoriteCount - 1).coerceAtLeast(0)
+                                item.copy(isLikedByCurrentUser = newIsLiked, favoriteCount = newCount)
+                            } else {
+                                item
+                            }
+                        }
+                        state.copy(posts = updatedPosts, selectedPost = updatedSelected)
+                    }
                     mainRepository.toggleLike(postId, email)
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error liking post: ${e.message}") }
+                _uiState.update { it.copy(errorMessage = "Error liking checkpoint: ${e.message}") }
             }
         }
     }
@@ -715,6 +752,7 @@ class MainViewModel(
                 _uiState.value = MainUiState(isDarkTheme = _uiState.value.isDarkTheme)
                 mainRepository.clearLocalData()
                 preferencesRepository.clearSession()
+                authRepository.logout()
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error logging out: ${e.message}") }
             }
@@ -785,13 +823,15 @@ class MainViewModel(
 
     // Logica Chat: apre la chat con un utente
     fun onOpenChat(partner: UserEntity) {
-        val currentEmail = _uiState.value.currentUserEmail ?: return
         _uiState.update { it.copy(selectedChatPartner = partner) }
         
         chatJob?.cancel()
         chatJob = viewModelScope.launch {
-            mainRepository.getChatMessages(currentEmail, partner.email).collectLatest { messages ->
-                _uiState.update { it.copy(currentChatMessages = messages) }
+            val currentEmail = preferencesRepository.userEmail.first() ?: _uiState.value.currentUserEmail
+            if (currentEmail != null) {
+                mainRepository.getChatMessages(currentEmail, partner.email).collectLatest { messages ->
+                    _uiState.update { it.copy(currentChatMessages = messages) }
+                }
             }
         }
     }
@@ -801,10 +841,9 @@ class MainViewModel(
         viewModelScope.launch {
             val partner = _uiState.value.chatPartners.firstOrNull { it.email == partnerEmail }
                 ?: authRepository.getUser(partnerEmail)
+                ?: UserEntity(email = partnerEmail, username = partnerEmail.split("@")[0])
             
-            if (partner != null) {
-                onOpenChat(partner)
-            }
+            onOpenChat(partner)
         }
     }
 

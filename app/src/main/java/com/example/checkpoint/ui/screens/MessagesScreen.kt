@@ -1,5 +1,6 @@
 package com.example.checkpoint.ui.screens
 
+import android.util.Base64
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -166,18 +167,33 @@ fun CompactPostItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val author = postWithAuthor.safeAuthor
             // Mini Avatar del post author
             Box(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
-                    .clickable { onUserClick(postWithAuthor.author) },
+                    .clickable { onUserClick(author) },
                 contentAlignment = Alignment.Center
             ) {
-                if (postWithAuthor.author.profilePictureUri != null) {
+                if (!author.profilePictureUri.isNullOrBlank()) {
+                    val avatarModel: Any? = remember(author.profilePictureUri) {
+                        val uri = author.profilePictureUri
+                        if (uri != null && uri.startsWith("data:")) {
+                            try {
+                                val base64Data = uri.substringAfter("base64,")
+                                Base64.decode(base64Data, Base64.DEFAULT)
+                            } catch (_: Exception) {
+                                uri
+                            }
+                        } else {
+                            uri
+                        }
+                    }
+
                     AsyncImage(
-                        model = postWithAuthor.author.profilePictureUri,
+                        model = avatarModel,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -199,7 +215,7 @@ fun CompactPostItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = stringResource(R.string.post_by_author, postWithAuthor.author.username),
+                    text = stringResource(R.string.post_by_author, author.username.ifBlank { author.email }),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.secondary,
                     maxLines = 1

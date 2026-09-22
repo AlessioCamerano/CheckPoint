@@ -122,15 +122,6 @@ fun BottomNavBar(
                                 )
                             }
                         }
-                        // Pallino stato in tempo reale
-                        Box(
-                            modifier = Modifier
-                                .size(MaterialTheme.spacing.small)
-                                .offset(x = 1.dp, y = 1.dp)
-                                .clip(CircleShape)
-                                .background(userStatus.color)
-                                .align(Alignment.BottomEnd)
-                        )
                     }
                 },
                 colors = NavigationBarItemDefaults.colors(
