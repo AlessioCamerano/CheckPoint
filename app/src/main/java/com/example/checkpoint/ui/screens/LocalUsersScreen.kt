@@ -42,7 +42,6 @@ import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.MainUiState
-import com.google.android.gms.location.LocationServices
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,13 +54,14 @@ fun LocalUsersScreen(
     onUserClick: (UserEntity) -> Unit
 ) {
     val context = LocalContext.current
+    val locationRequiredText = stringResource(R.string.local_users_location_required)
     var locationError by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             if (!granted) {
-                locationError = context.getString(R.string.local_users_location_required)
+                locationError = locationRequiredText
             } else {
                 fetchCurrentLocation(context, onSearchNearbyUsers, onError = { locationError = it })
             }
@@ -154,16 +154,15 @@ private fun fetchCurrentLocation(
     onSearchNearbyUsers: (Double, Double) -> Unit,
     onError: (String) -> Unit
 ) {
-    val client = LocationServices.getFusedLocationProviderClient(context)
-    client.lastLocation
-        .addOnSuccessListener { location ->
-            if (location == null) {
-                onError(context.getString(R.string.local_users_updating_position))
-            } else {
-                onSearchNearbyUsers(location.latitude, location.longitude)
-            }
-        }
-        .addOnFailureListener {
-            onError(it.message ?: context.getString(R.string.local_users_location_required))
-        }
+    val locationManager = context.getSystemService(android.location.LocationManager::class.java)
+        as? android.location.LocationManager
+
+    val location = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+        ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+
+    if (location == null) {
+        onError(context.getString(R.string.local_users_updating_position))
+    } else {
+        onSearchNearbyUsers(location.latitude, location.longitude)
+    }
 }

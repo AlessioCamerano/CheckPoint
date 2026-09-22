@@ -6,7 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -43,15 +50,61 @@ object Screen {
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
-    initialRoute: String? = null
+    initialRoute: String? = null,
+    initialTargetId: String? = null,
+    initialNotificationId: String? = null
 ) {
     val navController = rememberNavController()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val hasCompletedOnboarding by viewModel.hasCompletedOnboarding.collectAsStateWithLifecycle()
     val isSessionLoaded by viewModel.isSessionLoaded.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
+    // Flag per evitare di gestire l'intent iniziale più volte
+    var initialIntentHandled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isSessionLoaded, isLoggedIn, initialRoute, uiState.chatPartners, uiState.posts) {
+        if (!isSessionLoaded || !isLoggedIn || initialRoute.isNullOrBlank() || initialIntentHandled) return@LaunchedEffect
+
+        val dataReady = when (initialRoute) {
+            Screen.Chat -> uiState.chatPartners.any { it.email == initialTargetId }
+            Screen.PostDetail -> uiState.posts.any { it.post.id == initialTargetId }
+            else -> true
+        }
+
+        if (dataReady) {
+            if (!initialNotificationId.isNullOrBlank()) {
+                viewModel.onNotificationClickedById(initialNotificationId)
+            }
+            
+            when (initialRoute) {
+                Screen.Chat -> {
+                    if (!initialTargetId.isNullOrBlank()) {
+                        viewModel.onOpenChatByEmail(initialTargetId)
+                        navController.navigate(Screen.Chat) {
+                            popUpTo(Screen.Home) { inclusive = false }
+                        }
+                    }
+                }
+                Screen.PostDetail -> {
+                    if (!initialTargetId.isNullOrBlank()) {
+                        viewModel.onOpenPostDetailById(initialTargetId)
+                        navController.navigate(Screen.PostDetail) {
+                            popUpTo(Screen.Home) { inclusive = false }
+                        }
+                    }
+                }
+                else -> {
+                    navController.navigate(initialRoute) {
+                        popUpTo(Screen.Home) { inclusive = false }
+                    }
+                }
+            }
+            initialIntentHandled = true
+        }
+    }
+
     val startDestination = when {
-        initialRoute != null && isLoggedIn -> initialRoute
         initialRoute != null && !isLoggedIn -> Screen.Login
         isLoggedIn -> Screen.Home
         hasCompletedOnboarding -> Screen.Login
@@ -280,15 +333,31 @@ fun AppNavigation(
                 NotificationsScreen(
                     notifications = uiState.notifications,
                     onBack = { navController.popBackStack() },
+                    onClearAll = { viewModel.onClearAllNotifications() },
                     onNotificationClick = { notification ->
+                        viewModel.onNotificationClicked(notification)
                         when (notification.route) {
                             "chat" -> {
-                                uiState.chatPartners.firstOrNull()?.let { viewModel.onOpenChat(it) }
-                                navController.navigate(Screen.Chat)
+                                val targetEmail = notification.targetId
+                                if (!targetEmail.isNullOrBlank()) {
+                                    viewModel.onOpenChatByEmail(targetEmail)
+                                } else {
+                                    uiState.chatPartners.firstOrNull()?.let { viewModel.onOpenChat(it) }
+                                }
+                                navController.navigate(Screen.Chat) {
+                                    popUpTo(Screen.Home) { inclusive = false }
+                                }
                             }
                             "post_detail" -> {
-                                uiState.posts.firstOrNull()?.let { viewModel.onOpenPostDetail(it) }
-                                navController.navigate(Screen.PostDetail)
+                                val targetId = notification.targetId
+                                if (!targetId.isNullOrBlank()) {
+                                    viewModel.onOpenPostDetailById(targetId)
+                                } else {
+                                    uiState.posts.firstOrNull()?.let { viewModel.onOpenPostDetail(it) }
+                                }
+                                navController.navigate(Screen.PostDetail) {
+                                    popUpTo(Screen.Home) { inclusive = false }
+                                }
                             }
                             "home" -> {
                                 navController.navigate(Screen.Home) {

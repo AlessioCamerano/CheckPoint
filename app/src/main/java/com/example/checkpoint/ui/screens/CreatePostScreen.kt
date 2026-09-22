@@ -52,7 +52,7 @@ import com.example.checkpoint.util.MediaEditHelper
 import com.example.checkpoint.util.MediaStorageManager
 import com.yalantis.ucrop.UCrop
 
-@UnstableApi
+@OptIn(UnstableApi::class)
 @Composable
 fun CreatePostScreen(
     state: MainUiState,
@@ -61,8 +61,7 @@ fun CreatePostScreen(
     CreatePostScreenContent(state = state, onCreatePost = onCreatePost)
 }
 
-@UnstableApi
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(UnstableApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreatePostScreenContent(
     state: MainUiState,
@@ -400,6 +399,7 @@ fun CreatePostScreenContent(
 }
 
 @Preview(showSystemUi = true, name = "Create Post Dark")
+@OptIn(UnstableApi::class)
 @Composable
 fun CreatePostScreenDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
@@ -408,6 +408,7 @@ fun CreatePostScreenDarkPreview() {
 }
 
 @Preview(showSystemUi = true, name = "Create Post Light")
+@OptIn(UnstableApi::class)
 @Composable
 fun CreatePostScreenLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {

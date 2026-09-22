@@ -22,13 +22,12 @@ import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import kotlinx.coroutines.tasks.await
 import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.UserStatus
+import com.example.checkpoint.util.NotificationHelper
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,11 +40,17 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
-    private val application: Application,
+    private val application: Application?,
     private val mainRepository: MainRepository,
     private val authRepository: AuthRepository,
     private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    constructor(
+        mainRepository: MainRepository,
+        authRepository: AuthRepository,
+        preferencesRepository: UserPreferencesRepository
+    ) : this(null, mainRepository, authRepository, preferencesRepository)
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -67,6 +72,11 @@ class MainViewModel(
 
     private val _hasCompletedOnboarding = MutableStateFlow(false)
     val hasCompletedOnboarding: StateFlow<Boolean> = _hasCompletedOnboarding.asStateFlow()
+
+    private val notifiedNotificationIds = mutableSetOf<String>()
+    private val localNotifications = MutableStateFlow<List<AppNotification>>(emptyList())
+    private var isFirstMessageLoad = true
+    private var isFirstCommentLoad = true
 
     // Factory per creare il MainViewModel
     companion object {
@@ -106,6 +116,149 @@ class MainViewModel(
         observeSearchHistory()
         observeCurrentUserFollows() // Osserva follower/following dell'utente loggato
         observeChatPartners()       // Osserva le chat attive
+        observeNotifications()      // Osserva le notifiche in tempo reale
+    }
+
+    private fun observeNotifications() {
+        viewModelScope.launch {
+            preferencesRepository.userEmail.collectLatest { email ->
+                if (email.isNullOrBlank()) {
+                    notifiedNotificationIds.clear()
+                    localNotifications.value = emptyList()
+                    isFirstMessageLoad = true
+                    isFirstCommentLoad = true
+                    _uiState.update { it.copy(notifications = emptyList()) }
+                    return@collectLatest
+                }
+
+                // Sincronizza lo stato con la UI globale
+                launch {
+                    localNotifications.collectLatest { list ->
+                        _uiState.update { it.copy(notifications = list) }
+                    }
+                }
+
+                // 1. ascolta local messages in tempo reale
+                launch {
+                    mainRepository.getAllMessagesFlow().collectLatest { messages ->
+                        if (isFirstMessageLoad) {
+                            isFirstMessageLoad = false
+                            return@collectLatest
+                        }
+
+                        val lastMessage = messages.firstOrNull() ?: return@collectLatest
+                        if (lastMessage.receiverEmail == email && !notifiedNotificationIds.contains(lastMessage.id)) {
+                            notifiedNotificationIds.add(lastMessage.id)
+                            
+                            val newNotif = AppNotification(
+                                id = lastMessage.id,
+                                title = "Nuovo messaggio",
+                                body = lastMessage.content,
+                                route = "chat",
+                                time = "Ora",
+                                type = "message",
+                                senderEmail = lastMessage.senderEmail,
+                                targetId = lastMessage.senderEmail,
+                                timestamp = lastMessage.timestamp,
+                                isRead = false
+                            )
+                            
+                            localNotifications.update { (listOf(newNotif) + it).distinctBy { n -> n.id } }
+                            if (application != null) {
+                                NotificationHelper.showSystemNotification(
+                                    application,
+                                    newNotif.title,
+                                    newNotif.body,
+                                    newNotif.route,
+                                    newNotif.targetId,
+                                    notificationDocumentId = newNotif.id
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 2. ascolta local comments in tempo reale
+                launch {
+                    mainRepository.getAllCommentsFlow().collectLatest { comments ->
+                        if (isFirstCommentLoad) {
+                            isFirstCommentLoad = false
+                            return@collectLatest
+                        }
+
+                        val lastCommentWithAuthor = comments.firstOrNull() ?: return@collectLatest
+                        val lastComment = lastCommentWithAuthor.comment
+                        
+                        // Evita le notifiche per i propri commenti
+                        if (lastComment.authorEmail == email) return@collectLatest
+                        
+                        if (!notifiedNotificationIds.contains(lastComment.id)) {
+                            // Controlla se il commento è per un post dell'utente corrente
+                            val postAuthorEmail = _uiState.value.posts.firstOrNull { it.post.id == lastComment.postId }?.post?.authorEmail
+                            
+                            val isForMe = postAuthorEmail == email || 
+                                          (!lastComment.parentCommentId.isNullOrBlank() && comments.any { it.comment.id == lastComment.parentCommentId && it.comment.authorEmail == email })
+
+                            if (isForMe) {
+                                notifiedNotificationIds.add(lastComment.id)
+                                val title = if (lastComment.parentCommentId.isNullOrBlank()) "Nuovo commento" else "Nuova risposta"
+                                val body = "${lastCommentWithAuthor.author.username}: ${lastComment.content}"
+                                
+                                val newNotif = AppNotification(
+                                    id = lastComment.id,
+                                    title = title,
+                                    body = body,
+                                    route = "post_detail",
+                                    time = "Ora",
+                                    type = if (lastComment.parentCommentId.isNullOrBlank()) "comment" else "reply",
+                                    senderEmail = lastComment.authorEmail,
+                                    targetId = lastComment.postId,
+                                    timestamp = lastComment.timestamp,
+                                    isRead = false
+                                )
+
+                                localNotifications.update { (listOf(newNotif) + it).distinctBy { n -> n.id } }
+                                if (application != null) {
+                                    NotificationHelper.showSystemNotification(
+                                        application,
+                                        newNotif.title,
+                                        newNotif.body,
+                                        newNotif.route,
+                                        newNotif.targetId,
+                                        notificationDocumentId = newNotif.id
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 3. ascolta notifiche Firestore da repository
+                launch {
+                    mainRepository.observeNotifications(email).collectLatest { remoteNotifs ->
+                        localNotifications.update { current ->
+                            (remoteNotifs + current).distinctBy { n -> n.id }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun onNotificationClicked(notification: AppNotification) {
+        if (notification.id.isBlank()) return
+        localNotifications.update { it.filterNot { n -> n.id == notification.id } }
+        notifiedNotificationIds.remove(notification.id)
+    }
+
+    fun onNotificationClickedById(notificationId: String) {
+        if (notificationId.isBlank()) return
+        localNotifications.update { it.filterNot { n -> n.id == notificationId } }
+        notifiedNotificationIds.remove(notificationId)
+    }
+
+    fun onClearAllNotifications() {
+        localNotifications.value = emptyList()
     }
 
     // Gestione reattiva dei partner di chat
@@ -319,6 +472,17 @@ class MainViewModel(
                                     data = "Welcome back, ${user.username}!"
                                 ) 
                             }
+
+                            FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                                if (!task.isSuccessful) {
+                                    Log.w("CheckPointFCM", "Unable to get FCM token", task.exception)
+                                    return@addOnCompleteListener
+                                }
+                                val token = task.result ?: return@addOnCompleteListener
+                                viewModelScope.launch {
+                                    mainRepository.saveFcmToken(email, token)
+                                }
+                            }
                         } else {
                             onLogout()
                         }
@@ -486,11 +650,13 @@ class MainViewModel(
             if (email != null) {
                 mainRepository.syncDataFromFirestore(email)
 
-                val isGranted = ContextCompat.checkSelfPermission(
-                    application,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-                refreshUserLocation(isGranted)
+                if (application != null) {
+                    val isGranted = ContextCompat.checkSelfPermission(
+                        application,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                    refreshUserLocation(isGranted)
+                }
             }
             loadUserProfile()
             delay(1000.milliseconds)
@@ -630,6 +796,18 @@ class MainViewModel(
         }
     }
 
+    fun onOpenChatByEmail(partnerEmail: String) {
+        if (partnerEmail.isBlank()) return
+        viewModelScope.launch {
+            val partner = _uiState.value.chatPartners.firstOrNull { it.email == partnerEmail }
+                ?: authRepository.getUser(partnerEmail)
+            
+            if (partner != null) {
+                onOpenChat(partner)
+            }
+        }
+    }
+
     // Invia un nuovo messaggio diretto
     fun onSendMessage(content: String) {
         if (content.isBlank()) return
@@ -664,6 +842,18 @@ class MainViewModel(
         commentJob = viewModelScope.launch {
             mainRepository.getCommentsForPost(postWithAuthor.post.id).collectLatest { comments ->
                 _uiState.update { it.copy(currentPostComments = comments) }
+            }
+        }
+    }
+
+    fun onOpenPostDetailById(postId: String) {
+        if (postId.isBlank()) return
+        viewModelScope.launch {
+            val post = _uiState.value.posts.firstOrNull { it.post.id == postId }
+                ?: mainRepository.getPostById(postId, _uiState.value.currentUserEmail ?: "")
+            
+            if (post != null) {
+                onOpenPostDetail(post)
             }
         }
     }
@@ -744,12 +934,16 @@ class MainViewModel(
             val email = preferencesRepository.userEmail.first() ?: return@launch
             if (isPermissionGranted) {
                 try {
-                    val client = LocationServices.getFusedLocationProviderClient(application)
-                    // Controllo di sicurezza per Android
-                    if (PackageManager.PERMISSION_GRANTED ==
+                    if (application != null &&
+                        PackageManager.PERMISSION_GRANTED ==
                         ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                        
-                        val location = client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null).await()
+
+                        val locationManager = application.getSystemService(android.location.LocationManager::class.java)
+                            as? android.location.LocationManager
+
+                        val location = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                            ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+
                         if (location != null) {
                             mainRepository.updateUserLocation(email, location.latitude, location.longitude)
                             Log.d("CheckPointDebug", "GPS: Posizione aggiornata all'avvio")
@@ -759,7 +953,6 @@ class MainViewModel(
                     Log.e("CheckPointDebug", "GPS: Errore aggiornamento posizione: ${e.message}")
                 }
             } else {
-                // Se i permessi sono stati rimossi, pulisce i dati online
                 mainRepository.deleteUserLocation(email)
                 Log.d("CheckPointDebug", "GPS: Posizione rimossa (permessi negati)")
             }

@@ -62,9 +62,14 @@ data class MainUiState(
 )
 
 data class AppNotification(
-    val id: Int,
-    val title: String,
-    val body: String,
-    val route: String,
-    val time: String
+    val id: String = "",
+    val title: String = "",
+    val body: String = "",
+    val route: String = "home",
+    val time: String = "",
+    val type: String = "general",
+    val senderEmail: String? = null,
+    val targetId: String? = null,
+    val timestamp: Long = 0L,
+    val isRead: Boolean = false
 )

@@ -100,4 +100,14 @@ interface PostDao {
 
     @Query("DELETE FROM posts WHERE id = :postId")
     suspend fun deletePost(postId: String)
+
+    @Transaction
+    @Query("""
+        SELECT posts.*, 
+        (SELECT COUNT(*) FROM post_likes WHERE postId = posts.id) AS favoriteCount,
+        EXISTS(SELECT 1 FROM post_likes WHERE postId = posts.id AND userEmail = :currentUserEmail) AS isLikedByCurrentUser
+        FROM posts 
+        WHERE posts.id = :postId
+    """)
+    suspend fun getPostById(postId: String, currentUserEmail: String): PostWithAuthor?
 }

@@ -125,8 +125,12 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
                 val key = stringSetPreferencesKey("search_history_$email")
                 preferences.remove(key)
             }
+
+            // Resetta tutti i flag di sessione e onboarding
             preferences[PreferencesKeys.IS_LOGGED_IN] = false
+            preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = false
             preferences.remove(PreferencesKeys.USER_EMAIL)
+            preferences.remove(PreferencesKeys.IS_DARK_THEME)
         }
     }
 }

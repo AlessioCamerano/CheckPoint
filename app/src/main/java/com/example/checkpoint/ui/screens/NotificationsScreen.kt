@@ -34,6 +34,7 @@ import com.example.checkpoint.ui.theme.spacing
 fun NotificationsScreen(
     notifications: List<AppNotification>,
     onBack: () -> Unit,
+    onClearAll: () -> Unit,
     onNotificationClick: (AppNotification) -> Unit
 ) {
     Scaffold(
@@ -44,6 +45,13 @@ fun NotificationsScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(
                             R.string.action_back))
+                    }
+                },
+                actions = {
+                    if (notifications.isNotEmpty()) {
+                        TextButton(onClick = onClearAll) {
+                            Text("Cancella tutto", color = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -150,10 +158,15 @@ fun NotificationItem(
 @Composable
 fun NotificationsScreenDarkPreview() {
     val mocks = listOf(
-        AppNotification(1, "New Like", "Someone liked your checkpoint", "home", "2m ago"),
-        AppNotification(2, "New Comment", "Someone replied to you", "post_detail", "1h ago")
+        AppNotification("1", "New Like", "Someone liked your checkpoint", "home", "2m ago"),
+        AppNotification("2", "New Comment", "Someone replied to you", "post_detail", "1h ago")
     )
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
-        NotificationsScreen(notifications = mocks, onBack = {}, onNotificationClick = {})
+        NotificationsScreen(
+            notifications = mocks,
+            onBack = {},
+            onClearAll = {},
+            onNotificationClick = {}
+        )
     }
 }

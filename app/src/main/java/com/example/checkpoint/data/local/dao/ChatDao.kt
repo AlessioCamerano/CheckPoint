@@ -40,4 +40,6 @@ interface ChatDao {
           AND users.email != :currentUserEmail
     """)
     fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>>
+    @Query("SELECT * FROM messages ORDER BY timestamp DESC")
+    fun getAllMessagesFlow(): Flow<List<MessageEntity>>
 }

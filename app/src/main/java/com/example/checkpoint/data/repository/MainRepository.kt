@@ -16,10 +16,14 @@ import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.CommentWithAuthor
 import com.example.checkpoint.data.local.model.GeoUser
 import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.example.checkpoint.ui.state.AppNotification
+import com.example.checkpoint.util.TimeUtils
 import com.firebase.geofire.GeoFireUtils
 import com.firebase.geofire.GeoLocation
 import com.google.firebase.firestore.DocumentChange
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 
 import com.google.firebase.firestore.FirebaseFirestore
@@ -37,6 +41,7 @@ import java.util.UUID
  */
 interface MainRepository {
     fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>>
+    suspend fun getPostById(postId: String, currentUserEmail: String): PostWithAuthor?
     fun getAllUniqueTags(): Flow<List<String>>
     fun getTrendingTags(): Flow<List<String>>
     fun searchPostsByTitle(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>>
@@ -66,7 +71,10 @@ interface MainRepository {
     // Operazioni per chat
     fun getChatPartners(currentUserEmail: String): Flow<List<UserEntity>>
     fun getChatMessages(user1: String, user2: String): Flow<List<MessageEntity>>
+    fun getAllMessagesFlow(): Flow<List<MessageEntity>>
+    fun getAllCommentsFlow(): Flow<List<CommentWithAuthor>>
     suspend fun sendMessage(message: MessageEntity)
+    suspend fun saveFcmToken(userEmail: String, token: String)
     fun startRealtimeSync(currentUserEmail: String)
     fun stopRealtimeSync()
 
@@ -74,6 +82,19 @@ interface MainRepository {
     fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>>
     suspend fun addComment(comment: CommentEntity)
     fun getCommentCount(postId: String): Flow<Int>
+
+    // Operazioni per notifiche
+    fun observeNotifications(currentUserEmail: String): Flow<List<AppNotification>>
+    suspend fun createNotification(
+        recipientEmail: String,
+        title: String,
+        body: String,
+        route: String = "home",
+        type: String = "general",
+        senderEmail: String? = null,
+        targetId: String? = null
+    )
+    suspend fun deleteNotification(notificationId: String)
 }
 
 class MainRepositoryImpl(
@@ -90,6 +111,19 @@ class MainRepositoryImpl(
     private var postsListener: ListenerRegistration? = null
     private var likesListener: ListenerRegistration? = null
     private var followsListener: ListenerRegistration? = null
+    private var notificationsListener: ListenerRegistration? = null
+
+    override suspend fun saveFcmToken(userEmail: String, token: String) {
+        if (userEmail.isBlank() || token.isBlank()) return
+        firestore.collection("users")
+            .document(userEmail)
+            .set(mapOf("fcmToken" to token), com.google.firebase.firestore.SetOptions.merge())
+            .await()
+    }
+
+    override suspend fun getPostById(postId: String, currentUserEmail: String): PostWithAuthor? {
+        return postDao.getPostById(postId, currentUserEmail)
+    }
 
     override fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>> {
         return postDao.getAllPostsWithAuthor(currentUserEmail)
@@ -260,11 +294,26 @@ class MainRepositoryImpl(
             
             if (doc.exists()) {
                 likeRef.delete().await()
-                postDao.deleteLike(postId, userEmail) // Aggiornamento locale
+                postDao.deleteLike(postId, userEmail)
                 Log.d("CheckPointDebug", "Main: LIKE rimosso da FIRESTORE")
             } else {
                 likeRef.set(mapOf("postId" to postId, "userEmail" to userEmail)).await()
-                postDao.insertLike(PostLikeEntity(postId, userEmail)) // Aggiornamento locale
+                postDao.insertLike(PostLikeEntity(postId, userEmail))
+
+                val postDoc = firestore.collection("posts").document(postId).get().await()
+                val recipientEmail = postDoc.getString("authorEmail")
+                if (!recipientEmail.isNullOrBlank() && recipientEmail != userEmail) {
+                    createNotificationInternal(
+                        recipientEmail = recipientEmail,
+                        title = "Nuovo like",
+                        body = "$userEmail ha messo like al tuo post",
+                        route = "post_detail",
+                        type = "like",
+                        senderEmail = userEmail,
+                        targetId = postId
+                    )
+                }
+
                 Log.d("CheckPointDebug", "Main: LIKE aggiunto su FIRESTORE")
             }
             syncDataFromFirestore(userEmail)
@@ -291,6 +340,19 @@ class MainRepositoryImpl(
             } else {
                 followRef.set(mapOf("followerEmail" to followerEmail, "followedEmail" to followedEmail)).await()
                 userDao.insertFollow(FollowEntity(followerEmail, followedEmail))
+
+                if (followedEmail.isNotBlank() && followedEmail != followerEmail) {
+                    createNotificationInternal(
+                        recipientEmail = followedEmail,
+                        title = "Nuovo follow",
+                        body = "$followerEmail ti segue",
+                        route = "home",
+                        type = "follow",
+                        senderEmail = followerEmail,
+                        targetId = followedEmail
+                    )
+                }
+
                 Log.d("CheckPointDebug", "Main: FOLLOW eseguito su FIRESTORE")
             }
             syncDataFromFirestore(followerEmail)
@@ -383,6 +445,14 @@ class MainRepositoryImpl(
 
     override fun getChatMessages(user1: String, user2: String): Flow<List<MessageEntity>> {
         return chatDao.getChatMessages(user1, user2)
+    }
+
+    override fun getAllMessagesFlow(): Flow<List<MessageEntity>> {
+        return chatDao.getAllMessagesFlow()
+    }
+
+    override fun getAllCommentsFlow(): Flow<List<CommentWithAuthor>> {
+        return commentDao.getAllCommentsFlow()
     }
 
     override suspend fun sendMessage(message: MessageEntity) {
@@ -507,7 +577,7 @@ class MainRepositoryImpl(
         followsListener = firestore.collection("follows")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) return@addSnapshotListener
-                
+
                 snapshot?.documentChanges?.forEach { change ->
                     val follower = change.document.getString("followerEmail")
                     val followed = change.document.getString("followedEmail")
@@ -534,6 +604,7 @@ class MainRepositoryImpl(
         commentsListener?.remove()
         likesListener?.remove()
         followsListener?.remove()
+        notificationsListener?.remove()
     }
 
     override fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>> {
@@ -553,5 +624,94 @@ class MainRepositoryImpl(
 
     override fun getCommentCount(postId: String): Flow<Int> {
         return commentDao.getCommentCount(postId)
+    }
+
+    private suspend fun createNotificationInternal(
+        recipientEmail: String,
+        title: String,
+        body: String,
+        route: String = "home",
+        type: String = "general",
+        senderEmail: String? = null,
+        targetId: String? = null
+    ) {
+        createNotification(recipientEmail, title, body, route, type, senderEmail, targetId)
+    }
+
+    override suspend fun createNotification(
+        recipientEmail: String,
+        title: String,
+        body: String,
+        route: String,
+        type: String,
+        senderEmail: String?,
+        targetId: String?
+    ) {
+        if (recipientEmail.isBlank()) return
+        try {
+            val docRef = firestore.collection("notifications").document()
+            val notificationData = hashMapOf(
+                "id" to docRef.id,
+                "recipientEmail" to recipientEmail,
+                "title" to title,
+                "body" to body,
+                "route" to route,
+                "type" to type,
+                "senderEmail" to senderEmail,
+                "targetId" to targetId,
+                "timestamp" to System.currentTimeMillis(),
+                "isRead" to false
+            )
+            docRef.set(notificationData).await()
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Error creating notification: ${e.message}", e)
+        }
+    }
+
+    override suspend fun deleteNotification(notificationId: String) {
+        if (notificationId.isBlank()) return
+        try {
+            firestore.collection("notifications").document(notificationId).delete().await()
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Error deleting notification: ${e.message}", e)
+        }
+    }
+
+    override fun observeNotifications(currentUserEmail: String): Flow<List<AppNotification>> = callbackFlow {
+        if (currentUserEmail.isBlank()) {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+        val listener = firestore.collection("notifications")
+            .whereEqualTo("recipientEmail", currentUserEmail)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) return@addSnapshotListener
+                val notifications = snapshot?.documents?.mapNotNull { doc ->
+                    val id = doc.id
+                    val title = doc.getString("title") ?: ""
+                    val body = doc.getString("body") ?: ""
+                    val route = doc.getString("route") ?: "home"
+                    val type = doc.getString("type") ?: "general"
+                    val senderEmail = doc.getString("senderEmail")
+                    val targetId = doc.getString("targetId")
+                    val timestamp = doc.getLong("timestamp") ?: 0L
+                    val isRead = doc.getBoolean("isRead") ?: false
+                    AppNotification(
+                        id = id,
+                        title = title,
+                        body = body,
+                        route = route,
+                        time = TimeUtils.getTimeAgo(timestamp),
+                        type = type,
+                        senderEmail = senderEmail,
+                        targetId = targetId,
+                        timestamp = timestamp,
+                        isRead = isRead
+                    )
+                }?.sortedByDescending { it.timestamp } ?: emptyList()
+                trySend(notifications)
+            }
+        awaitClose { listener.remove() }
     }
 }

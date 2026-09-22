@@ -29,7 +29,7 @@ import com.example.checkpoint.data.local.entity.UserEntity
         MessageEntity::class,
         CommentEntity::class
     ], 
-    version = 13, 
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

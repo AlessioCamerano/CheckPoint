@@ -28,4 +28,7 @@ interface CommentDao {
     // Conteggio totale commenti
     @Query("SELECT COUNT(*) FROM comments WHERE postId = :postId")
     fun getCommentCount(postId: String): Flow<Int>
+    @Transaction
+    @Query("SELECT comments.* FROM comments ORDER BY timestamp DESC")
+    fun getAllCommentsFlow(): Flow<List<CommentWithAuthor>>
 }

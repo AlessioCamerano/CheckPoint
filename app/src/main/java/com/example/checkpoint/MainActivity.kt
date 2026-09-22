@@ -27,7 +27,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val launchRoute = intent?.getStringExtra("extra_target_route")
+        val launchRoute = intent?.getStringExtra(com.example.checkpoint.util.NotificationHelper.EXTRA_TARGET_ROUTE)
+        val launchTargetId = intent?.getStringExtra(com.example.checkpoint.util.NotificationHelper.EXTRA_TARGET_ID)
+        val launchNotificationId = intent?.getStringExtra(com.example.checkpoint.util.NotificationHelper.EXTRA_NOTIFICATION_ID)
 
         setContent {
             val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
@@ -60,7 +62,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavigation(
                         viewModel = viewModel,
-                        initialRoute = launchRoute
+                        initialRoute = launchRoute,
+                        initialTargetId = launchTargetId,
+                        initialNotificationId = launchNotificationId
                     )
                 }
             }
@@ -70,5 +74,6 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        recreate()
     }
 }
