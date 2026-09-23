@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -22,29 +20,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.checkpoint.R
-import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.MessageEntity
-import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.components.UserItem
-import com.example.checkpoint.ui.state.MainUiState
-import com.example.checkpoint.ui.theme.CheckPointTheme
+import com.example.checkpoint.ui.state.ChatUiState
+import com.example.checkpoint.ui.state.FeedUiState
 import com.example.checkpoint.ui.theme.spacing
 
-/**
- * Schermata che raccoglie le Chat Dirette e i Checkpoint salvati.
- */
 @Composable
 fun MessagesScreen(
-    uiState: MainUiState,
+    chatState: ChatUiState,
+    feedState: FeedUiState,
     onPartnerClick: (UserEntity) -> Unit = {},
     onPostClick: (PostWithAuthor) -> Unit = {},
     onToggleLike: (String) -> Unit = {},
@@ -62,15 +54,16 @@ fun MessagesScreen(
             .padding(horizontal = MaterialTheme.spacing.medium)
     ) {
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
+
         Text(
             text = stringResource(R.string.messages_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
+
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
-        // Tab per passare tra Messaggi e Salvati
         SecondaryTabRow(
             selectedTabIndex = selectedTab,
             containerColor = Color.Transparent,
@@ -95,8 +88,7 @@ fun MessagesScreen(
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
         if (selectedTab == 0) {
-            // Sezione Messaggi Diretti
-            if (uiState.chatPartners.isEmpty()) {
+            if (chatState.chatPartners.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.AutoMirrored.Filled.Chat,
                     text = stringResource(R.string.messages_empty)
@@ -107,14 +99,14 @@ fun MessagesScreen(
                     contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
                     verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
-                    items(uiState.chatPartners) { partner ->
+                    items(chatState.chatPartners) { partner ->
                         UserItem(user = partner, onClick = onPartnerClick)
                     }
                 }
             }
         } else {
-            // Sezione Checkpoint Salvati
-            val savedPosts = uiState.posts.filter { it.isLikedByCurrentUser }
+            val savedPosts = feedState.posts.filter { it.isLikedByCurrentUser }
+
             if (savedPosts.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.Default.Flag,
@@ -140,9 +132,6 @@ fun MessagesScreen(
     }
 }
 
-/**
- * Rappresentazione compatta di un post per la lista dei salvati.
- */
 @Composable
 fun CompactPostItem(
     postWithAuthor: PostWithAuthor,
@@ -168,7 +157,7 @@ fun CompactPostItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val author = postWithAuthor.safeAuthor
-            // Mini Avatar del post author
+
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -191,7 +180,6 @@ fun CompactPostItem(
                             uri
                         }
                     }
-
                     AsyncImage(
                         model = avatarModel,
                         contentDescription = null,
@@ -202,9 +190,9 @@ fun CompactPostItem(
                     Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
-            
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = postWithAuthor.post.title,
@@ -227,8 +215,8 @@ fun CompactPostItem(
                 modifier = Modifier.size(24.dp)
             ) {
                 Icon(
-                    Icons.Default.Flag, 
-                    contentDescription = null, 
+                    Icons.Default.Flag,
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )

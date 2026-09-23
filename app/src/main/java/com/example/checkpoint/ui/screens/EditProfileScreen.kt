@@ -19,10 +19,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.ProfileUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 import com.example.checkpoint.util.MediaStorageManager
@@ -30,7 +31,7 @@ import com.example.checkpoint.util.MediaStorageManager
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
-    state: MainUiState,
+    state: ProfileUiState,
     onBack: () -> Unit = {},
     onSave: (String, String, String?) -> Unit = { _, _, _ -> }
 ) {
@@ -38,7 +39,7 @@ fun EditProfileScreen(
     var username by remember { mutableStateOf(state.username) }
     var bio by remember { mutableStateOf(state.bio) }
     var profilePictureUri by remember { mutableStateOf(state.profilePictureUri) }
-    
+
     val bioCharLimit = 300
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -77,7 +78,7 @@ fun EditProfileScreen(
         ) {
             Box(
                 contentAlignment = Alignment.BottomEnd,
-                modifier = Modifier.clickable { 
+                modifier = Modifier.clickable {
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
@@ -106,7 +107,7 @@ fun EditProfileScreen(
                         )
                     }
                 }
-                
+
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -150,7 +151,7 @@ fun EditProfileScreen(
                     Text(
                         text = "${bio.length} / $bioCharLimit",
                         modifier = Modifier.fillMaxWidth(),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.End
+                        textAlign = TextAlign.End
                     )
                 }
             )
@@ -182,7 +183,7 @@ fun EditProfileScreen(
 fun EditProfileScreenDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         EditProfileScreen(
-            state = MainUiState(
+            state = ProfileUiState(
                 username = "User Test 1",
                 bio = "Developer & Gamer",
                 isDarkTheme = true
@@ -196,7 +197,7 @@ fun EditProfileScreenDarkPreview() {
 fun EditProfileScreenLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
         EditProfileScreen(
-            state = MainUiState(
+            state = ProfileUiState(
                 username = "User Test 1",
                 bio = "Developer & Gamer",
                 isDarkTheme = false

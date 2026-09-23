@@ -26,19 +26,17 @@ import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
-import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.FeedUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 
-/**
- * Schermata principale del feed.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    state: MainUiState,
+    state: FeedUiState,
+    isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     onSortOrderChange: (PostSortOrder) -> Unit = {},
     onToggleLike: (String) -> Unit = {},
@@ -49,7 +47,6 @@ fun MainScreen(
     var showSortMenu by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
-    // Scorrimento automatico verso l'alto
     LaunchedEffect(state.sortOrder) {
         if (state.posts.isNotEmpty()) {
             listState.animateScrollToItem(0)
@@ -57,7 +54,7 @@ fun MainScreen(
     }
 
     PullToRefreshBox(
-        isRefreshing = state.isRefreshing,
+        isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize()
     ) {
@@ -66,7 +63,6 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(horizontal = MaterialTheme.spacing.medium)
         ) {
-            // notifiche
             Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(
                     onClick = onNavigateToNotifications,
@@ -79,10 +75,9 @@ fun MainScreen(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
-            
-            // Titolo
+
             Text(
                 text = stringResource(R.string.app_name),
                 color = MaterialTheme.colorScheme.primary,
@@ -91,7 +86,6 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
-
             Text(
                 text = stringResource(R.string.main_relax_quote),
                 color = MaterialTheme.colorScheme.secondary,
@@ -102,9 +96,7 @@ fun MainScreen(
                     .padding(top = MaterialTheme.spacing.small),
                 textAlign = TextAlign.Center
             )
-
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -116,7 +108,6 @@ fun MainScreen(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium
                 )
-
                 Box {
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
@@ -125,46 +116,43 @@ fun MainScreen(
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
-
                     DropdownMenu(
                         expanded = showSortMenu,
                         onDismissRequest = { showSortMenu = false },
                         modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         DropdownMenuItem(
-                            text = { 
+                            text = {
                                 Text(
                                     text = stringResource(R.string.main_sort_trending),
                                     fontWeight = if (state.sortOrder == PostSortOrder.TRENDING) FontWeight.Bold else FontWeight.Normal
-                                ) 
+                                )
                             },
-                            onClick = { 
+                            onClick = {
                                 onSortOrderChange(PostSortOrder.TRENDING)
-                                showSortMenu = false 
+                                showSortMenu = false
                             },
                             leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { 
+                            text = {
                                 Text(
                                     text = stringResource(R.string.main_sort_newest),
                                     fontWeight = if (state.sortOrder == PostSortOrder.NEWEST) FontWeight.Bold else FontWeight.Normal
-                                ) 
+                                )
                             },
-                            onClick = { 
+                            onClick = {
                                 onSortOrderChange(PostSortOrder.NEWEST)
-                                showSortMenu = false 
+                                showSortMenu = false
                             },
                             leadingIcon = { Icon(Icons.Default.Update, contentDescription = null) }
                         )
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
-            // Progress bar per feedback visivo
-            if (state.isLoading && !state.isRefreshing) {
+            if (state.isLoading && !isRefreshing) {
                 LinearProgressIndicator(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -176,10 +164,8 @@ fun MainScreen(
             } else {
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraExtraSmall))
             }
-
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
-            // feed
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
@@ -201,8 +187,7 @@ fun MainScreen(
                         onPostClick = onPostClick
                     )
                 }
-                
-                // fine feed
+
                 item {
                     Box(
                         modifier = Modifier
@@ -231,7 +216,7 @@ fun MainScreenDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.background) {
             MainScreen(
-                state = MainUiState(
+                state = FeedUiState(
                     posts = listOf(
                         PostWithAuthor(
                             post = PostEntity("1", "user1@gmail.com", "Hello!", "Welcome to the dark side.", System.currentTimeMillis(), "https://example.com/dark.jpg", MediaType.IMAGE),
@@ -244,8 +229,7 @@ fun MainScreenDarkPreview() {
                             author = UserEntity("user2@gmail.com", "User Test 2"),
                             favoriteCount = 5
                         )
-                    ),
-                    isDarkTheme = true
+                    )
                 )
             )
         }
@@ -259,7 +243,7 @@ fun MainScreenLightPreview() {
     CheckPointTheme(darkTheme = false, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.background) {
             MainScreen(
-                state = MainUiState(
+                state = FeedUiState(
                     posts = listOf(
                         PostWithAuthor(
                             post = PostEntity("1", "user1@gmail.com", "Hello!", "Welcome to the light side.", System.currentTimeMillis(), "https://example.com/light.jpg", MediaType.IMAGE),
@@ -272,8 +256,7 @@ fun MainScreenLightPreview() {
                             author = UserEntity("user2@gmail.com", "User Test 2"),
                             favoriteCount = 5
                         )
-                    ),
-                    isDarkTheme = false
+                    )
                 )
             )
         }

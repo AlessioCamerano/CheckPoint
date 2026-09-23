@@ -4,49 +4,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import com.example.checkpoint.ui.screens.CreatePostScreen
-import com.example.checkpoint.ui.screens.MainScreen
-import com.example.checkpoint.ui.screens.MessagesScreen
-import com.example.checkpoint.ui.screens.ProfileScreen
-import com.example.checkpoint.ui.screens.SearchScreen
-import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.UserEntity
-import com.example.checkpoint.data.local.model.PostWithAuthor
-import com.example.checkpoint.ui.state.MainUiState
-import com.example.checkpoint.ui.state.PostSortOrder
-import com.example.checkpoint.ui.state.UserStatus
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.checkpoint.ui.screens.*
+import com.example.checkpoint.ui.viewmodel.*
 
-/**
- * Swipe tra le sezioni principali dell'applicazione.
- */
 @Composable
 fun MainTabPager(
     pagerState: PagerState,
     tabs: List<String>,
-    uiState: MainUiState,
-    onStatusChange: (UserStatus) -> Unit,
-    onThemeChange: (Boolean) -> Unit,
-    onRefresh: () -> Unit,
-    onSortOrderChange: (PostSortOrder) -> Unit,
-    onToggleLike: (String) -> Unit,
-    onSearch: (String) -> Unit,
-    onSaveSearch: (String) -> Unit,
-    onClearHistory: () -> Unit,
+    mainViewModel: MainViewModel,
+    feedViewModel: FeedViewModel,
+    profileViewModel: ProfileViewModel,
+    searchViewModel: SearchViewModel,
+    chatViewModel: ChatViewModel,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onNavigateToFollowers: () -> Unit,
     onNavigateToMyCheckpoints: () -> Unit,
-    onTagClick: (String) -> Unit,
-    onSearchSortChange: (PostSortOrder) -> Unit,
     onNavigateToLocalUsers: () -> Unit,
     onNavigateToOnboarding: () -> Unit,
-    onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit,
-    onLogout: () -> Unit,
-    onUserClick: (UserEntity) -> Unit,
-    onPostClick: (PostWithAuthor) -> Unit,
-    onPartnerClick: (UserEntity) -> Unit
+    onNavigateToPostDetail: () -> Unit,
+    onNavigateToChat: () -> Unit,
+    onNavigateToTag: (String) -> Unit,
+    onLogout: () -> Unit
 ) {
+    val mainState by mainViewModel.uiState.collectAsStateWithLifecycle()
+    val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val searchState by searchViewModel.uiState.collectAsStateWithLifecycle()
+    val chatState by chatViewModel.uiState.collectAsStateWithLifecycle()
+
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
@@ -54,43 +43,45 @@ fun MainTabPager(
     ) { page ->
         when (tabs[page]) {
             "search" -> SearchScreen(
-                state = uiState,
-                onSearch = onSearch,
-                onSaveSearch = onSaveSearch,
-                onClearHistory = onClearHistory,
-                onToggleLike = onToggleLike,
-                onUserClick = onUserClick,
-                onPostClick = onPostClick,
-                onTagClick = onTagClick,
-                onSortChange = onSearchSortChange
+                state = searchState,
+                onSearch = { searchViewModel.onSearchQueryChange(it) },
+                onSaveSearch = { searchViewModel.onSaveSearchQuery(it) },
+                onClearHistory = { searchViewModel.clearSearchHistory() },
+                onToggleLike = { feedViewModel.onToggleLike(it) },
+                onUserClick = { mainViewModel.onOpenUserPopup(it) },
+                onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() },
+                onTagClick = { searchViewModel.onSearchByTag(it); onNavigateToTag(it) },
+                onSortChange = { searchViewModel.onSearchSortOrderChange(it) }
             )
             "add" -> CreatePostScreen(
-                state = uiState,
-                onCreatePost = onCreatePost
+                state = feedState,
+                onCreatePost = { title, msg, uri, type, tags -> feedViewModel.onCreatePost(title, msg, uri, type, tags) }
             )
             "home_feed" -> MainScreen(
-                state = uiState,
-                onRefresh = onRefresh,
-                onSortOrderChange = onSortOrderChange,
-                onToggleLike = onToggleLike,
+                state = feedState,
+                isRefreshing = mainState.isRefreshing,
+                onRefresh = { mainViewModel.onRefresh() },
+                onSortOrderChange = { feedViewModel.onSortOrderChange(it) },
+                onToggleLike = { feedViewModel.onToggleLike(it) },
                 onNavigateToNotifications = onNavigateToNotifications,
-                onUserClick = onUserClick,
-                onPostClick = onPostClick
+                onUserClick = { mainViewModel.onOpenUserPopup(it) },
+                onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() }
             )
             "messages" -> MessagesScreen(
-                uiState = uiState,
-                onPartnerClick = onPartnerClick,
-                onPostClick = onPostClick,
-                onToggleLike = onToggleLike,
-                onUserClick = onUserClick
+                chatState = chatState,
+                feedState = feedState,
+                onPartnerClick = { chatViewModel.onOpenChat(it); onNavigateToChat() },
+                onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() },
+                onToggleLike = { feedViewModel.onToggleLike(it) },
+                onUserClick = { mainViewModel.onOpenUserPopup(it) }
             )
             "profile" -> ProfileScreen(
-                isDarkTheme = uiState.isDarkTheme,
-                userStatus = uiState.userStatus,
-                username = uiState.username,
-                profilePictureUri = uiState.profilePictureUri,
-                onStatusChange = onStatusChange,
-                onThemeChange = onThemeChange,
+                isDarkTheme = mainState.isDarkTheme,
+                userStatus = profileState.userStatus,
+                username = profileState.username,
+                profilePictureUri = profileState.profilePictureUri,
+                onStatusChange = { profileViewModel.onStatusChange(it) },
+                onThemeChange = { profileViewModel.onThemeChange(it) },
                 onNavigateToEditProfile = onNavigateToEditProfile,
                 onNavigateToFollowers = onNavigateToFollowers,
                 onNavigateToMyCheckpoints = onNavigateToMyCheckpoints,

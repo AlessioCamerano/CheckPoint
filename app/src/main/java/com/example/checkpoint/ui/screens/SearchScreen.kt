@@ -18,7 +18,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material3.*
@@ -27,29 +26,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.components.UserItem
-import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
+import com.example.checkpoint.ui.state.SearchUiState
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
-    state: MainUiState,
+    state: SearchUiState,
     onSearch: (String) -> Unit = {},
     onSaveSearch: (String) -> Unit = {},
     onClearHistory: () -> Unit = {},
@@ -69,8 +64,8 @@ fun SearchScreen(
         stringResource(com.example.checkpoint.R.string.tab_checkpoints),
         stringResource(com.example.checkpoint.R.string.tab_tags)
     )
-    val focusManager = LocalFocusManager.current
 
+    val focusManager = LocalFocusManager.current
     val topPadding by animateDpAsState(
         targetValue = if (isSearched) MaterialTheme.spacing.medium else 100.dp,
         animationSpec = tween(durationMillis = 600),
@@ -107,7 +102,7 @@ fun SearchScreen(
 
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { 
+                onValueChange = {
                     searchQuery = it
                     if (it.isBlank()) isSearched = false
                     else {
@@ -137,7 +132,7 @@ fun SearchScreen(
                         if (searchQuery.isNotBlank()) {
                             isSearched = true
                             onSearch(searchQuery)
-                            onSaveSearch(searchQuery) // Save only on explicit action
+                            onSaveSearch(searchQuery)
                             focusManager.clearFocus()
                         }
                     }
@@ -148,7 +143,6 @@ fun SearchScreen(
 
             if (!isSearched) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    // Ricerche recenti
                     if (state.searchHistory.isNotEmpty()) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -185,7 +179,6 @@ fun SearchScreen(
                         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
                     }
 
-                    // Trending Tags
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.AutoMirrored.Filled.TrendingUp,
@@ -202,6 +195,7 @@ fun SearchScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
+
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
                         verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
@@ -211,14 +205,13 @@ fun SearchScreen(
                                 searchQuery = tag
                                 isSearched = true
                                 onSearch(tag)
-                                onSaveSearch(tag) // Save trending tag click
+                                onSaveSearch(tag)
                                 focusManager.clearFocus()
                             }
                         }
                     }
                 }
             } else {
-                // Search Tabs & Sort
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -248,8 +241,6 @@ fun SearchScreen(
                             )
                         }
                     }
-
-                    // Tasto Ordinamento
                     Box {
                         IconButton(onClick = { showSortMenu = true }) {
                             Icon(
@@ -258,41 +249,38 @@ fun SearchScreen(
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
-
                         DropdownMenu(
                             expanded = showSortMenu,
                             onDismissRequest = { showSortMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.main_sort_trending)) },
-                                onClick = { 
+                                text = { Text(stringResource(com.example.checkpoint.R.string.main_sort_trending)) },
+                                onClick = {
                                     onSortChange(PostSortOrder.TRENDING)
-                                    showSortMenu = false 
+                                    showSortMenu = false
                                 },
                                 leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, null) }
                             )
                             DropdownMenuItem(
-                                text = { Text(stringResource(R.string.main_sort_newest)) },
-                                onClick = { 
+                                text = { Text(stringResource(com.example.checkpoint.R.string.main_sort_newest)) },
+                                onClick = {
                                     onSortChange(PostSortOrder.NEWEST)
-                                    showSortMenu = false 
+                                    showSortMenu = false
                                 },
                                 leadingIcon = { Icon(Icons.Default.Update, null) }
                             )
                         }
                     }
                 }
-
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
-                // Search Results
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
                     verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
                 ) {
                     when (selectedTab) {
-                        0 -> { // Users
+                        0 -> {
                             val sortedUsers = when (state.searchSortOrder) {
                                 PostSortOrder.NEWEST -> state.searchResultsUsers.sortedByDescending { it.username }
                                 PostSortOrder.TRENDING -> state.searchResultsUsers.sortedBy { it.username }
@@ -301,7 +289,7 @@ fun SearchScreen(
                                 UserItem(user, onClick = onUserClick)
                             }
                         }
-                        1 -> { // Checkpoints
+                        1 -> {
                             val sortedPosts = when (state.searchSortOrder) {
                                 PostSortOrder.NEWEST -> state.searchResultsPosts.sortedByDescending { it.post.timestamp }
                                 PostSortOrder.TRENDING -> state.searchResultsPosts.sortedByDescending { it.favoriteCount }
@@ -319,7 +307,7 @@ fun SearchScreen(
                                 )
                             }
                         }
-                        2 -> { // Tags (LISTA TAG, NON POST)
+                        2 -> {
                             val sortedTags = when (state.searchSortOrder) {
                                 PostSortOrder.NEWEST -> state.searchResultsTags.sortedDescending()
                                 PostSortOrder.TRENDING -> state.searchResultsTags.sorted()
@@ -388,7 +376,7 @@ fun TagItem(tag: String, onClick: () -> Unit) {
         color = MaterialTheme.colorScheme.tertiaryContainer,
         shape = MaterialTheme.shapes.large,
         border = androidx.compose.foundation.BorderStroke(
-            0.5.dp, 
+            0.5.dp,
             MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f)
         )
     ) {
@@ -407,7 +395,7 @@ fun TagItem(tag: String, onClick: () -> Unit) {
 fun SearchScreenDarkPreview() {
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         Surface {
-            SearchScreen(state = MainUiState(isDarkTheme = true))
+            SearchScreen(state = SearchUiState())
         }
     }
 }

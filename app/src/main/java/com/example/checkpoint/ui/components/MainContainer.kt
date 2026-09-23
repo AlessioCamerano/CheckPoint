@@ -12,77 +12,56 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.checkpoint.R
-import com.example.checkpoint.data.local.entity.MediaType
-import com.example.checkpoint.data.local.entity.UserEntity
-import com.example.checkpoint.data.local.model.PostWithAuthor
-import com.example.checkpoint.ui.state.MainUiState
-import com.example.checkpoint.ui.state.PostSortOrder
-import com.example.checkpoint.ui.state.UserStatus
+import com.example.checkpoint.ui.viewmodel.*
 import kotlinx.coroutines.launch
 
-/**
- * Ospita la navigazione orizzontale e la barra inferiore.
- */
 @Composable
 fun MainContainer(
-    uiState: MainUiState,
-    onStatusChange: (UserStatus) -> Unit,
-    onThemeChange: (Boolean) -> Unit,
-    onRefresh: () -> Unit,
-    onSortOrderChange: (PostSortOrder) -> Unit,
-    onToggleLike: (String) -> Unit,
-    onSearch: (String) -> Unit,
-    onSaveSearch: (String) -> Unit,
-    onClearHistory: () -> Unit,
+    mainViewModel: MainViewModel,
+    feedViewModel: FeedViewModel,
+    profileViewModel: ProfileViewModel,
+    searchViewModel: SearchViewModel,
+    chatViewModel: ChatViewModel,
     onNavigateToNotifications: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
     onNavigateToOnboarding: () -> Unit,
-    onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit,
-    onPostSuccessReset: () -> Unit,
-    onLogout: () -> Unit,
-    onUserClick: (UserEntity) -> Unit,
-    onDismissUserPopup: () -> Unit,
-    onToggleFollow: () -> Unit,
     onNavigateToFollowers: () -> Unit,
     onNavigateToMyCheckpoints: () -> Unit,
-    onTagClick: (String) -> Unit,
-    onSearchSortChange: (PostSortOrder) -> Unit,
     onNavigateToLocalUsers: () -> Unit,
-    onPostClick: (PostWithAuthor) -> Unit,
-    onPartnerClick: (UserEntity) -> Unit
+    onNavigateToPostDetail: () -> Unit,
+    onNavigateToChat: () -> Unit,
+    onNavigateToTag: (String) -> Unit,
+    onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    
-    // Configurazione delle tab e del pager
+
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
+
     val tabs = listOf("search", "add", "home_feed", "messages", "profile")
     val homeIndex = 2
     val pagerState = rememberPagerState(initialPage = homeIndex) { tabs.size }
-
     val successMessage = stringResource(R.string.checkpoint_created_success)
 
-    // Feedback per la creazione del post
-    LaunchedEffect(uiState.postSuccess) {
-        if (uiState.postSuccess) {
-            scope.launch {
-                snackbarHostState.showSnackbar(successMessage)
-            }
+    LaunchedEffect(feedState.postSuccess) {
+        if (feedState.postSuccess) {
+            scope.launch { snackbarHostState.showSnackbar(successMessage) }
             pagerState.animateScrollToPage(homeIndex)
-            onPostSuccessReset()
+            feedViewModel.resetPostSuccess()
         }
     }
 
-    // Gestione del tasto indietro per tornare alla Home
     BackHandler(enabled = pagerState.currentPage != homeIndex) {
-        scope.launch {
-            pagerState.animateScrollToPage(homeIndex)
-        }
+        scope.launch { pagerState.animateScrollToPage(homeIndex) }
     }
 
     Scaffold(
@@ -91,26 +70,17 @@ fun MainContainer(
         bottomBar = {
             BottomNavBar(
                 currentRoute = tabs[pagerState.currentPage],
-                userStatus = uiState.userStatus,
-                profilePictureUri = uiState.profilePictureUri,
+                userStatus = profileState.userStatus,
+                profilePictureUri = profileState.profilePictureUri,
                 onNavigate = { route ->
                     val index = tabs.indexOf(route)
-                    if (index != -1) {
-                        scope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    }
+                    if (index != -1) scope.launch { pagerState.animateScrollToPage(index) }
                 }
             )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-
-            if (uiState.isLoading && uiState.username == "Username" && uiState.posts.isEmpty() && !uiState.postSuccess) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            if (feedState.isLoading && feedState.posts.isEmpty() && !feedState.postSuccess) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = MaterialTheme.colorScheme.primary
@@ -119,28 +89,21 @@ fun MainContainer(
                 MainTabPager(
                     pagerState = pagerState,
                     tabs = tabs,
-                    uiState = uiState,
-                    onStatusChange = onStatusChange,
-                    onThemeChange = onThemeChange,
-                    onRefresh = onRefresh,
-                    onSortOrderChange = onSortOrderChange,
-                    onToggleLike = onToggleLike,
-                    onSearch = onSearch,
-                    onSaveSearch = onSaveSearch,
-                    onClearHistory = onClearHistory,
+                    mainViewModel = mainViewModel,
+                    feedViewModel = feedViewModel,
+                    profileViewModel = profileViewModel,
+                    searchViewModel = searchViewModel,
+                    chatViewModel = chatViewModel,
                     onNavigateToNotifications = onNavigateToNotifications,
                     onNavigateToEditProfile = onNavigateToEditProfile,
-                    onNavigateToOnboarding = onNavigateToOnboarding,
                     onNavigateToFollowers = onNavigateToFollowers,
                     onNavigateToMyCheckpoints = onNavigateToMyCheckpoints,
-                    onTagClick = onTagClick,
-                    onSearchSortChange = onSearchSortChange,
                     onNavigateToLocalUsers = onNavigateToLocalUsers,
-                    onCreatePost = onCreatePost,
-                    onLogout = onLogout,
-                    onUserClick = onUserClick,
-                    onPostClick = onPostClick,
-                    onPartnerClick = onPartnerClick
+                    onNavigateToOnboarding = onNavigateToOnboarding,
+                    onNavigateToPostDetail = onNavigateToPostDetail,
+                    onNavigateToChat = onNavigateToChat,
+                    onNavigateToTag = onNavigateToTag,
+                    onLogout = onLogout
                 )
             }
         }

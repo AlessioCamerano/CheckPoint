@@ -41,13 +41,13 @@ import androidx.core.content.ContextCompat
 import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.ui.components.UserItem
-import com.example.checkpoint.ui.state.MainUiState
+import com.example.checkpoint.ui.state.ProfileUiState
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocalUsersScreen(
-    state: MainUiState,
+    state: ProfileUiState,
     onBack: () -> Unit,
     onRadiusChange: (Int) -> Unit,
     onSearchNearbyUsers: (Double, Double) -> Unit,
@@ -97,6 +97,7 @@ fun LocalUsersScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(text = stringResource(R.string.local_users_radius_label, state.localUsersRadiusKm))
+
             Slider(
                 value = state.localUsersRadiusKm.toFloat(),
                 onValueChange = { onRadiusChange(it.roundToInt()) },
@@ -155,8 +156,7 @@ private fun fetchCurrentLocation(
     onError: (String) -> Unit
 ) {
     val locationManager = context.getSystemService(android.location.LocationManager::class.java)
-        as? android.location.LocationManager
-
+            as? android.location.LocationManager
     val location = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
         ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
 
