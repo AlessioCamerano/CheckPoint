@@ -5,12 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.checkpoint.data.local.AppDatabase
+import com.example.checkpoint.CheckPointApplication
 import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
-import com.example.checkpoint.data.repository.*
+import com.example.checkpoint.data.repository.PostRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.ui.state.FeedUiState
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.util.MediaStorageManager
@@ -35,13 +36,11 @@ class FeedViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val app = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-                val db = AppDatabase.getDatabase(app)
-                val notifRepo = NotificationRepositoryImpl()
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as CheckPointApplication
                 return FeedViewModel(
-                    application = app,
-                    postRepository = PostRepositoryImpl(db.postDao(), db.commentDao(), notifRepo),
-                    preferencesRepository = UserPreferencesRepositoryImpl(app)
+                    application = application,
+                    postRepository = application.container.postRepository,
+                    preferencesRepository = application.container.preferencesRepository
                 ) as T
             }
         }
@@ -98,7 +97,7 @@ class FeedViewModel(
                     MediaStorageManager.encodeToOptimizedBase64(application, mediaUri, isProfilePicture = false)
                 } else null
                 val resolvedMediaType = if (!processedMediaUri.isNullOrBlank()) MediaType.IMAGE else MediaType.NONE
-                
+
                 postRepository.createPost(PostEntity(authorEmail = email, title = title, initialMessage = message, mediaUri = processedMediaUri, mediaType = resolvedMediaType), tags)
                 _uiState.update { it.copy(isLoading = false, postSuccess = true) }
             } catch (e: Exception) {

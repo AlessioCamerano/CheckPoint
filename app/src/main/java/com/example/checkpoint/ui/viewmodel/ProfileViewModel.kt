@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.checkpoint.data.local.AppDatabase
-import com.example.checkpoint.data.repository.*
+import com.example.checkpoint.CheckPointApplication
+import com.example.checkpoint.data.repository.AuthRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.repository.UserRepository
 import com.example.checkpoint.ui.state.ProfileUiState
 import com.example.checkpoint.ui.state.UserStatus
 import com.example.checkpoint.util.MediaStorageManager
@@ -27,14 +29,12 @@ class ProfileViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val app = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-                val db = AppDatabase.getDatabase(app)
-                val notifRepo = NotificationRepositoryImpl()
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as CheckPointApplication
                 return ProfileViewModel(
-                    application = app,
-                    userRepository = UserRepositoryImpl(db.userDao(), notifRepo, db),
-                    authRepository = AuthRepositoryImpl(db.userDao()),
-                    preferencesRepository = UserPreferencesRepositoryImpl(app)
+                    application = application,
+                    userRepository = application.container.userRepository,
+                    authRepository = application.container.authRepository,
+                    preferencesRepository = application.container.preferencesRepository
                 ) as T
             }
         }
@@ -83,7 +83,7 @@ class ProfileViewModel(
             val email = preferencesRepository.userEmail.first() ?: return@launch
             val currentUser = authRepository.getUser(email) ?: return@launch
             _uiState.update { it.copy(isLoading = true) }
-            
+
             val processedPic = if (application != null && !newProfilePictureUri.isNullOrBlank()) {
                 MediaStorageManager.encodeToOptimizedBase64(application, newProfilePictureUri, isProfilePicture = true)
             } else newProfilePictureUri

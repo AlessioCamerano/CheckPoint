@@ -1,12 +1,13 @@
 package com.example.checkpoint.ui.viewmodel
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.checkpoint.data.local.AppDatabase
-import com.example.checkpoint.data.repository.*
+import com.example.checkpoint.CheckPointApplication
+import com.example.checkpoint.data.repository.PostRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.repository.UserRepository
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.SearchUiState
 import kotlinx.coroutines.Job
@@ -27,13 +28,11 @@ class SearchViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val app = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-                val db = AppDatabase.getDatabase(app)
-                val notifRepo = NotificationRepositoryImpl()
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as CheckPointApplication
                 return SearchViewModel(
-                    postRepository = PostRepositoryImpl(db.postDao(), db.commentDao(), notifRepo),
-                    userRepository = UserRepositoryImpl(db.userDao(), notifRepo, db),
-                    preferencesRepository = UserPreferencesRepositoryImpl(app)
+                    postRepository = application.container.postRepository,
+                    userRepository = application.container.userRepository,
+                    preferencesRepository = application.container.preferencesRepository
                 ) as T
             }
         }

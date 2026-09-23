@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.checkpoint.data.local.AppDatabase
+import com.example.checkpoint.CheckPointApplication
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.repository.*
 import com.example.checkpoint.ui.state.AppNotification
@@ -57,16 +57,17 @@ class MainViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val app = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-                val db = AppDatabase.getDatabase(app)
-                val authRepo = AuthRepositoryImpl(db.userDao())
-                val prefRepo = UserPreferencesRepositoryImpl(app)
-                val notifRepo = NotificationRepositoryImpl()
-                val userRepo = UserRepositoryImpl(db.userDao(), notifRepo, db)
-                val postRepo = PostRepositoryImpl(db.postDao(), db.commentDao(), notifRepo)
-                val chatRepo = ChatRepositoryImpl(db.chatDao(), notifRepo)
-
-                return MainViewModel(app, postRepo, userRepo, chatRepo, notifRepo, authRepo, prefRepo) as T
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as CheckPointApplication
+                val container = application.container
+                return MainViewModel(
+                    application = application,
+                    postRepository = container.postRepository,
+                    userRepository = container.userRepository,
+                    chatRepository = container.chatRepository,
+                    notificationRepository = container.notificationRepository,
+                    authRepository = container.authRepository,
+                    preferencesRepository = container.preferencesRepository
+                ) as T
             }
         }
     }

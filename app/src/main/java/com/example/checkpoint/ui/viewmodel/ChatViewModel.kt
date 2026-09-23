@@ -1,14 +1,15 @@
 package com.example.checkpoint.ui.viewmodel
 
-import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.checkpoint.data.local.AppDatabase
+import com.example.checkpoint.CheckPointApplication
 import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.UserEntity
-import com.example.checkpoint.data.repository.*
+import com.example.checkpoint.data.repository.AuthRepository
+import com.example.checkpoint.data.repository.ChatRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.ui.state.ChatUiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -28,12 +29,11 @@ class ChatViewModel(
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val app = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-                val db = AppDatabase.getDatabase(app)
+                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as CheckPointApplication
                 return ChatViewModel(
-                    chatRepository = ChatRepositoryImpl(db.chatDao(), NotificationRepositoryImpl()),
-                    authRepository = AuthRepositoryImpl(db.userDao()),
-                    preferencesRepository = UserPreferencesRepositoryImpl(app)
+                    chatRepository = application.container.chatRepository,
+                    authRepository = application.container.authRepository,
+                    preferencesRepository = application.container.preferencesRepository
                 ) as T
             }
         }
