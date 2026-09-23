@@ -15,7 +15,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class UserDaoTest {
-
     private lateinit var database: AppDatabase
     private lateinit var userDao: UserDao
 
@@ -35,9 +34,9 @@ class UserDaoTest {
 
     @Test
     fun insertAndGetUser() = runBlocking {
-        val user = UserEntity("test@gmail.com", "testuser", "password123")
+        val user = UserEntity("test@gmail.com", "testuser", "bio", null)
         userDao.insertUser(user)
-        
+
         val retrievedUser = userDao.getUserByEmail("test@gmail.com")
         assertNotNull(retrievedUser)
         assertEquals(user.username, retrievedUser?.username)
@@ -45,12 +44,12 @@ class UserDaoTest {
 
     @Test
     fun updateAndGetUser() = runBlocking {
-        val user = UserEntity("test@gmail.com", "testuser", "password123")
+        val user = UserEntity("test@gmail.com", "testuser", "bio", null)
         userDao.insertUser(user)
-        
+
         val updatedUser = user.copy(username = "newname", bio = "I am a dev")
         userDao.updateUser(updatedUser)
-        
+
         val retrievedUser = userDao.getUserByEmail("test@gmail.com")
         assertEquals("newname", retrievedUser?.username)
         assertEquals("I am a dev", retrievedUser?.bio)
