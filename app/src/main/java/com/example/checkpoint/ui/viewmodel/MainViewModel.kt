@@ -3,18 +3,12 @@ package com.example.checkpoint.ui.viewmodel
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.checkpoint.data.repository.AuthRepository
-import com.example.checkpoint.data.repository.AuthRepositoryImpl
-import com.example.checkpoint.data.repository.MainRepository
-import com.example.checkpoint.data.repository.MainRepositoryImpl
-import com.example.checkpoint.data.repository.UserPreferencesRepository
-import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
 import com.example.checkpoint.data.local.AppDatabase
 import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.MediaType
@@ -22,6 +16,18 @@ import com.example.checkpoint.data.local.entity.MessageEntity
 import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.example.checkpoint.data.repository.AuthRepository
+import com.example.checkpoint.data.repository.AuthRepositoryImpl
+import com.example.checkpoint.data.repository.ChatRepository
+import com.example.checkpoint.data.repository.ChatRepositoryImpl
+import com.example.checkpoint.data.repository.NotificationRepository
+import com.example.checkpoint.data.repository.NotificationRepositoryImpl
+import com.example.checkpoint.data.repository.PostRepository
+import com.example.checkpoint.data.repository.PostRepositoryImpl
+import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepositoryImpl
+import com.example.checkpoint.data.repository.UserRepository
+import com.example.checkpoint.data.repository.UserRepositoryImpl
 import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.ui.state.PostSortOrder
@@ -35,23 +41,31 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
     private val application: Application?,
-    private val mainRepository: MainRepository,
+    private val postRepository: PostRepository,
+    private val userRepository: UserRepository,
+    private val chatRepository: ChatRepository,
+    private val notificationRepository: NotificationRepository,
     private val authRepository: AuthRepository,
     private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     constructor(
-        mainRepository: MainRepository,
+        postRepository: PostRepository,
+        userRepository: UserRepository,
+        chatRepository: ChatRepository,
+        notificationRepository: NotificationRepository,
         authRepository: AuthRepository,
         preferencesRepository: UserPreferencesRepository
-    ) : this(null, mainRepository, authRepository, preferencesRepository)
+    ) : this(null, postRepository, userRepository, chatRepository, notificationRepository, authRepository, preferencesRepository)
 
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -64,7 +78,6 @@ class MainViewModel(
     private var commentJob: Job? = null
     private var periodicSyncJob: Job? = null
 
-    // Stato di caricamento iniziale della sessione
     private val _isSessionLoaded = MutableStateFlow(false)
     val isSessionLoaded: StateFlow<Boolean> = _isSessionLoaded.asStateFlow()
 
@@ -76,10 +89,12 @@ class MainViewModel(
 
     private val notifiedNotificationIds = mutableSetOf<String>()
     private val localNotifications = MutableStateFlow<List<AppNotification>>(emptyList())
+
     private var isFirstMessageLoad = true
     private var isFirstCommentLoad = true
 
-    // Factory per creare il MainViewModel
+    val pendingNavigation = MutableStateFlow<Triple<String, String?, String?>?>(null)
+
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -87,21 +102,22 @@ class MainViewModel(
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
                 val database = AppDatabase.getDatabase(application)
 
-                val authRepository = AuthRepositoryImpl(database.userDao())
-                val preferencesRepository = UserPreferencesRepositoryImpl(application)
-                val mainRepository = MainRepositoryImpl(
-                    database.postDao(), 
-                    database.userDao(),
-                    database.chatDao(),
-                    database.commentDao(),
-                    database // Passaggio dell'istanza DB
-                )
+                val authRepo = AuthRepositoryImpl(database.userDao())
+                val prefRepo = UserPreferencesRepositoryImpl(application)
+
+                val notifRepo = NotificationRepositoryImpl()
+                val userRepo = UserRepositoryImpl(database.userDao(), notifRepo, database)
+                val postRepo = PostRepositoryImpl(database.postDao(), database.commentDao(), notifRepo)
+                val chatRepo = ChatRepositoryImpl(database.chatDao(), notifRepo)
 
                 return MainViewModel(
                     application = application,
-                    mainRepository = mainRepository,
-                    authRepository = authRepository,
-                    preferencesRepository = preferencesRepository
+                    postRepository = postRepo,
+                    userRepository = userRepo,
+                    chatRepository = chatRepo,
+                    notificationRepository = notifRepo,
+                    authRepository = authRepo,
+                    preferencesRepository = prefRepo
                 ) as T
             }
         }
@@ -115,9 +131,9 @@ class MainViewModel(
         observeTags()
         observeTrendingTags()
         observeSearchHistory()
-        observeCurrentUserFollows() // Osserva follower/following dell'utente loggato
-        observeChatPartners()       // Osserva le chat attive
-        observeNotifications()      // Osserva le notifiche in tempo reale
+        observeCurrentUserFollows()
+        observeChatPartners()
+        observeNotifications()
     }
 
     private fun observeNotifications() {
@@ -132,30 +148,22 @@ class MainViewModel(
                     return@collectLatest
                 }
 
-                // Sincronizza lo stato con la UI globale
                 launch {
                     localNotifications.collectLatest { list ->
                         _uiState.update { it.copy(notifications = list) }
                     }
                 }
 
-                // 1. ascolta local messages per la UI
                 launch {
-                    mainRepository.getAllMessagesFlow().collectLatest { _ ->
-                        // I messaggi aggiornano le chat in tempo reale tramite UI state
-                    }
+                    chatRepository.getAllMessagesFlow().collectLatest { _ -> }
                 }
 
-                // 2. ascolta local comments per la UI
                 launch {
-                    mainRepository.getAllCommentsFlow().collectLatest { _ ->
-                        // I commenti aggiornano i dettagli post in tempo reale tramite UI state
-                    }
+                    postRepository.getAllCommentsFlow().collectLatest { _ -> }
                 }
 
-                // 3. ascolta notifiche Firestore da repository per la barra di stato ed il centro notifiche
                 launch {
-                    mainRepository.observeNotifications(email).collectLatest { remoteNotifs ->
+                    notificationRepository.observeNotifications(email).collectLatest { remoteNotifs ->
                         localNotifications.update { current ->
                             (remoteNotifs + current).distinctBy { n -> n.id }
                         }
@@ -172,7 +180,7 @@ class MainViewModel(
                                         notificationDocumentId = notif.id
                                     )
                                 }
-                                mainRepository.markNotificationAsRead(notif.id)
+                                notificationRepository.markNotificationAsRead(notif.id)
                             }
                         }
                     }
@@ -181,13 +189,11 @@ class MainViewModel(
         }
     }
 
-    val pendingNavigation = MutableStateFlow<Triple<String, String?, String?>?>(null)
-
     fun handleNotificationIntent(route: String, targetId: String?, notificationId: String?) {
         viewModelScope.launch {
             if (!notificationId.isNullOrBlank()) {
                 try {
-                    mainRepository.deleteNotification(notificationId)
+                    notificationRepository.deleteNotification(notificationId)
                 } catch (e: Exception) {
                     Log.e("CheckPointDebug", "Error deleting notification: ${e.message}")
                 }
@@ -210,7 +216,7 @@ class MainViewModel(
                     if (!targetId.isNullOrBlank()) {
                         val post = try {
                             _uiState.value.posts.firstOrNull { it.post.id == targetId }
-                                ?: mainRepository.getPostById(targetId, _uiState.value.currentUserEmail ?: "")
+                                ?: postRepository.getPostById(targetId, _uiState.value.currentUserEmail ?: "")
                         } catch (e: Exception) {
                             Log.e("CheckPointDebug", "Error resolving post detail: ${e.message}")
                             null
@@ -234,7 +240,7 @@ class MainViewModel(
         localNotifications.update { it.filterNot { n -> n.id == notification.id } }
         notifiedNotificationIds.remove(notification.id)
         viewModelScope.launch {
-            mainRepository.deleteNotification(notification.id)
+            notificationRepository.deleteNotification(notification.id)
         }
     }
 
@@ -243,7 +249,7 @@ class MainViewModel(
         localNotifications.update { it.filterNot { n -> n.id == notificationId } }
         notifiedNotificationIds.remove(notificationId)
         viewModelScope.launch {
-            mainRepository.deleteNotification(notificationId)
+            notificationRepository.deleteNotification(notificationId)
         }
     }
 
@@ -253,17 +259,16 @@ class MainViewModel(
         notifiedNotificationIds.clear()
         if (currentEmail.isNotBlank()) {
             viewModelScope.launch {
-                mainRepository.clearAllNotifications(currentEmail)
+                notificationRepository.clearAllNotifications(currentEmail)
             }
         }
     }
 
-    // Gestione reattiva dei partner di chat
     private fun observeChatPartners() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
                 if (email != null) {
-                    mainRepository.getChatPartners(email).collectLatest { partners ->
+                    chatRepository.getChatPartners(email).collectLatest { partners ->
                         _uiState.update { it.copy(chatPartners = partners) }
                     }
                 }
@@ -271,18 +276,17 @@ class MainViewModel(
         }
     }
 
-    // Osserva le relazioni di follow dell'utente corrente
     private fun observeCurrentUserFollows() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
                 if (email != null) {
                     launch {
-                        mainRepository.getFollowers(email).collectLatest { followers ->
+                        userRepository.getFollowers(email).collectLatest { followers ->
                             _uiState.update { it.copy(followersList = followers) }
                         }
                     }
                     launch {
-                        mainRepository.getFollowing(email).collectLatest { following ->
+                        userRepository.getFollowing(email).collectLatest { following ->
                             _uiState.update { it.copy(followingList = following) }
                         }
                     }
@@ -306,7 +310,7 @@ class MainViewModel(
     private fun observeTrendingTags() {
         viewModelScope.launch {
             try {
-                mainRepository.getTrendingTags().collectLatest { tags ->
+                postRepository.getTrendingTags().collectLatest { tags ->
                     _uiState.update { it.copy(trendingTags = tags) }
                 }
             } catch (e: Exception) {
@@ -320,24 +324,21 @@ class MainViewModel(
         searchJob = viewModelScope.launch {
             try {
                 val email = preferencesRepository.userEmail.first() ?: return@launch
-                
-                // User Search
+
                 launch {
-                    mainRepository.searchUsersByUsername(query).collectLatest { users ->
+                    userRepository.searchUsersByUsername(query).collectLatest { users ->
                         _uiState.update { it.copy(searchResultsUsers = users) }
                     }
                 }
-                
-                // Posts search
+
                 launch {
-                    mainRepository.searchPostsByTitle(query, email).collectLatest { posts ->
+                    postRepository.searchPostsByTitle(query, email).collectLatest { posts ->
                         _uiState.update { it.copy(searchResultsPosts = posts) }
                     }
                 }
-                
-                // Tags search
+
                 launch {
-                    mainRepository.searchUniqueTags(query).collectLatest { tags ->
+                    postRepository.searchUniqueTags(query).collectLatest { tags ->
                         _uiState.update { it.copy(searchResultsTags = tags) }
                     }
                 }
@@ -361,7 +362,7 @@ class MainViewModel(
     fun onSearchByTag(tag: String) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
-            mainRepository.searchPostsByTag(tag, email).collectLatest { posts ->
+            postRepository.searchPostsByTag(tag, email).collectLatest { posts ->
                 _uiState.update { it.copy(tagResults = posts) }
             }
         }
@@ -370,7 +371,7 @@ class MainViewModel(
     private fun observeTags() {
         viewModelScope.launch {
             try {
-                mainRepository.getAllUniqueTags().collectLatest { tags ->
+                postRepository.getAllUniqueTags().collectLatest { tags ->
                     _uiState.update { it.copy(availableTags = tags) }
                 }
             } catch (e: Exception) {
@@ -424,7 +425,6 @@ class MainViewModel(
                     if (loggedIn) {
                         val email = preferencesRepository.userEmail.first()
                         if (email != null) {
-                            // Avvia sincronizzazione automatica e real-time
                             startPeriodicSync(email)
                         }
                         loadUserProfile()
@@ -446,15 +446,13 @@ class MainViewModel(
                         val previousEmail = _uiState.value.currentUserEmail
                         if (previousEmail != null && previousEmail != email) {
                             Log.d("CheckPointDebug", "Cambio utente rilevato ($previousEmail -> $email): reset dati locali Room")
-                            mainRepository.clearLocalData()
+                            userRepository.clearLocalData()
                         }
                         var user = authRepository.getUser(email)
-                        
-                        // Se l'utente non è in Room, si prova a recuperarlo da Firebase e crearlo
+
                         if (user == null) {
                             val currentEmail = authRepository.getCurrentUserEmail()
                             if (currentEmail == email) {
-                                // loggato su Firebase
                                 val newUser = UserEntity(
                                     email = email,
                                     username = email.split("@")[0]
@@ -463,18 +461,16 @@ class MainViewModel(
                                 user = newUser
                             }
                         }
-
                         if (user != null) {
-                            _uiState.update { 
+                            _uiState.update {
                                 it.copy(
                                     username = user.username,
                                     bio = user.bio,
                                     profilePictureUri = user.profilePictureUri,
                                     currentUserEmail = email,
                                     data = "Welcome back, ${user.username}!"
-                                ) 
+                                )
                             }
-
                             FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                                 if (!task.isSuccessful) {
                                     Log.w("CheckPointFCM", "Unable to get FCM token", task.exception)
@@ -482,7 +478,7 @@ class MainViewModel(
                                 }
                                 val token = task.result ?: return@addOnCompleteListener
                                 viewModelScope.launch {
-                                    mainRepository.saveFcmToken(email, token)
+                                    userRepository.saveFcmToken(email, token)
                                 }
                             }
                         } else {
@@ -560,7 +556,7 @@ class MainViewModel(
                         mediaType = resolvedMediaType
                     )
 
-                    mainRepository.createPost(newPost, tags)
+                    postRepository.createPost(newPost, tags)
                     _uiState.update { it.copy(isLoading = false, postSuccess = true) }
                 }
             } catch (e: Exception) {
@@ -568,10 +564,11 @@ class MainViewModel(
             }
         }
     }
+
     fun onDeletePost(postId: String) {
         viewModelScope.launch {
             try {
-                mainRepository.deletePost(postId)
+                postRepository.deletePost(postId)
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error deleting post: ${e.message}") }
             }
@@ -592,7 +589,7 @@ class MainViewModel(
                     email to sortOrder
                 }.collectLatest { (email, sortOrder) ->
                     if (email != null) {
-                        mainRepository.getAllPosts(email).collectLatest { result ->
+                        postRepository.getAllPosts(email).collectLatest { result ->
                             val sortedList = when (sortOrder) {
                                 PostSortOrder.NEWEST -> result.sortedByDescending { it.post.timestamp }
                                 PostSortOrder.TRENDING -> result.sortedByDescending { it.favoriteCount }
@@ -620,17 +617,11 @@ class MainViewModel(
 
     fun onSortOrderChange(newOrder: PostSortOrder) {
         if (_sortOrder.value == newOrder) return
-        
         viewModelScope.launch {
             try {
-                // Mostra il caricamento per feedback visivo
                 _uiState.update { it.copy(isLoading = true) }
-                
-                // Piccolo delay simulato
                 delay(600.milliseconds)
-                
                 _sortOrder.value = newOrder
-                // Il caricamento viene rimosso appena viene caricata la nuova lista
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Error sorting checkpoints: ${e.message}") }
             }
@@ -667,7 +658,7 @@ class MainViewModel(
                         }
                         state.copy(posts = updatedPosts, selectedPost = updatedSelected)
                     }
-                    mainRepository.toggleLike(postId, email)
+                    postRepository.toggleLike(postId, email)
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Error liking checkpoint: ${e.message}") }
@@ -690,7 +681,9 @@ class MainViewModel(
             _uiState.update { it.copy(isRefreshing = true) }
             val email = uiState.value.currentUserEmail
             if (email != null) {
-                mainRepository.syncDataFromFirestore(email)
+                postRepository.syncPostsLikesAndComments()
+                userRepository.syncUsersAndFollows(email)
+                chatRepository.syncMessages(email)
 
                 if (application != null) {
                     val isGranted = ContextCompat.checkSelfPermission(
@@ -709,19 +702,27 @@ class MainViewModel(
     private fun startPeriodicSync(email: String) {
         periodicSyncJob?.cancel()
         periodicSyncJob = viewModelScope.launch {
-            mainRepository.syncDataFromFirestore(email)
-            
+            postRepository.syncPostsLikesAndComments()
+            userRepository.syncUsersAndFollows(email)
+            chatRepository.syncMessages(email)
+
             while (true) {
                 delay(60.seconds)
-                mainRepository.syncHighPriorityData(email)
+                chatRepository.syncMessages(email)
+                userRepository.syncUsersAndFollows(email)
             }
         }
-        mainRepository.startRealtimeSync(email)
+
+        postRepository.startRealtimeSync()
+        userRepository.startRealtimeSync(email)
+        chatRepository.startRealtimeSync(email)
     }
 
     private fun stopPeriodicSync() {
         periodicSyncJob?.cancel()
-        mainRepository.stopRealtimeSync()
+        postRepository.stopRealtimeSync()
+        userRepository.stopRealtimeSync()
+        chatRepository.stopRealtimeSync()
     }
 
     override fun onCleared() {
@@ -729,14 +730,10 @@ class MainViewModel(
         stopPeriodicSync()
     }
 
-    /**
-     * Helper per verificare l'esistenza dell'utente durante le interazioni.
-     * Restituisce true se l'utente esiste, false se è stato fatto il logout forzato.
-     */
     private suspend fun ensureUserExists(): Boolean {
         val email = preferencesRepository.userEmail.first()
         if (email.isNullOrBlank()) return false
-        
+
         val user = authRepository.getUser(email)
         return if (user == null) {
             onLogout()
@@ -755,7 +752,7 @@ class MainViewModel(
                 chatJob?.cancel()
                 commentJob?.cancel()
                 _uiState.value = MainUiState(isDarkTheme = _uiState.value.isDarkTheme)
-                mainRepository.clearLocalData()
+                userRepository.clearLocalData()
                 preferencesRepository.clearSession()
                 authRepository.logout()
             } catch (e: Exception) {
@@ -778,7 +775,6 @@ class MainViewModel(
         }
     }
 
-    // Gestione apertura popup profilo
     fun onOpenUserPopup(user: UserEntity) {
         val currentEmail = _uiState.value.currentUserEmail
         if (user.email != currentEmail && currentEmail != null) {
@@ -787,54 +783,48 @@ class MainViewModel(
         }
     }
 
-    // Avvia l'osservazione dello stato di follow per l'utente visualizzato nel popup
     private fun observeFollowStatus(followerEmail: String, followedEmail: String) {
         followJob?.cancel()
         followJob = viewModelScope.launch {
-            // Osserva se lo seguiamo
             launch {
-                mainRepository.isFollowing(followerEmail, followedEmail).collectLatest { isFollowing ->
+                userRepository.isFollowing(followerEmail, followedEmail).collectLatest { isFollowing ->
                     _uiState.update { it.copy(isFollowingSelectedUser = isFollowing) }
                 }
             }
-            // Conteggio follower in tempo reale
             launch {
-                mainRepository.getFollowersCount(followedEmail).collectLatest { count ->
+                userRepository.getFollowersCount(followedEmail).collectLatest { count ->
                     _uiState.update { it.copy(selectedUserFollowersCount = count) }
                 }
             }
-            // Conteggio seguiti in tempo reale
             launch {
-                mainRepository.getFollowingCount(followedEmail).collectLatest { count ->
+                userRepository.getFollowingCount(followedEmail).collectLatest { count ->
                     _uiState.update { it.copy(selectedUserFollowingCount = count) }
                 }
             }
         }
     }
 
-    // Alterna lo stato di follow (Follow/Unfollow)
     fun onToggleFollow() {
         val followedUser = _uiState.value.selectedUserForPopup ?: return
         val followerEmail = _uiState.value.currentUserEmail ?: return
-        
+
         viewModelScope.launch {
             try {
-                mainRepository.toggleFollow(followerEmail, followedUser.email)
+                userRepository.toggleFollow(followerEmail, followedUser.email)
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Follow failed: ${e.message}") }
             }
         }
     }
 
-    // Logica Chat: apre la chat con un utente
     fun onOpenChat(partner: UserEntity) {
         _uiState.update { it.copy(selectedChatPartner = partner) }
-        
+
         chatJob?.cancel()
         chatJob = viewModelScope.launch {
             val currentEmail = preferencesRepository.userEmail.first() ?: _uiState.value.currentUserEmail
             if (currentEmail != null) {
-                mainRepository.getChatMessages(currentEmail, partner.email).collectLatest { messages ->
+                chatRepository.getChatMessages(currentEmail, partner.email).collectLatest { messages ->
                     _uiState.update { it.copy(currentChatMessages = messages) }
                 }
             }
@@ -847,17 +837,16 @@ class MainViewModel(
             val partner = _uiState.value.chatPartners.firstOrNull { it.email == partnerEmail }
                 ?: authRepository.getUser(partnerEmail)
                 ?: UserEntity(email = partnerEmail, username = partnerEmail.split("@")[0])
-            
+
             onOpenChat(partner)
         }
     }
 
-    // Invia un nuovo messaggio diretto
     fun onSendMessage(content: String) {
         if (content.isBlank()) return
         val currentEmail = _uiState.value.currentUserEmail ?: return
         val partnerEmail = _uiState.value.selectedChatPartner?.email ?: return
-        
+
         viewModelScope.launch {
             try {
                 val message = MessageEntity(
@@ -865,26 +854,24 @@ class MainViewModel(
                     receiverEmail = partnerEmail,
                     content = content
                 )
-                mainRepository.sendMessage(message)
+                chatRepository.sendMessage(message)
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to send message: ${e.message}") }
             }
         }
     }
 
-    // Chiude la chat e pulisce lo stato
     fun onCloseChat() {
         chatJob?.cancel()
         _uiState.update { it.copy(selectedChatPartner = null, currentChatMessages = emptyList()) }
     }
 
-    // Logica Commenti: apre il dettaglio del post
     fun onOpenPostDetail(postWithAuthor: PostWithAuthor) {
         _uiState.update { it.copy(selectedPost = postWithAuthor) }
-        
+
         commentJob?.cancel()
         commentJob = viewModelScope.launch {
-            mainRepository.getCommentsForPost(postWithAuthor.post.id).collectLatest { comments ->
+            postRepository.getCommentsForPost(postWithAuthor.post.id).collectLatest { comments ->
                 _uiState.update { it.copy(currentPostComments = comments) }
             }
         }
@@ -894,20 +881,19 @@ class MainViewModel(
         if (postId.isBlank()) return
         viewModelScope.launch {
             val post = _uiState.value.posts.firstOrNull { it.post.id == postId }
-                ?: mainRepository.getPostById(postId, _uiState.value.currentUserEmail ?: "")
-            
+                ?: postRepository.getPostById(postId, _uiState.value.currentUserEmail ?: "")
+
             if (post != null) {
                 onOpenPostDetail(post)
             }
         }
     }
 
-    // Aggiunge un commento o una risposta (parentCommentId) a un post
     fun onAddComment(content: String, parentCommentId: String? = null) {
         if (content.isBlank()) return
         val currentEmail = _uiState.value.currentUserEmail ?: return
         val postId = _uiState.value.selectedPost?.post?.id ?: return
-        
+
         viewModelScope.launch {
             try {
                 val comment = CommentEntity(
@@ -916,29 +902,27 @@ class MainViewModel(
                     content = content,
                     parentCommentId = parentCommentId
                 )
-                mainRepository.addComment(comment)
+                postRepository.addComment(comment)
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to add comment: ${e.message}") }
             }
         }
     }
 
-    // Chiude il dettaglio post
     fun onClosePostDetail() {
         commentJob?.cancel()
         _uiState.update { it.copy(selectedPost = null, currentPostComments = emptyList()) }
     }
 
-    // Chiusura popup profilo
     fun onDismissUserPopup() {
         followJob?.cancel()
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 selectedUserForPopup = null,
                 isFollowingSelectedUser = false,
                 selectedUserFollowersCount = 0,
                 selectedUserFollowingCount = 0
-            ) 
+            )
         }
     }
 
@@ -951,8 +935,8 @@ class MainViewModel(
             val email = preferencesRepository.userEmail.first() ?: return@launch
             _uiState.update { it.copy(isLocalUsersLoading = true, errorMessage = null) }
             try {
-                mainRepository.updateUserLocation(email, latitude, longitude)
-                val users = mainRepository.findNearbyUsers(
+                userRepository.updateUserLocation(email, latitude, longitude)
+                val users = userRepository.findNearbyUsers(
                     currentUserEmail = email,
                     latitude = latitude,
                     longitude = longitude,
@@ -970,9 +954,6 @@ class MainViewModel(
         }
     }
 
-    /**
-     * Aggiorna o rimuove la posizione dell'utente in base ai permessi.
-     */
     fun refreshUserLocation(isPermissionGranted: Boolean) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
@@ -981,15 +962,11 @@ class MainViewModel(
                     if (application != null &&
                         PackageManager.PERMISSION_GRANTED ==
                         ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION)) {
-
                         val locationManager = application.getSystemService(android.location.LocationManager::class.java)
-                            as? android.location.LocationManager
-
                         val location = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
                             ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
-
                         if (location != null) {
-                            mainRepository.updateUserLocation(email, location.latitude, location.longitude)
+                            userRepository.updateUserLocation(email, location.latitude, location.longitude)
                             Log.d("CheckPointDebug", "GPS: Posizione aggiornata all'avvio")
                         }
                     }
@@ -997,7 +974,7 @@ class MainViewModel(
                     Log.e("CheckPointDebug", "GPS: Errore aggiornamento posizione: ${e.message}")
                 }
             } else {
-                mainRepository.deleteUserLocation(email)
+                userRepository.deleteUserLocation(email)
                 Log.d("CheckPointDebug", "GPS: Posizione rimossa (permessi negati)")
             }
         }

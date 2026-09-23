@@ -1,10 +1,10 @@
 package com.example.checkpoint.ui.components
 
+import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -20,6 +20,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,7 +58,6 @@ fun BottomNavBar(
                     indicatorColor = Color.Transparent
                 )
             )
-
             NavigationBarItem(
                 selected = currentRoute == "add",
                 onClick = { onNavigate("add") },
@@ -68,7 +68,6 @@ fun BottomNavBar(
                     indicatorColor = Color.Transparent
                 )
             )
-
             NavigationBarItem(
                 selected = currentRoute == "home_feed",
                 onClick = { onNavigate("home_feed") },
@@ -79,7 +78,6 @@ fun BottomNavBar(
                     indicatorColor = Color.Transparent
                 )
             )
-
             NavigationBarItem(
                 selected = currentRoute == "messages",
                 onClick = { onNavigate("messages") },
@@ -90,11 +88,10 @@ fun BottomNavBar(
                     indicatorColor = Color.Transparent
                 )
             )
-
             NavigationBarItem(
                 selected = currentRoute == "profile",
                 onClick = { onNavigate("profile") },
-                icon = { 
+                icon = {
                     Box {
                         Box(
                             modifier = Modifier
@@ -103,9 +100,21 @@ fun BottomNavBar(
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (profilePictureUri != null) {
+                            if (!profilePictureUri.isNullOrBlank()) {
+                                val avatarModel: Any? = remember(profilePictureUri) {
+                                    if (profilePictureUri.startsWith("data:")) {
+                                        try {
+                                            val base64Data = profilePictureUri.substringAfter("base64,")
+                                            Base64.decode(base64Data, Base64.DEFAULT)
+                                        } catch (_: Exception) {
+                                            profilePictureUri
+                                        }
+                                    } else {
+                                        profilePictureUri
+                                    }
+                                }
                                 AsyncImage(
-                                    model = profilePictureUri,
+                                    model = avatarModel,
                                     contentDescription = stringResource(com.example.checkpoint.R.string.tab_profile),
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
@@ -115,9 +124,9 @@ fun BottomNavBar(
                                     imageVector = Icons.Default.Person,
                                     contentDescription = stringResource(com.example.checkpoint.R.string.tab_profile),
                                     modifier = Modifier.size(20.dp),
-                                    tint = if (currentRoute == "profile") 
-                                        MaterialTheme.colorScheme.primary 
-                                    else 
+                                    tint = if (currentRoute == "profile")
+                                        MaterialTheme.colorScheme.primary
+                                    else
                                         MaterialTheme.colorScheme.secondary
                                 )
                             }
