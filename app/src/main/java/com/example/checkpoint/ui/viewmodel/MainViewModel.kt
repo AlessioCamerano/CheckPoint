@@ -503,8 +503,11 @@ class MainViewModel(
                 if (email != null) {
                     val currentUser = authRepository.getUser(email)
                     if (currentUser != null) {
+                        _uiState.update { it.copy(isLoading = true) }
+
+                        // Delega l'upload a Firebase Storage e salva l'URL risultante
                         val processedPic = if (application != null && !newProfilePictureUri.isNullOrBlank()) {
-                            MediaStorageManager.convertUriToBase64(application, newProfilePictureUri)
+                            MediaStorageManager.uploadMediaToFirebase(application, newProfilePictureUri, "profile_pictures")
                         } else newProfilePictureUri
 
                         val updatedUser = currentUser.copy(
@@ -513,26 +516,28 @@ class MainViewModel(
                             profilePictureUri = processedPic
                         )
                         authRepository.updateUser(updatedUser)
-                        _uiState.update { 
+
+                        _uiState.update {
                             it.copy(
                                 username = newUsername,
                                 bio = newBio,
                                 profilePictureUri = processedPic,
-                                errorMessage = null
-                            ) 
+                                errorMessage = null,
+                                isLoading = false
+                            )
                         }
                     }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error updating profile: ${e.message}") }
+                _uiState.update { it.copy(errorMessage = "Error updating profile: ${e.message}", isLoading = false) }
             }
         }
     }
 
     fun onCreatePost(
-        title: String, 
-        message: String, 
-        mediaUri: String? = null, 
+        title: String,
+        message: String,
+        mediaUri: String? = null,
         mediaType: MediaType = MediaType.NONE,
         tags: List<String> = emptyList()
     ) {
@@ -541,11 +546,13 @@ class MainViewModel(
                 _uiState.update { it.copy(isLoading = true) }
                 val email = preferencesRepository.userEmail.first()
                 if (email != null) {
-                    val resolvedMediaType = if (!mediaUri.isNullOrBlank()) MediaType.IMAGE else MediaType.NONE
 
+                    // Esegue l'upload asincrono del file multimediale
                     val processedMediaUri = if (application != null && !mediaUri.isNullOrBlank()) {
-                        MediaStorageManager.convertUriToBase64(application, mediaUri)
-                    } else mediaUri
+                        MediaStorageManager.uploadMediaToFirebase(application, mediaUri, "posts_media")
+                    } else null
+
+                    val resolvedMediaType = if (!processedMediaUri.isNullOrBlank()) MediaType.IMAGE else MediaType.NONE
 
                     val newPost = PostEntity(
                         authorEmail = email,
@@ -554,6 +561,7 @@ class MainViewModel(
                         mediaUri = processedMediaUri,
                         mediaType = resolvedMediaType
                     )
+
                     mainRepository.createPost(newPost, tags)
                     _uiState.update { it.copy(isLoading = false, postSuccess = true) }
                 }
