@@ -1,10 +1,10 @@
 package com.example.checkpoint.ui.state
 
 /**
- * Stato della UI durante i flussi di Login e Signup.
+ * Stato dell'interfaccia utente durante i flussi di autenticazione (Login e Registrazione).
  */
 data class AuthUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 )

@@ -5,7 +5,12 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,9 +22,26 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.checkpoint.ui.components.MainContainer
 import com.example.checkpoint.ui.components.UserProfilePopup
-import com.example.checkpoint.ui.screens.*
-import com.example.checkpoint.ui.viewmodel.*
+import com.example.checkpoint.ui.screens.ChatScreen
+import com.example.checkpoint.ui.screens.EditProfileScreen
+import com.example.checkpoint.ui.screens.FollowersFollowingScreen
+import com.example.checkpoint.ui.screens.LocalUsersScreen
+import com.example.checkpoint.ui.screens.LoginScreen
+import com.example.checkpoint.ui.screens.MyCheckpointsScreen
+import com.example.checkpoint.ui.screens.NotificationsScreen
+import com.example.checkpoint.ui.screens.OnboardingScreen
+import com.example.checkpoint.ui.screens.PostDetailScreen
+import com.example.checkpoint.ui.screens.SignupScreen
+import com.example.checkpoint.ui.screens.TagResultsScreen
+import com.example.checkpoint.ui.viewmodel.ChatViewModel
+import com.example.checkpoint.ui.viewmodel.FeedViewModel
+import com.example.checkpoint.ui.viewmodel.MainViewModel
+import com.example.checkpoint.ui.viewmodel.ProfileViewModel
+import com.example.checkpoint.ui.viewmodel.SearchViewModel
 
+/**
+ * Costanti per le rotte di navigazione dell'applicazione.
+ */
 object Screen {
     const val Onboarding = "onboarding"
     const val OnboardingReview = "onboarding_review"
@@ -36,12 +58,15 @@ object Screen {
     const val TagResults = "tag_results/{tag}"
 }
 
+/**
+ * Componente principale di navigazione dell'applicazione che gestisce le rotte, i ViewModel e le transizioni.
+ */
 @Composable
 fun AppNavigation(
     viewModel: MainViewModel,
     initialRoute: String? = null,
     initialTargetId: String? = null,
-    initialNotificationId: String? = null
+    initialNotificationId: String? = null,
 ) {
     val navController = rememberNavController()
 
@@ -57,24 +82,29 @@ fun AppNavigation(
 
     var initialIntentHandled by remember { mutableStateOf(false) }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Gestione Notifiche e Deep Link Iniziali
+    // ------------------------------------------------------------------------------------------------
+
     LaunchedEffect(isSessionLoaded, isLoggedIn, initialRoute) {
         if (!isSessionLoaded || !isLoggedIn || initialRoute.isNullOrBlank() || initialIntentHandled) return@LaunchedEffect
         if (!initialNotificationId.isNullOrBlank()) viewModel.onNotificationClickedById(initialNotificationId)
 
         when (initialRoute) {
-            Screen.Chat, "chat" -> {
+            Screen.Chat -> {
                 if (!initialTargetId.isNullOrBlank()) {
                     chatViewModel.onOpenChatByEmail(initialTargetId)
                     navController.navigate(Screen.Chat) { popUpTo(Screen.Home) { inclusive = false } }
                 }
             }
-            Screen.PostDetail, "post_detail" -> {
+            Screen.PostDetail -> {
                 if (!initialTargetId.isNullOrBlank()) {
                     feedViewModel.onOpenPostDetailById(initialTargetId)
                     navController.navigate(Screen.PostDetail) { popUpTo(Screen.Home) { inclusive = false } }
                 }
             }
-            Screen.FollowersList, "followers_list" -> {
+            Screen.FollowersList -> {
                 if (!initialTargetId.isNullOrBlank()) {
                     viewModel.onOpenUserPopupByEmail(initialTargetId)
                     navController.navigate(Screen.FollowersList) { popUpTo(Screen.Home) { inclusive = false } }
@@ -93,24 +123,29 @@ fun AppNavigation(
         if (isLoggedIn && nav != null) {
             val (route, targetId, _) = nav
             when (route) {
-                Screen.Chat, "chat" -> {
+                Screen.Chat -> {
                     targetId?.let { chatViewModel.onOpenChatByEmail(it) }
                     navController.navigate(Screen.Chat) { popUpTo(Screen.Home) { inclusive = false } }
                 }
-                Screen.PostDetail, "post_detail" -> {
+                Screen.PostDetail -> {
                     targetId?.let { feedViewModel.onOpenPostDetailById(it) }
                     navController.navigate(Screen.PostDetail) { popUpTo(Screen.Home) { inclusive = false } }
                 }
-                Screen.FollowersList, "followers_list" -> {
+                Screen.FollowersList -> {
                     targetId?.let { viewModel.onOpenUserPopupByEmail(it) }
                     navController.navigate(Screen.FollowersList) { popUpTo(Screen.Home) { inclusive = false } }
                 }
-                Screen.Notifications, "notifications" -> navController.navigate(Screen.Notifications)
+                Screen.Notifications -> navController.navigate(Screen.Notifications)
                 else -> navController.navigate(Screen.Home) { popUpTo(Screen.Home) { inclusive = false } }
             }
             viewModel.consumePendingNavigation()
         }
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Navigazione e Configurazione Grafico delle Rotte
+    // ------------------------------------------------------------------------------------------------
 
     val startDestination = when {
         initialRoute != null && !isLoggedIn -> Screen.Login
@@ -120,7 +155,9 @@ fun AppNavigation(
     }
 
     if (!isSessionLoaded) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
         return
     }
 
@@ -131,7 +168,7 @@ fun AppNavigation(
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }
+            popExitTransition = { ExitTransition.None },
         ) {
             composable(Screen.Onboarding) {
                 OnboardingScreen(
@@ -139,7 +176,7 @@ fun AppNavigation(
                     onFinish = {
                         viewModel.onOnboardingCompleted()
                         navController.navigate(Screen.Login) { popUpTo(Screen.Onboarding) { inclusive = true } }
-                    }
+                    },
                 )
             }
             composable(Screen.OnboardingReview) {
@@ -148,13 +185,13 @@ fun AppNavigation(
             composable(Screen.Login) {
                 LoginScreen(
                     onLoginSuccess = { navController.navigate(Screen.Home) { popUpTo(Screen.Login) { inclusive = true } } },
-                    onNavigateToSignup = { navController.navigate(Screen.Signup) }
+                    onNavigateToSignup = { navController.navigate(Screen.Signup) },
                 )
             }
             composable(Screen.Signup) {
                 SignupScreen(
                     onSignupSuccess = { navController.navigate(Screen.Home) { popUpTo(Screen.Login) { inclusive = true } } },
-                    onNavigateToLogin = { navController.popBackStack() }
+                    onNavigateToLogin = { navController.popBackStack() },
                 )
             }
             composable(Screen.Home) {
@@ -177,7 +214,7 @@ fun AppNavigation(
                         viewModel.onLogout()
                         profileViewModel.onLogout()
                         navController.navigate(Screen.Login) { popUpTo(Screen.Home) { inclusive = true } }
-                    }
+                    },
                 )
             }
             composable(Screen.Chat) {
@@ -189,7 +226,7 @@ fun AppNavigation(
                         partner = partner,
                         messages = chatState.currentChatMessages,
                         onBack = { chatViewModel.onCloseChat(); navController.popBackStack() },
-                        onSendMessage = { chatViewModel.onSendMessage(it) }
+                        onSendMessage = { chatViewModel.onSendMessage(it) },
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -205,7 +242,7 @@ fun AppNavigation(
                         onBack = { feedViewModel.onClosePostDetail(); navController.popBackStack() },
                         onAddComment = { content, parentId -> feedViewModel.onAddComment(content, parentId) },
                         onToggleLike = { feedViewModel.onToggleLike(it) },
-                        onUserClick = { viewModel.onOpenUserPopup(it) }
+                        onUserClick = { viewModel.onOpenUserPopup(it) },
                     )
                 } else {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -222,7 +259,7 @@ fun AppNavigation(
                     onPostClick = { post ->
                         feedViewModel.onOpenPostDetail(post)
                         navController.navigate(Screen.PostDetail)
-                    }
+                    },
                 )
             }
             composable(route = Screen.TagResults, arguments = listOf(navArgument("tag") { type = NavType.StringType })) { backStackEntry ->
@@ -237,7 +274,7 @@ fun AppNavigation(
                     onPostClick = { post ->
                         feedViewModel.onOpenPostDetail(post)
                         navController.navigate(Screen.PostDetail)
-                    }
+                    },
                 )
             }
             composable(Screen.FollowersList) {
@@ -246,7 +283,7 @@ fun AppNavigation(
                     followers = profileState.followersList,
                     following = profileState.followingList,
                     onBack = { navController.popBackStack() },
-                    onUserClick = { viewModel.onOpenUserPopup(it) }
+                    onUserClick = { viewModel.onOpenUserPopup(it) },
                 )
             }
             composable(Screen.LocalUsers) {
@@ -257,7 +294,7 @@ fun AppNavigation(
                     onRadiusChange = { profileViewModel.onLocalUsersRadiusChange(it) },
                     onSearchNearbyUsers = { lat, lng -> profileViewModel.onSearchNearbyUsers(lat, lng) },
                     onUserClick = { viewModel.onOpenUserPopup(it) },
-                    onClearLocalUsers = { profileViewModel.onClearLocalUsers() }
+                    onClearLocalUsers = { profileViewModel.onClearLocalUsers() },
                 )
             }
             composable(Screen.EditProfile) {
@@ -268,7 +305,7 @@ fun AppNavigation(
                     onSave = { username, bio, uri ->
                         profileViewModel.onUpdateProfile(username, bio, uri)
                         navController.popBackStack()
-                    }
+                    },
                 )
             }
             composable(Screen.Notifications) {
@@ -294,7 +331,7 @@ fun AppNavigation(
                             }
                             else -> navController.navigate(Screen.Home) { popUpTo(Screen.Home) { inclusive = false } }
                         }
-                    }
+                    },
                 )
             }
         }
@@ -310,7 +347,7 @@ fun AppNavigation(
                 onMessageClick = { u ->
                     chatViewModel.onOpenChat(u)
                     navController.navigate(Screen.Chat)
-                }
+                },
             )
         }
     }
