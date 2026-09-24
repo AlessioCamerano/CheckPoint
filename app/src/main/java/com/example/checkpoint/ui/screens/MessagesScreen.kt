@@ -4,7 +4,18 @@ import android.util.Base64
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -12,8 +23,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +54,9 @@ import com.example.checkpoint.ui.state.ChatUiState
 import com.example.checkpoint.ui.state.FeedUiState
 import com.example.checkpoint.ui.theme.spacing
 
+/**
+ * Schermata della lista chat (Directs) e dei post salvati nei preferiti.
+ */
 @Composable
 fun MessagesScreen(
     chatState: ChatUiState,
@@ -40,18 +64,18 @@ fun MessagesScreen(
     onPartnerClick: (UserEntity) -> Unit = {},
     onPostClick: (PostWithAuthor) -> Unit = {},
     onToggleLike: (String) -> Unit = {},
-    onUserClick: (UserEntity) -> Unit = {}
+    onUserClick: (UserEntity) -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf(
         stringResource(R.string.tab_directs),
-        stringResource(R.string.tab_saved)
+        stringResource(R.string.tab_saved),
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = MaterialTheme.spacing.medium)
+            .padding(horizontal = MaterialTheme.spacing.medium),
     ) {
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
@@ -59,16 +83,19 @@ fun MessagesScreen(
             text = stringResource(R.string.messages_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
         )
 
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
+        // ------------------------------------------------------------------------------------------------
+        // Selettore Tab (Chat Directs vs Post Salvati)
+        // ------------------------------------------------------------------------------------------------
         SecondaryTabRow(
             selectedTabIndex = selectedTab,
             containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.primary,
-            divider = {}
+            divider = {},
         ) {
             tabs.forEachIndexed { index, title ->
                 Tab(
@@ -78,26 +105,30 @@ fun MessagesScreen(
                         Text(
                             text = title,
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
                         )
-                    }
+                    },
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
+
+        // ------------------------------------------------------------------------------------------------
+        // Elenco Chat o Post Salvati
+        // ------------------------------------------------------------------------------------------------
         if (selectedTab == 0) {
             if (chatState.chatPartners.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.AutoMirrored.Filled.Chat,
-                    text = stringResource(R.string.messages_empty)
+                    text = stringResource(R.string.messages_empty),
                 )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
                 ) {
                     items(chatState.chatPartners) { partner ->
                         UserItem(user = partner, onClick = onPartnerClick)
@@ -110,20 +141,20 @@ fun MessagesScreen(
             if (savedPosts.isEmpty()) {
                 MessagesEmptyState(
                     icon = Icons.Default.Flag,
-                    text = stringResource(R.string.saves_empty)
+                    text = stringResource(R.string.saves_empty),
                 )
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
+                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
                 ) {
                     items(savedPosts) { postWithAuthor ->
                         CompactPostItem(
                             postWithAuthor = postWithAuthor,
                             onClick = { onPostClick(postWithAuthor) },
                             onToggleLike = onToggleLike,
-                            onUserClick = onUserClick
+                            onUserClick = onUserClick,
                         )
                     }
                 }
@@ -132,12 +163,15 @@ fun MessagesScreen(
     }
 }
 
+/**
+ * Elemento compatto per la visualizzazione di un post salvato nei preferiti.
+ */
 @Composable
 fun CompactPostItem(
     postWithAuthor: PostWithAuthor,
     onClick: () -> Unit,
     onToggleLike: (String) -> Unit,
-    onUserClick: (UserEntity) -> Unit
+    onUserClick: (UserEntity) -> Unit,
 ) {
     Surface(
         modifier = Modifier
@@ -147,14 +181,14 @@ fun CompactPostItem(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         border = BorderStroke(
             0.5.dp,
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-        )
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+        ),
     ) {
         Row(
             modifier = Modifier
                 .padding(MaterialTheme.spacing.smallMedium)
                 .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             val author = postWithAuthor.safeAuthor
 
@@ -164,12 +198,12 @@ fun CompactPostItem(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                     .clickable { onUserClick(author) },
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 if (!author.profilePictureUri.isNullOrBlank()) {
                     val avatarModel: Any? = remember(author.profilePictureUri) {
                         val uri = author.profilePictureUri
-                        if (uri != null && uri.startsWith("data:")) {
+                        if (uri.startsWith("data:")) {
                             try {
                                 val base64Data = uri.substringAfter("base64,")
                                 Base64.decode(base64Data, Base64.DEFAULT)
@@ -184,10 +218,10 @@ fun CompactPostItem(
                         model = avatarModel,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
                     )
                 } else {
-                    Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                 }
             }
 
@@ -200,48 +234,51 @@ fun CompactPostItem(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = stringResource(R.string.post_by_author, author.username.ifBlank { author.email }),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.secondary,
-                    maxLines = 1
+                    maxLines = 1,
                 )
             }
 
             IconButton(
                 onClick = { onToggleLike(postWithAuthor.post.id) },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             ) {
                 Icon(
                     Icons.Default.Flag,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
     }
 }
 
+/**
+ * Vista di stato vuoto per messaggi o salvati non presenti.
+ */
 @Composable
 fun MessagesEmptyState(icon: ImageVector, text: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 icon,
                 contentDescription = null,
                 modifier = Modifier.size(MaterialTheme.spacing.extraLarge),
-                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
             Text(
                 text = text,
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f),
             )
         }
     }

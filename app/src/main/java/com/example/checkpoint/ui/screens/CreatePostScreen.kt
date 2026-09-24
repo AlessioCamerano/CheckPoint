@@ -8,20 +8,49 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -32,9 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import coil.compose.AsyncImage
 import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
@@ -46,10 +73,13 @@ import com.example.checkpoint.util.MediaEditHelper
 import com.example.checkpoint.util.MediaStorageManager
 import com.yalantis.ucrop.UCrop
 
+/**
+ * Schermata per la creazione e pubblicazione di un nuovo Checkpoint/Post.
+ */
 @Composable
 fun CreatePostScreen(
     state: FeedUiState,
-    onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit = { _, _, _, _, _ -> }
+    onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit = { _, _, _, _, _ -> },
 ) {
     CreatePostScreenContent(state = state, onCreatePost = onCreatePost)
 }
@@ -58,7 +88,7 @@ fun CreatePostScreen(
 @Composable
 fun CreatePostScreenContent(
     state: FeedUiState,
-    onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit = { _, _, _, _, _ -> }
+    onCreatePost: (String, String, String?, MediaType, List<String>) -> Unit = { _, _, _, _, _ -> },
 ) {
     val context = LocalContext.current
     var title by remember { mutableStateOf("") }
@@ -100,7 +130,7 @@ fun CreatePostScreenContent(
                     mediaType = MediaType.IMAGE
                 }
             }
-        }
+        },
     )
 
     val mediaPickerLauncher = rememberLauncherForActivityResult(
@@ -113,12 +143,12 @@ fun CreatePostScreenContent(
                     mediaType = MediaType.IMAGE
                 }
             }
-        }
+        },
     )
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         val scrollState = rememberScrollState()
 
@@ -127,16 +157,19 @@ fun CreatePostScreenContent(
                 .fillMaxSize()
                 .padding(horizontal = MaterialTheme.spacing.large)
                 .verticalScroll(scrollState)
-                .imePadding()
+                .imePadding(),
         ) {
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
+            // ------------------------------------------------------------------------------------------------
+            // Titolo e Sottotitolo
+            // ------------------------------------------------------------------------------------------------
             Text(
                 text = stringResource(R.string.post_new_title),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
             Text(
                 text = stringResource(R.string.post_new_subtitle),
@@ -146,17 +179,21 @@ fun CreatePostScreenContent(
                 modifier = Modifier
                     .padding(top = MaterialTheme.spacing.small)
                     .fillMaxWidth(),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Campi di Testo: Titolo e Messaggio
+            // ------------------------------------------------------------------------------------------------
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
                 label = { Text(stringResource(R.string.field_title)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.extraLarge,
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
@@ -167,10 +204,14 @@ fun CreatePostScreenContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 120.dp),
-                shape = MaterialTheme.shapes.extraLarge
+                shape = MaterialTheme.shapes.extraLarge,
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Sezione Immagine/Media
+            // ------------------------------------------------------------------------------------------------
             if (mediaUri != null) {
                 Box(
                     modifier = Modifier
@@ -178,13 +219,13 @@ fun CreatePostScreenContent(
                         .height(250.dp)
                         .clip(MaterialTheme.shapes.large)
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     AsyncImage(
                         model = mediaUri,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
                     )
 
                     IconButton(
@@ -195,9 +236,9 @@ fun CreatePostScreenContent(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .padding(MaterialTheme.spacing.small)
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape),
                     ) {
-                        Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
 
                     IconButton(
@@ -205,9 +246,9 @@ fun CreatePostScreenContent(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(MaterialTheme.spacing.small)
-                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape)
+                            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), CircleShape),
                     ) {
-                        Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     }
                 }
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
@@ -218,13 +259,17 @@ fun CreatePostScreenContent(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
                         mediaPickerLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
                         )
-                    }
+                    },
                 )
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
             }
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Gestione Tag
+            // ------------------------------------------------------------------------------------------------
             LaunchedEffect(currentTag) {
                 if (currentTag.isNotEmpty()) {
                     scrollState.animateScrollTo(scrollState.maxValue)
@@ -237,7 +282,7 @@ fun CreatePostScreenContent(
             Box(
                 modifier = Modifier.onGloballyPositioned {
                     textFieldHeight = with(density) { it.size.height.toDp() }
-                }
+                },
             ) {
                 OutlinedTextField(
                     value = currentTag,
@@ -254,7 +299,7 @@ fun CreatePostScreenContent(
                             selectedTags.add(cleanTag)
                             currentTag = ""
                         }
-                    })
+                    }),
                 )
             }
 
@@ -263,7 +308,7 @@ fun CreatePostScreenContent(
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
                 verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 selectedTags.forEach { tag ->
                     Surface(
@@ -271,18 +316,18 @@ fun CreatePostScreenContent(
                         shape = MaterialTheme.shapes.large,
                         border = BorderStroke(
                             0.5.dp,
-                            MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)
-                        )
+                            MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f),
+                        ),
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         ) {
                             Text(
                                 text = "#$tag",
                                 color = MaterialTheme.colorScheme.onTertiaryContainer,
                                 style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                             Spacer(modifier = Modifier.width(MaterialTheme.spacing.small / 2 + 2.dp))
                             Icon(
@@ -291,7 +336,7 @@ fun CreatePostScreenContent(
                                 tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
                                 modifier = Modifier
                                     .size(14.dp)
-                                    .clickable { selectedTags.remove(tag) }
+                                    .clickable { selectedTags.remove(tag) },
                             )
                         }
                     }
@@ -300,6 +345,10 @@ fun CreatePostScreenContent(
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Pulsante di Invio
+            // ------------------------------------------------------------------------------------------------
             Button(
                 onClick = {
                     if (title.isNotBlank() && initialMessage.isNotBlank()) {
@@ -312,9 +361,13 @@ fun CreatePostScreenContent(
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = MaterialTheme.shapes.extraLarge,
-                enabled = title.isNotBlank() && initialMessage.isNotBlank()
+                enabled = title.isNotBlank() && initialMessage.isNotBlank(),
             ) {
-                Text(stringResource(R.string.post_button), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = stringResource(R.string.post_button),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
 
             Spacer(modifier = Modifier.height(150.dp))

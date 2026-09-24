@@ -1,7 +1,16 @@
 package com.example.checkpoint.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -10,28 +19,44 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Update
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.example.checkpoint.R
 import com.example.checkpoint.data.local.entity.MediaType
 import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.PostWithAuthor
+import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.state.FeedUiState
 import com.example.checkpoint.ui.state.PostSortOrder
-import com.example.checkpoint.ui.components.PostItem
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
 
+/**
+ * Schermata principale (Home Feed) dell'applicazione che mostra l'elenco dei post pubblicati.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -42,7 +67,7 @@ fun MainScreen(
     onToggleLike: (String) -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onUserClick: (UserEntity) -> Unit = {},
-    onPostClick: (PostWithAuthor) -> Unit = {}
+    onPostClick: (PostWithAuthor) -> Unit = {},
 ) {
     var showSortMenu by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -56,22 +81,25 @@ fun MainScreen(
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = MaterialTheme.spacing.medium)
+                .padding(horizontal = MaterialTheme.spacing.medium),
         ) {
+            // ------------------------------------------------------------------------------------------------
+            // Intestazione con Pulsante Notifiche e Titolo
+            // ------------------------------------------------------------------------------------------------
             Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(
                     onClick = onNavigateToNotifications,
-                    modifier = Modifier.align(Alignment.TopEnd)
+                    modifier = Modifier.align(Alignment.TopEnd),
                 ) {
                     Icon(
                         imageVector = Icons.Default.NotificationsNone,
                         contentDescription = stringResource(R.string.notifications),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
@@ -84,7 +112,7 @@ fun MainScreen(
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             Text(
                 text = stringResource(R.string.main_relax_quote),
@@ -94,58 +122,63 @@ fun MainScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = MaterialTheme.spacing.small),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
+
+
+            // ------------------------------------------------------------------------------------------------
+            // Filtri di Ordinamento (Nuovi vs Popolari)
+            // ------------------------------------------------------------------------------------------------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.main_feed_title),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
                 Box {
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
                             imageVector = Icons.Default.FilterList,
                             contentDescription = stringResource(R.string.action_sort),
-                            tint = MaterialTheme.colorScheme.onBackground
+                            tint = MaterialTheme.colorScheme.onBackground,
                         )
                     }
                     DropdownMenu(
                         expanded = showSortMenu,
                         onDismissRequest = { showSortMenu = false },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface),
                     ) {
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = stringResource(R.string.main_sort_trending),
-                                    fontWeight = if (state.sortOrder == PostSortOrder.TRENDING) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (state.sortOrder == PostSortOrder.TRENDING) FontWeight.Bold else FontWeight.Normal,
                                 )
                             },
                             onClick = {
                                 onSortOrderChange(PostSortOrder.TRENDING)
                                 showSortMenu = false
                             },
-                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null) },
                         )
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = stringResource(R.string.main_sort_newest),
-                                    fontWeight = if (state.sortOrder == PostSortOrder.NEWEST) FontWeight.Bold else FontWeight.Normal
+                                    fontWeight = if (state.sortOrder == PostSortOrder.NEWEST) FontWeight.Bold else FontWeight.Normal,
                                 )
                             },
                             onClick = {
                                 onSortOrderChange(PostSortOrder.NEWEST)
                                 showSortMenu = false
                             },
-                            leadingIcon = { Icon(Icons.Default.Update, contentDescription = null) }
+                            leadingIcon = { Icon(Icons.Default.Update, contentDescription = null) },
                         )
                     }
                 }
@@ -159,22 +192,26 @@ fun MainScreen(
                         .height(MaterialTheme.spacing.extraExtraSmall)
                         .padding(horizontal = MaterialTheme.spacing.small),
                     color = MaterialTheme.colorScheme.primary,
-                    trackColor = Color.Transparent
+                    trackColor = Color.Transparent,
                 )
             } else {
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.extraExtraSmall))
             }
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Elenco dei Post del Feed
+            // ------------------------------------------------------------------------------------------------
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = MaterialTheme.spacing.medium),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small)
+                verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.small),
             ) {
                 items(
                     items = state.posts,
-                    key = { it.post.id }
+                    key = { it.post.id },
                 ) { postWithAuthor ->
                     PostItem(
                         post = postWithAuthor.post,
@@ -184,7 +221,7 @@ fun MainScreen(
                         favoriteCount = postWithAuthor.favoriteCount,
                         onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
                         onAuthorClick = onUserClick,
-                        onPostClick = onPostClick
+                        onPostClick = onPostClick,
                     )
                 }
 
@@ -193,14 +230,19 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = MaterialTheme.spacing.large),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = if (state.isLoading) stringResource(R.string.main_loading) else stringResource(
-                                R.string.main_no_more),
+                            text = if (state.isLoading) {
+                                stringResource(R.string.main_loading)
+                            } else {
+                                stringResource(
+                                    R.string.main_no_more,
+                                )
+                            },
                             color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
                             style = MaterialTheme.typography.labelMedium,
-                            fontStyle = FontStyle.Italic
+                            fontStyle = FontStyle.Italic,
                         )
                     }
                 }
@@ -222,15 +264,15 @@ fun MainScreenDarkPreview() {
                             post = PostEntity("1", "user1@gmail.com", "Hello!", "Welcome to the dark side.", System.currentTimeMillis(), "https://example.com/dark.jpg", MediaType.IMAGE),
                             author = author,
                             isLikedByCurrentUser = true,
-                            favoriteCount = 10
+                            favoriteCount = 10,
                         ),
                         PostWithAuthor(
                             post = PostEntity("2", "user2@gmail.com", "Morning", "Coffee is ready.", System.currentTimeMillis()),
                             author = UserEntity("user2@gmail.com", "User Test 2"),
-                            favoriteCount = 5
-                        )
-                    )
-                )
+                            favoriteCount = 5,
+                        ),
+                    ),
+                ),
             )
         }
     }
@@ -249,15 +291,15 @@ fun MainScreenLightPreview() {
                             post = PostEntity("1", "user1@gmail.com", "Hello!", "Welcome to the light side.", System.currentTimeMillis(), "https://example.com/light.jpg", MediaType.IMAGE),
                             author = author,
                             isLikedByCurrentUser = true,
-                            favoriteCount = 10
+                            favoriteCount = 10,
                         ),
                         PostWithAuthor(
                             post = PostEntity("2", "user2@gmail.com", "Morning", "Coffee is ready.", System.currentTimeMillis()),
                             author = UserEntity("user2@gmail.com", "User Test 2"),
-                            favoriteCount = 5
-                        )
-                    )
-                )
+                            favoriteCount = 5,
+                        ),
+                    ),
+                ),
             )
         }
     }

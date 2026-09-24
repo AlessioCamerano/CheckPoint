@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,13 +62,16 @@ import com.example.checkpoint.ui.theme.spacing
 private data class OnboardingSlideData(
     val titleRes: Int,
     val subtitleRes: Int,
-    val icon: @Composable () -> Unit
+    val icon: @Composable () -> Unit,
 )
 
+/**
+ * Schermata di Onboarding ed introduzione guidata alle funzionalità dell'app.
+ */
 @Composable
 fun OnboardingScreen(
     showPermissionsStep: Boolean = true,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
 ) {
     val context = LocalContext.current
     val slides = remember {
@@ -79,9 +84,9 @@ fun OnboardingScreen(
                         imageVector = Icons.Default.Explore,
                         contentDescription = null,
                         modifier = Modifier.size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             ),
             OnboardingSlideData(
                 titleRes = R.string.onboarding_slide_2_title,
@@ -91,9 +96,9 @@ fun OnboardingScreen(
                         imageVector = Icons.Default.Groups,
                         contentDescription = null,
                         modifier = Modifier.size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             ),
             OnboardingSlideData(
                 titleRes = R.string.onboarding_slide_3_title,
@@ -103,9 +108,9 @@ fun OnboardingScreen(
                         imageVector = Icons.Default.Chat,
                         contentDescription = null,
                         modifier = Modifier.size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
-                }
+                },
             ),
             OnboardingSlideData(
                 titleRes = R.string.onboarding_slide_4_title,
@@ -115,10 +120,10 @@ fun OnboardingScreen(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = null,
                         modifier = Modifier.size(72.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
-                }
-            )
+                },
+            ),
         )
     }
     val pageCount = if (showPermissionsStep) 5 else 4
@@ -135,7 +140,7 @@ fun OnboardingScreen(
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) {
         permissionsRequested = true
     }
@@ -146,60 +151,67 @@ fun OnboardingScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(MaterialTheme.spacing.medium)
+                .padding(MaterialTheme.spacing.medium),
         ) {
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
 
+            // ------------------------------------------------------------------------------------------------
+            // Pager di Presentazione delle Slide
+            // ------------------------------------------------------------------------------------------------
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = MaterialTheme.spacing.small),
                 pageSpacing = MaterialTheme.spacing.smallMedium,
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = MaterialTheme.spacing.smallMedium
-                )
+                contentPadding = PaddingValues(
+                    horizontal = MaterialTheme.spacing.smallMedium,
+                ),
             ) { page ->
                 if (showPermissionsStep && page == pageCount - 1) {
                     val permissionStates = requiredPermissions.map { permission ->
                         val granted = ContextCompat.checkSelfPermission(
                             context,
-                            permission
+                            permission,
                         ) == PackageManager.PERMISSION_GRANTED
                         permission to granted
                     }
                     PermissionsSlideContent(
                         permissionStates = permissionStates,
                         onRequestPermissions = ::requestPermissions,
-                        permissionsRequested = permissionsRequested
+                        permissionsRequested = permissionsRequested,
                     )
                 } else {
-                    val slideIndex = if (showPermissionsStep) page else page
+                    val slideIndex = page
                     IntroSlideContent(
                         title = stringResource(slides[slideIndex].titleRes),
                         subtitle = stringResource(slides[slideIndex].subtitleRes),
-                        icon = slides[slideIndex].icon
+                        icon = slides[slideIndex].icon,
                     )
                 }
             }
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Indicatori di Pagina e Pulsanti di Azione
+            // ------------------------------------------------------------------------------------------------
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = MaterialTheme.spacing.medium),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 repeat(pageCount) { index ->
                     val selected = index == pagerState.currentPage
@@ -209,8 +221,8 @@ fun OnboardingScreen(
                             .size(if (selected) 20.dp else 8.dp, 8.dp)
                             .background(
                                 color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(100)
-                            )
+                                shape = RoundedCornerShape(100),
+                            ),
                     )
                 }
             }
@@ -222,11 +234,11 @@ fun OnboardingScreen(
                         .fillMaxWidth()
                         .height(MaterialTheme.spacing.extraLarge),
                     shape = MaterialTheme.shapes.extraLarge,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 ) {
                     Text(
                         text = stringResource(if (showPermissionsStep) R.string.onboarding_start_button else R.string.onboarding_done_button),
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             } else {
@@ -235,11 +247,11 @@ fun OnboardingScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MaterialTheme.spacing.extraLarge),
-                    shape = MaterialTheme.shapes.extraLarge
+                    shape = MaterialTheme.shapes.extraLarge,
                 ) {
                     Text(
                         text = stringResource(R.string.onboarding_skip_button),
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             }
@@ -252,7 +264,7 @@ private fun IntroSlideContent(
     title: String,
     subtitle: String,
     icon: @Composable () -> Unit,
-    outerVerticalPadding: Dp = MaterialTheme.spacing.medium
+    outerVerticalPadding: Dp = MaterialTheme.spacing.medium,
 ) {
     val ringColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
     Card(
@@ -260,14 +272,14 @@ private fun IntroSlideContent(
             .fillMaxSize()
             .padding(vertical = outerVerticalPadding),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(MaterialTheme.spacing.large),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Box(
                 modifier = Modifier
@@ -276,18 +288,18 @@ private fun IntroSlideContent(
                         brush = Brush.radialGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.20f),
-                                Color.Transparent
-                            )
+                                Color.Transparent,
+                            ),
                         ),
-                        shape = RoundedCornerShape(80.dp)
+                        shape = RoundedCornerShape(80.dp),
                     ),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 icon()
                 Canvas(modifier = Modifier.matchParentSize()) {
                     drawCircle(
                         color = ringColor,
-                        radius = size.minDimension / 2f
+                        radius = size.minDimension / 2f,
                     )
                 }
             }
@@ -298,7 +310,7 @@ private fun IntroSlideContent(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
@@ -307,7 +319,7 @@ private fun IntroSlideContent(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.secondary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -318,25 +330,25 @@ private fun PermissionsSlideContent(
     permissionStates: List<Pair<String, Boolean>>,
     onRequestPermissions: () -> Unit,
     permissionsRequested: Boolean,
-    outerVerticalPadding: Dp = MaterialTheme.spacing.medium
+    outerVerticalPadding: Dp = MaterialTheme.spacing.medium,
 ) {
     Card(
         modifier = Modifier
             .fillMaxSize()
             .padding(vertical = outerVerticalPadding),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(MaterialTheme.spacing.large),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = stringResource(R.string.onboarding_permissions_title),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
             )
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.smallMedium))
@@ -344,7 +356,7 @@ private fun PermissionsSlideContent(
             Text(
                 text = stringResource(R.string.onboarding_permissions_subtitle),
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.secondary
+                color = MaterialTheme.colorScheme.secondary,
             )
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
@@ -352,14 +364,14 @@ private fun PermissionsSlideContent(
             PermissionRow(
                 icon = Icons.Default.Place,
                 label = stringResource(R.string.onboarding_permission_location),
-                granted = permissionStates.any { it.first == Manifest.permission.ACCESS_FINE_LOCATION && it.second }
+                granted = permissionStates.any { it.first == Manifest.permission.ACCESS_FINE_LOCATION && it.second },
             )
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.small))
             PermissionRow(
                 icon = Icons.Default.Notifications,
                 label = stringResource(R.string.onboarding_permission_notifications),
                 granted = permissionStates.none { it.first == Manifest.permission.POST_NOTIFICATIONS } ||
-                    permissionStates.any { it.first == Manifest.permission.POST_NOTIFICATIONS && it.second }
+                    permissionStates.any { it.first == Manifest.permission.POST_NOTIFICATIONS && it.second },
             )
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
@@ -367,7 +379,7 @@ private fun PermissionsSlideContent(
             Text(
                 text = stringResource(R.string.location_disclosure_message),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary
+                color = MaterialTheme.colorScheme.secondary,
             )
 
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
@@ -375,7 +387,7 @@ private fun PermissionsSlideContent(
             Button(
                 onClick = onRequestPermissions,
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge
+                shape = MaterialTheme.shapes.extraLarge,
             ) {
                 Text(
                     text = stringResource(
@@ -383,8 +395,8 @@ private fun PermissionsSlideContent(
                             R.string.onboarding_permissions_retry
                         } else {
                             R.string.onboarding_permissions_button
-                        }
-                    )
+                        },
+                    ),
                 )
             }
         }
@@ -393,32 +405,32 @@ private fun PermissionsSlideContent(
 
 @Composable
 private fun PermissionRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
-    granted: Boolean
+    granted: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary
+            tint = MaterialTheme.colorScheme.primary,
         )
         Spacer(modifier = Modifier.width(MaterialTheme.spacing.smallMedium))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = stringResource(
-                if (granted) R.string.onboarding_permission_enabled else R.string.onboarding_permission_disabled
+                if (granted) R.string.onboarding_permission_enabled else R.string.onboarding_permission_disabled,
             ),
             style = MaterialTheme.typography.labelMedium,
-            color = if (granted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            color = if (granted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
         )
     }
 }

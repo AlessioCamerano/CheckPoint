@@ -2,7 +2,20 @@ package com.example.checkpoint.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -12,8 +25,23 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,7 +61,7 @@ import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.util.TimeUtils
 
 /**
- * Schermata di dettaglio di un Checkpoint con discussione
+ * Schermata di dettaglio di un singolo Checkpoint/Post e della discussione con commenti nidificati.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,11 +71,10 @@ fun PostDetailScreen(
     onBack: () -> Unit,
     onAddComment: (String, String?) -> Unit,
     onToggleLike: (String) -> Unit,
-    onUserClick: (UserEntity) -> Unit = {}
+    onUserClick: (UserEntity) -> Unit = {},
 ) {
     var commentText by remember { mutableStateOf("") }
     var replyingTo by remember { mutableStateOf<CommentWithAuthor?>(null) }
-    // Stato per gestire i commenti espansi/collassati
     val expandedComments = remember { mutableStateOf(setOf<String>()) }
 
     Scaffold(
@@ -56,22 +83,25 @@ fun PostDetailScreen(
                 title = { Text(stringResource(R.string.post_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(
-                            R.string.action_back))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
         bottomBar = {
-            // Area di inserimento commenti/risposte
+            // ------------------------------------------------------------------------------------------------
+            // Area di Inserimento Commento o Risposta
+            // ------------------------------------------------------------------------------------------------
             Surface(tonalElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
                 Column(
                     modifier = Modifier
                         .navigationBarsPadding()
-                        .imePadding()
+                        .imePadding(),
                 ) {
-                    // Indicatore visivo se si sta rispondendo a un commento specifico
                     if (replyingTo != null) {
                         Row(
                             modifier = Modifier
@@ -79,16 +109,16 @@ fun PostDetailScreen(
                                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = stringResource(R.string.replying_to_label, replyingTo?.author?.username ?: ""),
                                 fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.primary,
                             )
                             IconButton(
                                 onClick = { replyingTo = null },
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp),
                             ) {
                                 Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_cancel), modifier = Modifier.size(14.dp))
                             }
@@ -97,18 +127,25 @@ fun PostDetailScreen(
                     Row(
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         TextField(
                             value = commentText,
                             onValueChange = { commentText = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text(if (replyingTo != null) stringResource(R.string.reply_placeholder) else stringResource(
-                                R.string.comment_placeholder)) },
+                            placeholder = {
+                                Text(
+                                    if (replyingTo != null) {
+                                        stringResource(R.string.reply_placeholder)
+                                    } else {
+                                        stringResource(R.string.comment_placeholder)
+                                    },
+                                )
+                            },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent
-                            )
+                                unfocusedContainerColor = Color.Transparent,
+                            ),
                         )
                         IconButton(
                             onClick = {
@@ -118,22 +155,26 @@ fun PostDetailScreen(
                                     replyingTo = null
                                 }
                             },
-                            enabled = commentText.isNotBlank()
+                            enabled = commentText.isNotBlank(),
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = stringResource(
-                                R.string.action_send))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = stringResource(R.string.action_send),
+                            )
                         }
                     }
                 }
             }
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
-        // Logica per ricostruire l'albero dei commenti e filtrare quelli visibili (espansi)
+        // ------------------------------------------------------------------------------------------------
+        // Ricostruzione Albero dei Commenti Nidificati
+        // ------------------------------------------------------------------------------------------------
         val visibleComments = remember(comments, expandedComments.value) {
             val roots = comments.filter { it.comment.parentCommentId == null }
             val map = comments.groupBy { it.comment.parentCommentId }
-            
+
             val result = mutableListOf<Pair<CommentWithAuthor, Int>>()
             fun addRecursive(parent: CommentWithAuthor, depth: Int) {
                 result.add(parent to depth)
@@ -150,9 +191,8 @@ fun PostDetailScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
         ) {
-            // Header: Post originale
             item {
                 PostItem(
                     post = postWithAuthor.post,
@@ -161,25 +201,24 @@ fun PostDetailScreen(
                     isLiked = postWithAuthor.isLikedByCurrentUser,
                     favoriteCount = postWithAuthor.favoriteCount,
                     onFavoriteClick = { onToggleLike(postWithAuthor.post.id) },
-                    onAuthorClick = { onUserClick(postWithAuthor.safeAuthor) }
+                    onAuthorClick = { onUserClick(postWithAuthor.safeAuthor) },
                 )
             }
-            
+
             item {
                 Text(
                     text = stringResource(R.string.post_detail_comments_count, comments.size),
                     modifier = Modifier.padding(16.dp),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
-            // Lista dei commenti nidificati
             items(visibleComments) { (commentWithAuthor, depth) ->
                 val hasReplies = comments.any { it.comment.parentCommentId == commentWithAuthor.comment.id }
                 val isExpanded = expandedComments.value.contains(commentWithAuthor.comment.id)
-                
+
                 CommentItem(
                     commentWithAuthor = commentWithAuthor,
                     depth = depth,
@@ -189,7 +228,7 @@ fun PostDetailScreen(
                     onToggleExpand = {
                         val current = expandedComments.value
                         expandedComments.value = if (isExpanded) current - commentWithAuthor.comment.id else current + commentWithAuthor.comment.id
-                    }
+                    },
                 )
             }
         }
@@ -197,7 +236,7 @@ fun PostDetailScreen(
 }
 
 /**
- * Singolo commento.
+ * Singolo elemento della discussione per la resa del commento.
  */
 @Composable
 fun CommentItem(
@@ -206,7 +245,7 @@ fun CommentItem(
     isExpanded: Boolean = false,
     hasReplies: Boolean = false,
     onReplyClick: (CommentWithAuthor) -> Unit,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
 ) {
     val comment = commentWithAuthor.comment
     val author = commentWithAuthor.safeAuthor
@@ -215,7 +254,7 @@ fun CommentItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = (depth * 16).dp)
-            .clickable(enabled = hasReplies) { onToggleExpand() }
+            .clickable(enabled = hasReplies) { onToggleExpand() },
     ) {
         if (depth > 0) {
             Box(
@@ -223,7 +262,7 @@ fun CommentItem(
                     .width(2.dp)
                     .fillMaxHeight()
                     .padding(vertical = 4.dp)
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
@@ -231,12 +270,12 @@ fun CommentItem(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (hasReplies) {
@@ -244,7 +283,7 @@ fun CommentItem(
                             imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                     }
@@ -252,24 +291,24 @@ fun CommentItem(
                         text = author.username,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "• ${TimeUtils.getTimeAgo(comment.timestamp)}",
                         fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.secondary,
                     )
                 }
                 IconButton(
                     onClick = { onReplyClick(commentWithAuthor) },
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Reply,
                         contentDescription = stringResource(R.string.action_reply),
                         tint = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }
@@ -277,12 +316,12 @@ fun CommentItem(
             Text(
                 text = comment.content,
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             HorizontalDivider(
                 modifier = Modifier.padding(top = 12.dp),
                 thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
             )
         }
     }
@@ -296,14 +335,14 @@ fun PostDetailScreenDarkPreview() {
     val comments = listOf(
         CommentWithAuthor(
             comment = CommentEntity(id = "1", postId = post.id, authorEmail = "u1@g.com", content = "Great post!"),
-            author = UserEntity("u1@g.com", "User 1")
+            author = UserEntity("u1@g.com", "User 1"),
         ),
         CommentWithAuthor(
             comment = CommentEntity(id = "2", postId = post.id, authorEmail = "u2@g.com", content = "I agree.", parentCommentId = "1"),
-            author = UserEntity("u2@g.com", "User 2")
-        )
+            author = UserEntity("u2@g.com", "User 2"),
+        ),
     )
-    
+
     CheckPointTheme(darkTheme = true, dynamicColor = false) {
         Surface {
             PostDetailScreen(
@@ -311,7 +350,7 @@ fun PostDetailScreenDarkPreview() {
                 comments = comments,
                 onBack = {},
                 onAddComment = { _, _ -> },
-                onToggleLike = {}
+                onToggleLike = {},
             )
         }
     }

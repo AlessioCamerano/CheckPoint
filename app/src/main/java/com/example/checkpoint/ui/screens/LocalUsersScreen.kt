@@ -2,7 +2,9 @@ package com.example.checkpoint.ui.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +49,9 @@ import com.example.checkpoint.ui.components.UserItem
 import com.example.checkpoint.ui.state.ProfileUiState
 import kotlin.math.roundToInt
 
+/**
+ * Schermata per la ricerca di utenti nelle vicinanze in base alla posizione GPS e al raggio in km.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocalUsersScreen(
@@ -55,7 +60,7 @@ fun LocalUsersScreen(
     onRadiusChange: (Int) -> Unit,
     onSearchNearbyUsers: (Double, Double) -> Unit,
     onUserClick: (UserEntity) -> Unit,
-    onClearLocalUsers: () -> Unit = {}
+    onClearLocalUsers: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val locationRequiredText = stringResource(R.string.local_users_location_required)
@@ -69,13 +74,16 @@ fun LocalUsersScreen(
         }
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // Dialog Avviso Visibilità e Permessi
+    // ------------------------------------------------------------------------------------------------
     if (showVisibilityWarning && !state.isLocationVisible) {
         AlertDialog(
             onDismissRequest = { showVisibilityWarning = false },
             title = {
                 Text(
                     text = stringResource(R.string.profile_menu_location_visibility),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
@@ -85,7 +93,7 @@ fun LocalUsersScreen(
                 TextButton(onClick = { showVisibilityWarning = false }) {
                     Text(text = stringResource(R.string.action_close))
                 }
-            }
+            },
         )
     }
 
@@ -97,7 +105,7 @@ fun LocalUsersScreen(
             } else {
                 fetchCurrentLocation(context, onSearchNearbyUsers, onError = { locationError = it })
             }
-        }
+        },
     )
 
     if (showDisclosureDialog) {
@@ -106,7 +114,7 @@ fun LocalUsersScreen(
             title = {
                 Text(
                     text = stringResource(R.string.location_disclosure_title),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
@@ -117,18 +125,18 @@ fun LocalUsersScreen(
                     onClick = {
                         showDisclosureDialog = false
                         launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
+                    },
                 ) {
                     Text(text = stringResource(R.string.location_disclosure_agree))
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDisclosureDialog = false }
+                    onClick = { showDisclosureDialog = false },
                 ) {
                     Text(text = stringResource(R.string.location_disclosure_decline))
                 }
-            }
+            },
         )
     }
 
@@ -139,33 +147,36 @@ fun LocalUsersScreen(
                     Text(
                         text = stringResource(R.string.local_users_title),
                         fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { onClearLocalUsers(); onBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back)
+                            contentDescription = stringResource(R.string.action_back),
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // ------------------------------------------------------------------------------------------------
+            // Selezione Raggio di Ricerca (Slider)
+            // ------------------------------------------------------------------------------------------------
             Text(text = stringResource(R.string.local_users_radius_label, state.localUsersRadiusKm))
 
             Slider(
                 value = state.localUsersRadiusKm.toFloat(),
                 onValueChange = { onRadiusChange(it.roundToInt()) },
-                valueRange = 1f..150f
+                valueRange = 1f..150f,
             )
 
             Button(
@@ -177,24 +188,30 @@ fun LocalUsersScreen(
                         showDisclosureDialog = true
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
                     text = if (state.isLocalUsersLoading) {
                         stringResource(R.string.local_users_searching)
                     } else {
                         stringResource(R.string.local_users_search)
-                    }
+                    },
                 )
             }
 
             locationError?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
             state.errorMessage?.let { Text(text = it, color = MaterialTheme.colorScheme.error) }
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Elenco Utenti Trovati
+            // ------------------------------------------------------------------------------------------------
             if (state.localUsers.isEmpty() && !state.isLocalUsersLoading) {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(text = stringResource(R.string.local_users_no_results))
                 }
@@ -202,7 +219,7 @@ fun LocalUsersScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(state.localUsers) { geoUser ->
                         UserItem(user = geoUser.user, onClick = onUserClick)
@@ -215,14 +232,13 @@ fun LocalUsersScreen(
 
 @SuppressLint("MissingPermission")
 private fun fetchCurrentLocation(
-    context: android.content.Context,
+    context: Context,
     onSearchNearbyUsers: (Double, Double) -> Unit,
-    onError: (String) -> Unit
+    onError: (String) -> Unit,
 ) {
-    val locationManager = context.getSystemService(android.location.LocationManager::class.java)
-            as? android.location.LocationManager
-    val location = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
-        ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+    val locationManager = context.getSystemService(LocationManager::class.java)
+    val location = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+        ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
 
     if (location == null) {
         onError(context.getString(R.string.local_users_updating_position))
