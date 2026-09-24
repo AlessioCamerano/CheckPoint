@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,8 +25,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,11 +54,40 @@ fun LocalUsersScreen(
     onBack: () -> Unit,
     onRadiusChange: (Int) -> Unit,
     onSearchNearbyUsers: (Double, Double) -> Unit,
-    onUserClick: (UserEntity) -> Unit
+    onUserClick: (UserEntity) -> Unit,
+    onClearLocalUsers: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val locationRequiredText = stringResource(R.string.local_users_location_required)
     var locationError by remember { mutableStateOf<String?>(null) }
+    var showDisclosureDialog by remember { mutableStateOf(false) }
+    var showVisibilityWarning by remember { mutableStateOf(!state.isLocationVisible) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            onClearLocalUsers()
+        }
+    }
+
+    if (showVisibilityWarning && !state.isLocationVisible) {
+        AlertDialog(
+            onDismissRequest = { showVisibilityWarning = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.profile_menu_location_visibility),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(text = stringResource(R.string.local_users_visibility_disabled_warning))
+            },
+            confirmButton = {
+                TextButton(onClick = { showVisibilityWarning = false }) {
+                    Text(text = stringResource(R.string.action_close))
+                }
+            }
+        )
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -68,6 +100,38 @@ fun LocalUsersScreen(
         }
     )
 
+    if (showDisclosureDialog) {
+        AlertDialog(
+            onDismissRequest = { showDisclosureDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.location_disclosure_title),
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(text = stringResource(R.string.location_disclosure_message))
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDisclosureDialog = false
+                        launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                ) {
+                    Text(text = stringResource(R.string.location_disclosure_agree))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDisclosureDialog = false }
+                ) {
+                    Text(text = stringResource(R.string.location_disclosure_decline))
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -79,7 +143,7 @@ fun LocalUsersScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { onClearLocalUsers(); onBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.action_back)
@@ -110,7 +174,7 @@ fun LocalUsersScreen(
                     if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
                         fetchCurrentLocation(context, onSearchNearbyUsers, onError = { locationError = it })
                     } else {
-                        launcher.launch(permission)
+                        showDisclosureDialog = true
                     }
                 },
                 modifier = Modifier.fillMaxWidth()

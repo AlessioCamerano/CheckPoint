@@ -135,4 +135,15 @@ class FeedViewModel(
             postRepository.addComment(CommentEntity(postId = postId, authorEmail = email, content = content, parentCommentId = parentCommentId))
         }
     }
+
+    fun onOpenPostDetailById(postId: String) {
+        if (postId.isBlank()) return
+        viewModelScope.launch {
+            val email = preferencesRepository.userEmail.first() ?: return@launch
+            val post = postRepository.getPostById(postId, email)
+            if (post != null) {
+                onOpenPostDetail(post)
+            }
+        }
+    }
 }

@@ -290,7 +290,8 @@ class MainViewModel(
     fun refreshUserLocation(isPermissionGranted: Boolean) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
-            if (isPermissionGranted) {
+            val isVisible = preferencesRepository.isLocationVisible.first()
+            if (isPermissionGranted && isVisible) {
                 try {
                     if (application != null && ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         val locationManager = application.getSystemService(android.location.LocationManager::class.java)
@@ -301,6 +302,14 @@ class MainViewModel(
             } else {
                 userRepository.deleteUserLocation(email)
             }
+        }
+    }
+
+    fun onOpenUserPopupByEmail(email: String) {
+        if (email.isBlank()) return
+        viewModelScope.launch {
+            val user = authRepository.getUser(email) ?: UserEntity(email = email, username = email.split("@")[0])
+            onOpenUserPopup(user)
         }
     }
 }

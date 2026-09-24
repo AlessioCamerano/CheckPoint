@@ -30,27 +30,95 @@ import com.example.checkpoint.ui.components.SupportDialog
 import com.example.checkpoint.ui.state.UserStatus
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.theme.spacing
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 
 @Composable
 fun ProfileScreen(
     isDarkTheme: Boolean = true,
+    isLocationVisible: Boolean = true,
     userStatus: UserStatus = UserStatus.Online,
     username: String = "Username",
     profilePictureUri: String? = null,
     onStatusChange: (UserStatus) -> Unit = {},
     onThemeChange: (Boolean) -> Unit = {},
+    onLocationVisibilityChange: (Boolean) -> Unit = {},
     onNavigateToEditProfile: () -> Unit = {},
     onNavigateToFollowers: () -> Unit = {},
     onNavigateToMyCheckpoints: () -> Unit = {},
     onNavigateToLocalUsers: () -> Unit = {},
     onNavigateToOnboarding: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onDeleteAccount: ((Result<Unit>) -> Unit) -> Unit = {}
 ) {
     var showSupportDialog by remember { mutableStateOf(false) }
+    var showPrivacyPolicyDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    var deleteAccountError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val reauthErrorMessage = stringResource(R.string.delete_account_reauth_required)
+    val deleteAccountGenericError = stringResource(R.string.delete_account_error)
 
     if (showSupportDialog) {
         SupportDialog(onDismiss = { showSupportDialog = false })
+    }
+
+    if (showPrivacyPolicyDialog) {
+        AlertDialog(
+            onDismissRequest = { showPrivacyPolicyDialog = false },
+            title = { Text(text = stringResource(R.string.privacy_policy_title), fontWeight = FontWeight.Bold) },
+            text = { Text(text = stringResource(R.string.privacy_policy_message)) },
+            confirmButton = {
+                TextButton(onClick = { showPrivacyPolicyDialog = false }) {
+                    Text(text = stringResource(R.string.action_close))
+                }
+            }
+        )
+    }
+
+    deleteAccountError?.let { errorMsg ->
+        AlertDialog(
+            onDismissRequest = { deleteAccountError = null },
+            title = { Text(text = stringResource(R.string.delete_account_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error) },
+            text = { Text(text = errorMsg) },
+            confirmButton = {
+                TextButton(onClick = { deleteAccountError = null }) {
+                    Text(text = stringResource(R.string.action_close))
+                }
+            }
+        )
+    }
+
+    if (showDeleteAccountDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAccountDialog = false },
+            title = { Text(text = stringResource(R.string.delete_account_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error) },
+            text = { Text(text = stringResource(R.string.delete_account_confirm)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteAccountDialog = false
+                        onDeleteAccount { result ->
+                            result.onFailure { exc ->
+                                val msg = if (exc is FirebaseAuthRecentLoginRequiredException) {
+                                    reauthErrorMessage
+                                } else {
+                                    String.format(deleteAccountGenericError, exc.localizedMessage ?: "Unknown error")
+                                }
+                                deleteAccountError = msg
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(text = stringResource(R.string.delete_account_button), color = MaterialTheme.colorScheme.onError)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAccountDialog = false }) {
+                    Text(text = stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
 
     Column(
@@ -92,6 +160,10 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
                 SectionLabel(stringResource(com.example.checkpoint.R.string.profile_section_app))
                 ThemeSwitchMenuItem(isDarkTheme, onThemeChange)
+                LocationVisibilitySwitchMenuItem(isLocationVisible, onLocationVisibilityChange)
+                ProfileMenuItem(Icons.Default.PrivacyTip, stringResource(R.string.profile_menu_privacy_policy)) {
+                    showPrivacyPolicyDialog = true
+                }
                 ProfileMenuItem(Icons.Default.Settings, stringResource(R.string.profile_menu_android_settings)) {
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = Uri.fromParts("package", context.packageName, null)
@@ -102,6 +174,9 @@ fun ProfileScreen(
                     onNavigateToOnboarding()
                 }
                 MenuItemCaption(stringResource(com.example.checkpoint.R.string.profile_menu_onboarding_caption))
+                ProfileMenuItem(Icons.Default.DeleteForever, stringResource(R.string.profile_menu_delete_account)) {
+                    showDeleteAccountDialog = true
+                }
             }
 
             item {
@@ -146,6 +221,55 @@ fun ThemeSwitchMenuItem(
                 thumbContent = {
                     Icon(
                         imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                        contentDescription = null,
+                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                    )
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    uncheckedThumbColor = MaterialTheme.colorScheme.secondary,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun LocationVisibilitySwitchMenuItem(
+    isVisible: Boolean,
+    onVisibilityChange: (Boolean) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+            thickness = 0.5.dp
+        )
+        Row(
+            modifier = Modifier
+                .padding(vertical = MaterialTheme.spacing.smallMedium, horizontal = MaterialTheme.spacing.small),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (isVisible) Icons.Default.LocationOn else Icons.Default.LocationOff,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(MaterialTheme.spacing.medium))
+            Text(
+                text = stringResource(R.string.profile_menu_location_visibility),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Switch(
+                checked = isVisible,
+                onCheckedChange = onVisibilityChange,
+                thumbContent = {
+                    Icon(
+                        imageVector = if (isVisible) Icons.Default.LocationOn else Icons.Default.LocationOff,
                         contentDescription = null,
                         modifier = Modifier.size(SwitchDefaults.IconSize)
                     )

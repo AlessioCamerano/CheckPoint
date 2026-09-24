@@ -24,6 +24,7 @@ data class ProfileUiState(
     val profilePictureUri: String? = null,
     val currentUserEmail: String? = null,
     val isDarkTheme: Boolean = true,
+    val isLocationVisible: Boolean = true,
     val userStatus: UserStatus = UserStatus.Online,
     val followersList: List<UserEntity> = emptyList(),
     val followingList: List<UserEntity> = emptyList(),

@@ -44,6 +44,7 @@ class ProfileViewModel(
         loadUserProfile()
         observeFollows()
         observeTheme()
+        observeLocationVisibility()
     }
 
     private fun loadUserProfile() {
@@ -78,6 +79,14 @@ class ProfileViewModel(
         }
     }
 
+    private fun observeLocationVisibility() {
+        viewModelScope.launch {
+            preferencesRepository.isLocationVisible.collectLatest { visible ->
+                _uiState.update { it.copy(isLocationVisible = visible) }
+            }
+        }
+    }
+
     fun onUpdateProfile(newUsername: String, newBio: String, newProfilePictureUri: String?) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
@@ -97,6 +106,16 @@ class ProfileViewModel(
         viewModelScope.launch { preferencesRepository.setTheme(isDark) }
     }
 
+    fun onLocationVisibilityChange(visible: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.setLocationVisible(visible)
+            val email = preferencesRepository.userEmail.first()
+            if (!visible && !email.isNullOrBlank()) {
+                userRepository.deleteUserLocation(email)
+            }
+        }
+    }
+
     fun onStatusChange(newStatus: UserStatus) {
         _uiState.update { it.copy(userStatus = newStatus) }
     }
@@ -108,6 +127,10 @@ class ProfileViewModel(
     fun onSearchNearbyUsers(latitude: Double, longitude: Double) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
+            if (!_uiState.value.isLocationVisible) {
+                userRepository.deleteUserLocation(email)
+                return@launch
+            }
             _uiState.update { it.copy(isLocalUsersLoading = true) }
             try {
                 userRepository.updateUserLocation(email, latitude, longitude)
@@ -119,8 +142,33 @@ class ProfileViewModel(
         }
     }
 
+    fun onClearLocalUsers() {
+        _uiState.update { it.copy(localUsers = emptyList(), errorMessage = null, isLocalUsersLoading = false) }
+    }
+
+    fun onDeleteAccount(onResult: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val email = preferencesRepository.userEmail.first()
+            if (!email.isNullOrBlank()) {
+                userRepository.deleteUserLocation(email)
+            }
+            val result = authRepository.deleteAccount()
+            if (result.isSuccess) {
+                userRepository.clearLocalData()
+                preferencesRepository.clearSession()
+            }
+            _uiState.update { it.copy(isLoading = false) }
+            onResult(result)
+        }
+    }
+
     fun onLogout() {
         viewModelScope.launch {
+            val email = preferencesRepository.userEmail.first()
+            if (!email.isNullOrBlank()) {
+                userRepository.deleteUserLocation(email)
+            }
             userRepository.clearLocalData()
             preferencesRepository.clearSession()
             authRepository.logout()

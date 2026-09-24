@@ -62,10 +62,22 @@ fun AppNavigation(
         if (!initialNotificationId.isNullOrBlank()) viewModel.onNotificationClickedById(initialNotificationId)
 
         when (initialRoute) {
-            Screen.Chat -> {
+            Screen.Chat, "chat" -> {
                 if (!initialTargetId.isNullOrBlank()) {
                     chatViewModel.onOpenChatByEmail(initialTargetId)
                     navController.navigate(Screen.Chat) { popUpTo(Screen.Home) { inclusive = false } }
+                }
+            }
+            Screen.PostDetail, "post_detail" -> {
+                if (!initialTargetId.isNullOrBlank()) {
+                    feedViewModel.onOpenPostDetailById(initialTargetId)
+                    navController.navigate(Screen.PostDetail) { popUpTo(Screen.Home) { inclusive = false } }
+                }
+            }
+            Screen.FollowersList, "followers_list" -> {
+                if (!initialTargetId.isNullOrBlank()) {
+                    viewModel.onOpenUserPopupByEmail(initialTargetId)
+                    navController.navigate(Screen.FollowersList) { popUpTo(Screen.Home) { inclusive = false } }
                 }
             }
             else -> {
@@ -79,11 +91,22 @@ fun AppNavigation(
     LaunchedEffect(pendingNav, isLoggedIn) {
         val nav = pendingNav
         if (isLoggedIn && nav != null) {
-            val (route, _, _) = nav
+            val (route, targetId, _) = nav
             when (route) {
-                Screen.Chat -> navController.navigate(Screen.Chat) { popUpTo(Screen.Home) { inclusive = false } }
-                Screen.PostDetail -> navController.navigate(Screen.PostDetail) { popUpTo(Screen.Home) { inclusive = false } }
-                Screen.Notifications -> navController.navigate(Screen.Notifications)
+                Screen.Chat, "chat" -> {
+                    targetId?.let { chatViewModel.onOpenChatByEmail(it) }
+                    navController.navigate(Screen.Chat) { popUpTo(Screen.Home) { inclusive = false } }
+                }
+                Screen.PostDetail, "post_detail" -> {
+                    targetId?.let { feedViewModel.onOpenPostDetailById(it) }
+                    navController.navigate(Screen.PostDetail) { popUpTo(Screen.Home) { inclusive = false } }
+                }
+                Screen.FollowersList, "followers_list" -> {
+                    targetId?.let { viewModel.onOpenUserPopupByEmail(it) }
+                    navController.navigate(Screen.FollowersList) { popUpTo(Screen.Home) { inclusive = false } }
+                }
+                Screen.Notifications, "notifications" -> navController.navigate(Screen.Notifications)
+                else -> navController.navigate(Screen.Home) { popUpTo(Screen.Home) { inclusive = false } }
             }
             viewModel.consumePendingNavigation()
         }
@@ -233,7 +256,8 @@ fun AppNavigation(
                     onBack = { navController.popBackStack() },
                     onRadiusChange = { profileViewModel.onLocalUsersRadiusChange(it) },
                     onSearchNearbyUsers = { lat, lng -> profileViewModel.onSearchNearbyUsers(lat, lng) },
-                    onUserClick = { viewModel.onOpenUserPopup(it) }
+                    onUserClick = { viewModel.onOpenUserPopup(it) },
+                    onClearLocalUsers = { profileViewModel.onClearLocalUsers() }
                 )
             }
             composable(Screen.EditProfile) {
@@ -260,9 +284,15 @@ fun AppNavigation(
                                 navController.navigate(Screen.Chat) { popUpTo(Screen.Home) { inclusive = false } }
                             }
                             "post_detail" -> {
+                                notification.targetId?.let { feedViewModel.onOpenPostDetailById(it) }
                                 navController.navigate(Screen.PostDetail) { popUpTo(Screen.Home) { inclusive = false } }
                             }
-                            "home" -> navController.navigate(Screen.Home) { popUpTo(Screen.Home) { inclusive = false } }
+                            "followers_list" -> {
+                                val target = notification.targetId ?: notification.senderEmail
+                                target?.let { viewModel.onOpenUserPopupByEmail(it) }
+                                navController.navigate(Screen.FollowersList) { popUpTo(Screen.Home) { inclusive = false } }
+                            }
+                            else -> navController.navigate(Screen.Home) { popUpTo(Screen.Home) { inclusive = false } }
                         }
                     }
                 )

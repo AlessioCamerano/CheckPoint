@@ -22,10 +22,12 @@ interface UserPreferencesRepository {
     val hasCompletedOnboarding: Flow<Boolean>
     val userEmail: Flow<String?>
     val isDarkTheme: Flow<Boolean?>
+    val isLocationVisible: Flow<Boolean>
     val searchHistory: Flow<List<String>>
     suspend fun saveSession(email: String)
     suspend fun setOnboardingCompleted(completed: Boolean)
     suspend fun setTheme(isDark: Boolean)
+    suspend fun setLocationVisible(visible: Boolean)
     suspend fun saveSearchQuery(query: String)
     suspend fun clearSearchHistory()
     suspend fun clearSession()
@@ -41,6 +43,7 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
         val USER_EMAIL = stringPreferencesKey("user_email")
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
+        val IS_LOCATION_VISIBLE = booleanPreferencesKey("is_location_visible")
     }
 
     override val isLoggedIn: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
@@ -57,6 +60,10 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
 
     override val isDarkTheme: Flow<Boolean?> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.IS_DARK_THEME]
+    } ?: emptyFlow()
+
+    override val isLocationVisible: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
+        preferences[PreferencesKeys.IS_LOCATION_VISIBLE] ?: true
     } ?: emptyFlow()
 
     override val searchHistory: Flow<List<String>> = context?.dataStore?.data?.map { preferences ->
@@ -86,6 +93,12 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
     override suspend fun setTheme(isDark: Boolean) {
         context?.dataStore?.edit { preferences ->
             preferences[PreferencesKeys.IS_DARK_THEME] = isDark
+        }
+    }
+
+    override suspend fun setLocationVisible(visible: Boolean) {
+        context?.dataStore?.edit { preferences ->
+            preferences[PreferencesKeys.IS_LOCATION_VISIBLE] = visible
         }
     }
 

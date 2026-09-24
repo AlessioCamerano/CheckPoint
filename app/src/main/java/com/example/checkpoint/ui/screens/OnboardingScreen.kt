@@ -362,6 +362,14 @@ private fun PermissionsSlideContent(
                     permissionStates.any { it.first == Manifest.permission.POST_NOTIFICATIONS && it.second }
             )
 
+            Spacer(modifier = Modifier.height(MaterialTheme.spacing.medium))
+
+            Text(
+                text = stringResource(R.string.location_disclosure_message),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+
             Spacer(modifier = Modifier.height(MaterialTheme.spacing.large))
 
             Button(

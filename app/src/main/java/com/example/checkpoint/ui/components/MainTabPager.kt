@@ -77,17 +77,27 @@ fun MainTabPager(
             )
             "profile" -> ProfileScreen(
                 isDarkTheme = mainState.isDarkTheme,
+                isLocationVisible = profileState.isLocationVisible,
                 userStatus = profileState.userStatus,
                 username = profileState.username,
                 profilePictureUri = profileState.profilePictureUri,
                 onStatusChange = { profileViewModel.onStatusChange(it) },
                 onThemeChange = { profileViewModel.onThemeChange(it) },
+                onLocationVisibilityChange = { profileViewModel.onLocationVisibilityChange(it) },
                 onNavigateToEditProfile = onNavigateToEditProfile,
                 onNavigateToFollowers = onNavigateToFollowers,
                 onNavigateToMyCheckpoints = onNavigateToMyCheckpoints,
                 onNavigateToLocalUsers = onNavigateToLocalUsers,
                 onNavigateToOnboarding = onNavigateToOnboarding,
-                onLogout = onLogout
+                onLogout = onLogout,
+                onDeleteAccount = { onResult ->
+                    profileViewModel.onDeleteAccount { result ->
+                        if (result.isSuccess) {
+                            onLogout()
+                        }
+                        onResult(result)
+                    }
+                }
             )
         }
     }

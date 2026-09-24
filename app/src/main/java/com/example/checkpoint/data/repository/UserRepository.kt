@@ -73,9 +73,15 @@ class UserRepositoryImpl(
             } else {
                 followRef.set(mapOf("followerEmail" to followerEmail, "followedEmail" to followedEmail)).await()
                 userDao.insertFollow(FollowEntity(followerEmail, followedEmail))
+
                 notificationRepository.createNotification(
-                    recipientEmail = followedEmail, title = "Nuovo follow",
-                    body = "$followerEmail ti segue", route = "home", type = "follow", senderEmail = followerEmail, targetId = followedEmail
+                    recipientEmail = followedEmail,
+                    title = "Nuovo follow",
+                    body = "$followerEmail ti segue",
+                    route = "followers_list",
+                    type = "follow",
+                    senderEmail = followerEmail,
+                    targetId = followerEmail
                 )
             }
         } catch (e: Exception) {

@@ -166,4 +166,25 @@
     <string name="onboarding_skip_button">Skip for now</string>
     <string name="onboarding_start_button">Continue to login</string>
     <string name="onboarding_done_button">Done!</string>
+
+    <!-- Privacy, Disclosure & Account Management -->
+    <string name="location_disclosure_title">Location Usage Disclosure</string>
+    <string name="location_disclosure_message">CheckPoint accesses your location data to allow you to discover nearby users on the "Local Users" feature. Your exact location will never be shared with other users, only your relative distance. You can disable location sharing at any time in your profile settings.</string>
+    <string name="location_disclosure_agree">I Understand &amp; Agree</string>
+    <string name="location_disclosure_decline">Not Now</string>
+
+    <string name="profile_menu_location_visibility">Visible to Nearby Users</string>
+    <string name="profile_menu_privacy_policy">Privacy Policy</string>
+    <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="privacy_policy_message">CheckPoint respects your privacy. We collect your email and username for authentication, and your location (when granted) solely to show nearby users. Your location data is never sold or shared with third parties. You can delete your account and associated data at any time in your profile settings.</string>
+
+    <string name="profile_menu_delete_account">Delete Account</string>
+    <string name="delete_account_title">Delete Account</string>
+    <string name="delete_account_confirm">Are you sure you want to permanently delete your account? All your posts, profile info, and location data will be permanently erased. This action cannot be undone.</string>
+    <string name="delete_account_button">Permanently Delete Account</string>
+    <string name="delete_account_success">Your account has been deleted.</string>
+    <string name="delete_account_error">Error deleting account: %1$s</string>
+    <string name="delete_account_reauth_required">For security reasons, please log out and log in again before deleting your account.</string>
+
+    <string name="local_users_visibility_disabled_warning">Your location visibility is currently turned OFF in Profile settings. To share your location and find nearby players, please turn ON \"Visible to Nearby Users\" in your Profile settings.</string>
 </resources>

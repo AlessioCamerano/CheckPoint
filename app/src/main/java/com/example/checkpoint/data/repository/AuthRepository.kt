@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.checkpoint.data.local.dao.UserDao
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -24,6 +25,7 @@ interface AuthRepository {
     suspend fun signInWithEmail(email: String, password: String): Result<UserEntity>
     suspend fun signInWithGoogle(idToken: String): Result<UserEntity>
     suspend fun logout()
+    suspend fun deleteAccount(): Result<Unit>
     fun getCurrentUserEmail(): String?
 }
 
@@ -165,6 +167,50 @@ class AuthRepositoryImpl(
     override suspend fun logout() {
         Log.d("CheckPointDebug", "Auth: Esecuzione LOGOUT")
         firebaseAuth.signOut()
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        val email = getCurrentUserEmail()
+        val user = firebaseAuth.currentUser
+        Log.d("CheckPointDebug", "Auth: Esecuzione ELIMINAZIONE ACCOUNT per $email")
+        if (email.isNullOrBlank() || user == null) {
+            return Result.failure(Exception("Utente non autenticato"))
+        }
+
+        return try {
+            // 1. Cancella posizione utente da Firestore
+            try { firestore.collection("user_locations").document(email).delete().await() } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user_location: ${e.message}") }
+            
+            // 2. Cancella documento utente da Firestore
+            try { firestore.collection("users").document(email).delete().await() } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user doc: ${e.message}") }
+
+            // 3. Cancella post creati dall'utente
+            try {
+                val userPosts = firestore.collection("posts").whereEqualTo("authorEmail", email).get().await()
+                for (doc in userPosts.documents) {
+                    doc.reference.delete().await()
+                }
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user posts: ${e.message}") }
+
+            // 4. Cancella notifiche dell'utente
+            try {
+                val notifs = firestore.collection("notifications").whereEqualTo("recipientEmail", email).get().await()
+                for (doc in notifs.documents) {
+                    doc.reference.delete().await()
+                }
+            } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user notifications: ${e.message}") }
+
+            // 5. Cancella utente da Firebase Auth
+            user.delete().await()
+            firebaseAuth.signOut()
+            Result.success(Unit)
+        } catch (e: FirebaseAuthRecentLoginRequiredException) {
+            Log.e("CheckPointDebug", "Auth: Re-authentication required to delete account", e)
+            Result.failure(e)
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Auth: ERRORE eliminazione account: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     override fun getCurrentUserEmail(): String? {

@@ -68,6 +68,7 @@ class AuthViewModelTest {
         override suspend fun signInWithEmail(email: String, password: String): Result<UserEntity> = Result.success(UserEntity(email, "user"))
         override suspend fun signInWithGoogle(idToken: String): Result<UserEntity> = Result.success(UserEntity("test@gmail.com", "user"))
         override suspend fun logout() {}
+        override suspend fun deleteAccount(): Result<Unit> = Result.success(Unit)
         override fun getCurrentUserEmail(): String? = null
     }
 
@@ -75,10 +76,12 @@ class AuthViewModelTest {
         override val isLoggedIn: Flow<Boolean> = MutableStateFlow(false)
         override val userEmail: Flow<String?> = emptyFlow()
         override val isDarkTheme: Flow<Boolean?> = emptyFlow()
+        override val isLocationVisible: Flow<Boolean> = MutableStateFlow(true)
         override val searchHistory: Flow<List<String>> = emptyFlow()
         override val hasCompletedOnboarding: Flow<Boolean> = MutableStateFlow(true)
         override suspend fun saveSession(email: String) {}
         override suspend fun setTheme(isDark: Boolean) {}
+        override suspend fun setLocationVisible(visible: Boolean) {}
         override suspend fun saveSearchQuery(query: String) {}
         override suspend fun clearSearchHistory() {}
         override suspend fun clearSession() {}

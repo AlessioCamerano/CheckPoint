@@ -7,6 +7,8 @@ import com.example.checkpoint.data.local.entity.CommentEntity
 import com.example.checkpoint.data.local.entity.PostEntity
 import com.example.checkpoint.data.local.entity.PostLikeEntity
 import com.example.checkpoint.data.local.entity.PostTagEntity
+import com.example.checkpoint.data.local.dao.UserDao
+import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.CommentWithAuthor
 import com.example.checkpoint.data.local.model.PostWithAuthor
 import com.google.firebase.firestore.DocumentChange
@@ -23,8 +25,7 @@ import java.util.UUID
 
 /**
  * Repository dedicato al feed e interazioni sui post.
- * Implementa query ottimizzate scaricando like e commenti solo per i post
- * attualmente presenti nel feed, limitando la mole di dati elaborati.
+ * Implementa query ottimizzate scaricando tutti i dati necessari (tag, autori, e interazioni).
  */
 interface PostRepository {
     fun getAllPosts(currentUserEmail: String): Flow<List<PostWithAuthor>>
@@ -49,6 +50,7 @@ interface PostRepository {
 class PostRepositoryImpl(
     private val postDao: PostDao,
     private val commentDao: CommentDao,
+    private val userDao: UserDao,
     private val notificationRepository: NotificationRepository,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) : PostRepository {
@@ -133,14 +135,25 @@ class PostRepositoryImpl(
             if (remoteIds.isNotEmpty()) postDao.deletePostsNotIn(remoteIds)
             postDao.insertPosts(remotePosts)
 
-            remotePosts.forEach { post ->
-                val tags = firestore.collection("posts").document(post.id).get().await().get("tags") as? List<String>
-                tags?.let { postDao.insertTags(it.map { tag -> PostTagEntity(post.id, tag) }) }
+            postsSnapshot.documents.forEach { doc ->
+                val postId = doc.id
+                @Suppress("UNCHECKED_CAST")
+                val tags = doc.get("tags") as? List<String>
+                if (!tags.isNullOrEmpty()) {
+                    postDao.insertTags(tags.map { PostTagEntity(postId, it) })
+                }
+            }
+
+            val authorEmails = remotePosts.map { it.authorEmail }.distinct()
+            authorEmails.chunked(10).forEach { chunk ->
+                if (chunk.isNotEmpty()) {
+                    val usersSnap = firestore.collection("users").whereIn("email", chunk).get().await()
+                    userDao.insertUsers(usersSnap.toObjects(UserEntity::class.java))
+                }
             }
 
             if (remoteIds.isEmpty()) return
 
-            // Sincronizza like e commenti solo per i post scaricati, partizionando le richieste in blocchi da 10
             remoteIds.chunked(10).forEach { chunk ->
                 if (chunk.isNotEmpty()) {
                     val likesSnapshot = firestore.collection("likes").whereIn("postId", chunk).get().await()
@@ -151,7 +164,16 @@ class PostRepositoryImpl(
                     }
 
                     val commentsSnapshot = firestore.collection("comments").whereIn("postId", chunk).get().await()
-                    commentDao.insertComments(commentsSnapshot.toObjects(CommentEntity::class.java))
+                    val comments = commentsSnapshot.toObjects(CommentEntity::class.java)
+                    commentDao.insertComments(comments)
+
+                    val commentAuthors = comments.map { it.authorEmail }.distinct()
+                    commentAuthors.chunked(10).forEach { authorChunk ->
+                        if (authorChunk.isNotEmpty()) {
+                            val commentUsersSnap = firestore.collection("users").whereIn("email", authorChunk).get().await()
+                            userDao.insertUsers(commentUsersSnap.toObjects(UserEntity::class.java))
+                        }
+                    }
                 }
             }
         } catch (e: Exception) { Log.e("CheckPointDebug", "Sync Posts fail: ${e.message}") }
@@ -164,9 +186,23 @@ class PostRepositoryImpl(
                 if (e != null) return@addSnapshotListener
                 snapshot?.documentChanges?.forEach { change ->
                     val post = change.document.toObject(PostEntity::class.java)
+                    @Suppress("UNCHECKED_CAST")
+                    val tags = change.document.get("tags") as? List<String>
                     repositoryScope.launch {
-                        if (change.type == DocumentChange.Type.ADDED || change.type == DocumentChange.Type.MODIFIED) postDao.insertPost(post)
-                        else if (change.type == DocumentChange.Type.REMOVED) postDao.deletePost(change.document.id)
+                        if (change.type == DocumentChange.Type.ADDED || change.type == DocumentChange.Type.MODIFIED) {
+                            postDao.insertPost(post)
+                            if (!tags.isNullOrEmpty()) {
+                                postDao.insertTags(tags.map { PostTagEntity(post.id, it) })
+                            }
+                            if (userDao.getUserByEmail(post.authorEmail) == null) {
+                                try {
+                                    val userDoc = firestore.collection("users").document(post.authorEmail).get().await()
+                                    userDoc.toObject(UserEntity::class.java)?.let { userDao.insertUser(it) }
+                                } catch (e: Exception) { Log.e("CheckPointDebug", "Author sync fail: ${e.message}") }
+                            }
+                        } else if (change.type == DocumentChange.Type.REMOVED) {
+                            postDao.deletePost(change.document.id)
+                        }
                     }
                 }
             }
@@ -174,7 +210,19 @@ class PostRepositoryImpl(
         commentsListener = firestore.collection("comments").orderBy("timestamp", Query.Direction.DESCENDING).limit(50)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) return@addSnapshotListener
-                snapshot?.toObjects(CommentEntity::class.java)?.let { repositoryScope.launch { commentDao.insertComments(it) } }
+                snapshot?.toObjects(CommentEntity::class.java)?.let { comments ->
+                    repositoryScope.launch {
+                        commentDao.insertComments(comments)
+                        comments.forEach { comment ->
+                            if (userDao.getUserByEmail(comment.authorEmail) == null) {
+                                try {
+                                    val userDoc = firestore.collection("users").document(comment.authorEmail).get().await()
+                                    userDoc.toObject(UserEntity::class.java)?.let { userDao.insertUser(it) }
+                                } catch (e: Exception) { Log.e("CheckPointDebug", "Comment author sync fail: ${e.message}") }
+                            }
+                        }
+                    }
+                }
             }
 
         likesListener = firestore.collection("likes").addSnapshotListener { snapshot, e ->

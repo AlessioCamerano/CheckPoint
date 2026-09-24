@@ -80,10 +80,12 @@ class FeedViewModelTest {
         override val isLoggedIn = MutableStateFlow(true)
         override val userEmail = MutableStateFlow("test@gmail.com")
         override val isDarkTheme = MutableStateFlow(true)
+        override val isLocationVisible = MutableStateFlow(true)
         override val searchHistory = MutableStateFlow<List<String>>(emptyList())
         override val hasCompletedOnboarding = MutableStateFlow(true)
         override suspend fun saveSession(email: String) {}
         override suspend fun setTheme(isDark: Boolean) {}
+        override suspend fun setLocationVisible(visible: Boolean) {}
         override suspend fun saveSearchQuery(query: String) {}
         override suspend fun clearSearchHistory() {}
         override suspend fun clearSession() {}

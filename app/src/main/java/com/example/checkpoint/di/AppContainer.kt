@@ -27,6 +27,6 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     // Dipendenze incrociate direttamente nel costruttore
     override val userRepository: UserRepository by lazy { UserRepositoryImpl(database.userDao(), notificationRepository, database) }
-    override val postRepository: PostRepository by lazy { PostRepositoryImpl(database.postDao(), database.commentDao(), notificationRepository) }
+    override val postRepository: PostRepository by lazy { PostRepositoryImpl(database.postDao(), database.commentDao(), database.userDao(), notificationRepository) }
     override val chatRepository: ChatRepository by lazy { ChatRepositoryImpl(database.chatDao(), notificationRepository) }
 }
