@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Rappresenta un commento su un post.
+ * Entità Room che rappresenta un commento associato a un post.
  */
 @Entity(
     tableName = "comments",

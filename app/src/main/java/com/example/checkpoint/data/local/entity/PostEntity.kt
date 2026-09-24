@@ -6,18 +6,20 @@ import androidx.room.PrimaryKey
 import java.util.UUID
 
 /**
- * Tipi di media supportati nei post.
+ * Tipologie di media allegabili a un post.
  */
 enum class MediaType {
     IMAGE, VIDEO, NONE
 }
 
 /**
- * Entità Post normalizzata
+ * Entità Room che rappresenta un post pubblicato sulla piattaforma.
  */
 @Entity(
     tableName = "posts",
-    indices = [Index(value = ["authorEmail"])]
+    indices = [
+        Index(value = ["authorEmail"]),
+    ],
 )
 data class PostEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
@@ -27,5 +29,4 @@ data class PostEntity(
     val timestamp: Long = System.currentTimeMillis(),
     val mediaUri: String? = null,
     val mediaType: MediaType = MediaType.NONE,
-    val isMuted: Boolean = false
 )

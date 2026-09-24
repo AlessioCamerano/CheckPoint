@@ -10,102 +10,68 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
 /**
- * Interfaccia che definisce le operazioni di autenticazione.
+ * Gestione delle operazioni di autenticazione, registrazione e sincronizzazione del profilo utente.
  */
 interface AuthRepository {
-    suspend fun registerUser(user: UserEntity)
-    suspend fun updateUser(user: UserEntity)
-    suspend fun getUser(email: String): UserEntity?
-    suspend fun getUserByUsername(username: String): UserEntity?
-    suspend fun isEmailTaken(email: String): Boolean
-    suspend fun isUsernameTaken(username: String): Boolean
 
-    // metodi autenticazione Firebase
+    // ------------------------------------------------------------------------------------------------
+    // Autenticazione Firebase
+    // ------------------------------------------------------------------------------------------------
+
+    /** Registrazione tramite email, username e password. */
     suspend fun signUpWithEmail(email: String, username: String, password: String): Result<UserEntity>
+
+    /** Accesso tramite email e password. */
     suspend fun signInWithEmail(email: String, password: String): Result<UserEntity>
+
+    /** Accesso o registrazione tramite account Google. */
     suspend fun signInWithGoogle(idToken: String): Result<UserEntity>
+
+    /** Disconnette l'utente corrente da Firebase. */
     suspend fun logout()
+
+    /** Elimina l'account utente e tutti i suoi dati associati. */
     suspend fun deleteAccount(): Result<Unit>
+
+    /** Restituisce l'email dell'utente attualmente autenticato. */
     fun getCurrentUserEmail(): String?
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Gestione e Verifica Profilo Utente
+    // ------------------------------------------------------------------------------------------------
+
+    /** Registra un nuovo utente sia in locale (Room) sia su Cloud Firestore. */
+    suspend fun registerUser(user: UserEntity)
+
+    /** Aggiorna i dati del profilo sia in locale (Room) sia su Cloud Firestore. */
+    suspend fun updateUser(user: UserEntity)
+
+    /** Cerca un utente per email, controllando prima la cache locale e poi Firestore. */
+    suspend fun getUser(email: String): UserEntity?
+
+    /** Cerca un utente per username. */
+    suspend fun getUserByUsername(username: String): UserEntity?
+
+    /** Verifica se un'email è già registrata nel DB locale. */
+    suspend fun isEmailTaken(email: String): Boolean
+
+    /** Verifica se uno username è già in uso nel DB locale. */
+    suspend fun isUsernameTaken(username: String): Boolean
 }
 
 /**
- * Autenticazione con Firebase e Cloud Firestore.
+ * Implementazione concreta di [AuthRepository] integrata con Room, Firebase Auth e Firestore.
  */
 class AuthRepositoryImpl(
     private val userDao: UserDao,
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : AuthRepository {
-    
-    override suspend fun registerUser(user: UserEntity) {
-        Log.d("CheckPointDebug", "Auth: Registrazione utente locale: ${user.email}")
-        // Salva in locale
-        userDao.insertUser(user)
-        // Salva/Sincronizza su Firestore
-        syncUserToFirestore(user)
-    }
 
-    override suspend fun updateUser(user: UserEntity) {
-        Log.d("CheckPointDebug", "Auth: Aggiornamento utente locale: ${user.email}")
-        userDao.updateUser(user)
-        syncUserToFirestore(user)
-    }
-
-    private suspend fun syncUserToFirestore(user: UserEntity) {
-        Log.d("CheckPointDebug", "Auth: Sincronizzazione utente su FIRESTORE: ${user.email}")
-        try {
-            firestore.collection("users").document(user.email).set(user).await()
-            Log.d("CheckPointDebug", "Auth: Utente sincronizzato con successo su FIRESTORE")
-        } catch (e: Exception) {
-            Log.e("CheckPointDebug", "Auth: ERRORE sincronizzazione FIRESTORE: ${e.message}", e)
-        }
-    }
-
-    override suspend fun getUser(email: String): UserEntity? {
-        // Prova prima in locale
-        val localUser = userDao.getUserByEmail(email)
-        
-        // Anche se lo trova in locale, prova a sincronizzarlo su Firestore
-        // per essere sicuro che il cloud sia aggiornato
-        if (localUser != null) {
-            try {
-                syncUserToFirestore(localUser)
-            } catch (e: Exception) {
-                Log.e("CheckPointDebug", "Auth: Errore sync background utente su Firestore: ${e.message}")
-            }
-            return localUser
-        }
-
-        Log.d("CheckPointDebug", "Auth: Utente non trovato in Room, cerco su FIRESTORE: $email")
-        // Se non c'è, prova su Firestore
-        return try {
-            val doc = firestore.collection("users").document(email).get().await()
-            val remoteUser = doc.toObject(UserEntity::class.java)
-            if (remoteUser != null) {
-                Log.d("CheckPointDebug", "Auth: Utente trovato su FIRESTORE, salvo in cache locale")
-                userDao.insertUser(remoteUser) // Salva in cache locale
-            } else {
-                Log.d("CheckPointDebug", "Auth: Utente NON trovato neanche su FIRESTORE")
-            }
-            remoteUser
-        } catch (e: Exception) {
-            Log.e("CheckPointDebug", "Auth: ERRORE recupero utente FIRESTORE: ${e.message}", e)
-            null
-        }
-    }
-
-    override suspend fun getUserByUsername(username: String): UserEntity? {
-        return userDao.getUserByUsername(username)
-    }
-
-    override suspend fun isEmailTaken(email: String): Boolean {
-        return userDao.getUserByEmail(email) != null
-    }
-
-    override suspend fun isUsernameTaken(username: String): Boolean {
-        return userDao.getUserByUsername(username) != null
-    }
+    // ------------------------------------------------------------------------------------------------
+    // Autenticazione Firebase
+    // ------------------------------------------------------------------------------------------------
 
     override suspend fun signUpWithEmail(email: String, username: String, password: String): Result<UserEntity> {
         Log.d("CheckPointDebug", "Auth: Tentativo Signup Firebase Email: $email")
@@ -113,7 +79,7 @@ class AuthRepositoryImpl(
             firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             Log.d("CheckPointDebug", "Auth: Signup Firebase SUCCESS")
             val userEntity = UserEntity(email = email, username = username)
-            registerUser(userEntity) // Usa registerUser per salvare sia in Room che su Firestore
+            registerUser(userEntity)
             Result.success(userEntity)
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "Auth: ERRORE Signup Firebase: ${e.message}", e)
@@ -127,13 +93,12 @@ class AuthRepositoryImpl(
             val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("Sign-in failed")
             Log.d("CheckPointDebug", "Auth: Login Firebase SUCCESS")
-            
-            // Carica profilo da Firestore o lo crea
+
             val user = getUser(email) ?: UserEntity(
                 email = email,
-                username = firebaseUser.displayName ?: email.split("@")[0]
+                username = firebaseUser.displayName ?: email.split("@")[0],
             ).also { registerUser(it) }
-            
+
             Result.success(user)
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "Auth: ERRORE Login Firebase: ${e.message}", e)
@@ -148,15 +113,14 @@ class AuthRepositoryImpl(
             val result = firebaseAuth.signInWithCredential(credential).await()
             val firebaseUser = result.user ?: throw Exception("Google Sign-in failed")
             Log.d("CheckPointDebug", "Auth: Login GOOGLE SUCCESS")
-            
-            val email = firebaseUser.email ?: throw Exception("Email not provided by Google")
-            
-            // Carica profilo da Firestore o lo crea
+
+            val email = firebaseUser.email ?: throw Exception("Email non fornita da Google")
+
             val user = getUser(email) ?: UserEntity(
                 email = email,
-                username = firebaseUser.displayName ?: email.split("@")[0]
+                username = firebaseUser.displayName ?: email.split("@")[0],
             ).also { registerUser(it) }
-            
+
             Result.success(user)
         } catch (e: Exception) {
             Log.e("CheckPointDebug", "Auth: ERRORE Login GOOGLE: ${e.message}", e)
@@ -179,10 +143,18 @@ class AuthRepositoryImpl(
 
         return try {
             // 1. Cancella posizione utente da Firestore
-            try { firestore.collection("user_locations").document(email).delete().await() } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user_location: ${e.message}") }
-            
+            try {
+                firestore.collection("user_locations").document(email).delete().await()
+            } catch (e: Exception) {
+                Log.e("CheckPointDebug", "Error deleting user_location: ${e.message}")
+            }
+
             // 2. Cancella documento utente da Firestore
-            try { firestore.collection("users").document(email).delete().await() } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user doc: ${e.message}") }
+            try {
+                firestore.collection("users").document(email).delete().await()
+            } catch (e: Exception) {
+                Log.e("CheckPointDebug", "Error deleting user doc: ${e.message}")
+            }
 
             // 3. Cancella post creati dall'utente
             try {
@@ -190,7 +162,9 @@ class AuthRepositoryImpl(
                 for (doc in userPosts.documents) {
                     doc.reference.delete().await()
                 }
-            } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user posts: ${e.message}") }
+            } catch (e: Exception) {
+                Log.e("CheckPointDebug", "Error deleting user posts: ${e.message}")
+            }
 
             // 4. Cancella notifiche dell'utente
             try {
@@ -198,7 +172,9 @@ class AuthRepositoryImpl(
                 for (doc in notifs.documents) {
                     doc.reference.delete().await()
                 }
-            } catch (e: Exception) { Log.e("CheckPointDebug", "Error deleting user notifications: ${e.message}") }
+            } catch (e: Exception) {
+                Log.e("CheckPointDebug", "Error deleting user notifications: ${e.message}")
+            }
 
             // 5. Cancella utente da Firebase Auth
             user.delete().await()
@@ -215,5 +191,73 @@ class AuthRepositoryImpl(
 
     override fun getCurrentUserEmail(): String? {
         return firebaseAuth.currentUser?.email
+    }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Gestione e Verifica Profilo Utente
+    // ------------------------------------------------------------------------------------------------
+
+    override suspend fun registerUser(user: UserEntity) {
+        Log.d("CheckPointDebug", "Auth: Registrazione utente locale: ${user.email}")
+        userDao.insertUser(user)
+        syncUserToFirestore(user)
+    }
+
+    override suspend fun updateUser(user: UserEntity) {
+        Log.d("CheckPointDebug", "Auth: Aggiornamento utente locale: ${user.email}")
+        userDao.updateUser(user)
+        syncUserToFirestore(user)
+    }
+
+    override suspend fun getUser(email: String): UserEntity? {
+        val localUser = userDao.getUserByEmail(email)
+
+        if (localUser != null) {
+            try {
+                syncUserToFirestore(localUser)
+            } catch (e: Exception) {
+                Log.e("CheckPointDebug", "Auth: Errore sync background utente su Firestore: ${e.message}")
+            }
+            return localUser
+        }
+
+        Log.d("CheckPointDebug", "Auth: Utente non trovato in Room, cerco su FIRESTORE: $email")
+        return try {
+            val doc = firestore.collection("users").document(email).get().await()
+            val remoteUser = doc.toObject(UserEntity::class.java)
+            if (remoteUser != null) {
+                Log.d("CheckPointDebug", "Auth: Utente trovato su FIRESTORE, salvo in cache locale")
+                userDao.insertUser(remoteUser)
+            } else {
+                Log.d("CheckPointDebug", "Auth: Utente NON trovato neanche su FIRESTORE")
+            }
+            remoteUser
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Auth: ERRORE recupero utente FIRESTORE: ${e.message}", e)
+            null
+        }
+    }
+
+    override suspend fun getUserByUsername(username: String): UserEntity? {
+        return userDao.getUserByUsername(username)
+    }
+
+    override suspend fun isEmailTaken(email: String): Boolean {
+        return userDao.getUserByEmail(email) != null
+    }
+
+    override suspend fun isUsernameTaken(username: String): Boolean {
+        return userDao.getUserByUsername(username) != null
+    }
+
+    private suspend fun syncUserToFirestore(user: UserEntity) {
+        Log.d("CheckPointDebug", "Auth: Sincronizzazione utente su FIRESTORE: ${user.email}")
+        try {
+            firestore.collection("users").document(user.email).set(user).await()
+            Log.d("CheckPointDebug", "Auth: Utente sincronizzato con successo su FIRESTORE")
+        } catch (e: Exception) {
+            Log.e("CheckPointDebug", "Auth: ERRORE sincronizzazione FIRESTORE: ${e.message}", e)
+        }
     }
 }

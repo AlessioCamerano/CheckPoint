@@ -21,7 +21,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 class MainViewModel(
     private val application: Application?,
@@ -230,12 +229,6 @@ class MainViewModel(
             postRepository.syncPostsLikesAndComments()
             userRepository.syncUsersAndFollows(email)
             chatRepository.syncMessages(email)
-
-            while (true) {
-                delay(60.seconds)
-                chatRepository.syncMessages(email)
-                userRepository.syncUsersAndFollows(email)
-            }
         }
         postRepository.startRealtimeSync()
         userRepository.startRealtimeSync(email)

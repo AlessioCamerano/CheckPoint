@@ -17,41 +17,60 @@ import com.example.checkpoint.data.local.entity.PostTagEntity
 import com.example.checkpoint.data.local.entity.UserEntity
 
 /**
- * Punto di accesso a Room
+ * Database principale Room dell'applicazione CheckPoint per il salvataggio e la cache locale dei dati.
  */
 @Database(
     entities = [
-        UserEntity::class, 
-        PostEntity::class, 
-        PostLikeEntity::class, 
-        PostTagEntity::class, 
+        UserEntity::class,
+        PostEntity::class,
+        PostLikeEntity::class,
+        PostTagEntity::class,
         FollowEntity::class,
         MessageEntity::class,
-        CommentEntity::class
-    ], 
+        CommentEntity::class,
+    ],
     version = 15,
-    exportSchema = false
+    exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
+
+    // ------------------------------------------------------------------------------------------------
+    // Data Access Objects (DAO)
+    // ------------------------------------------------------------------------------------------------
+
+    /** Restituisce l'istanza per le operazioni sugli utenti. */
     abstract fun userDao(): UserDao
+
+    /** Restituisce l'istanza per le operazioni sui post, tag e like. */
     abstract fun postDao(): PostDao
+
+    /** Restituisce l'istanza per le operazioni sulla chat e messaggi. */
     abstract fun chatDao(): ChatDao
+
+    /** Restituisce l'istanza per le operazioni sui commenti. */
     abstract fun commentDao(): CommentDao
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Singleton Instance
+    // ------------------------------------------------------------------------------------------------
+
     companion object {
-        //Logica Singleton
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        /**
+         * Restituisce l'istanza Singleton thread-safe del database Room.
+         */
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "checkpoint_database"
+                    "checkpoint_database",
                 )
-                .fallbackToDestructiveMigration(dropAllTables = true) // Cancella e ricrea se lo schema cambia
-                .build()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

@@ -70,7 +70,6 @@ class FeedViewModelTest {
         override fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>> = emptyFlow()
         override suspend fun addComment(comment: CommentEntity) {}
         override fun getCommentCount(postId: String): Flow<Int> = emptyFlow()
-        override fun getAllCommentsFlow(): Flow<List<CommentWithAuthor>> = emptyFlow()
         override suspend fun syncPostsLikesAndComments() {}
         override fun startRealtimeSync() {}
         override fun stopRealtimeSync() {}

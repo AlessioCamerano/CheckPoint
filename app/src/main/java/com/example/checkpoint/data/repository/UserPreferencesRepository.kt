@@ -15,26 +15,61 @@ import kotlinx.coroutines.flow.map
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
 
 /**
- * Interfaccia per la gestione delle preferenze utente.
+ * Gestione dello stato di sessione, preferenze utente e cronologia ricerche tramite DataStore.
  */
 interface UserPreferencesRepository {
+
+    // ------------------------------------------------------------------------------------------------
+    // Flussi di Stato Preferenze
+    // ------------------------------------------------------------------------------------------------
+
+    /** Flusso che indica se l'utente è attualmente autenticato. */
     val isLoggedIn: Flow<Boolean>
+
+    /** Flusso che indica se l'utente ha completato l'onboarding. */
     val hasCompletedOnboarding: Flow<Boolean>
+
+    /** Flusso con l'email dell'utente memorizzata nella sessione locale. */
     val userEmail: Flow<String?>
+
+    /** Flusso che indica se il tema scuro è abilitato. */
     val isDarkTheme: Flow<Boolean?>
+
+    /** Flusso che indica se la posizione geografica è visibile agli altri utenti. */
     val isLocationVisible: Flow<Boolean>
+
+    /** Flusso con la cronologia delle ricerche effettuate dall'utente. */
     val searchHistory: Flow<List<String>>
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Salvataggio e Modifica Preferenze
+    // ------------------------------------------------------------------------------------------------
+
+    /** Salva la sessione di accesso per l'email fornita. */
     suspend fun saveSession(email: String)
+
+    /** Imposta lo stato di completamento dell'onboarding. */
     suspend fun setOnboardingCompleted(completed: Boolean)
+
+    /** Imposta la preferenza del tema chiaro/scuro. */
     suspend fun setTheme(isDark: Boolean)
+
+    /** Imposta la visibilità della posizione geografica. */
     suspend fun setLocationVisible(visible: Boolean)
+
+    /** Aggiunge una ricerca alla cronologia dell'utente corrente. */
     suspend fun saveSearchQuery(query: String)
+
+    /** Svuota la cronologia delle ricerche dell'utente corrente. */
     suspend fun clearSearchHistory()
+
+    /** Cancella tutti i dati di sessione e preferenze. */
     suspend fun clearSession()
 }
 
 /**
- * Implementazione delle preferenze utente con DataStore.
+ * Implementazione concreta di [UserPreferencesRepository] basata su Jetpack DataStore Preferences.
  */
 class UserPreferencesRepositoryImpl(private val context: Context?) : UserPreferencesRepository {
 
@@ -45,6 +80,11 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
         val IS_DARK_THEME = booleanPreferencesKey("is_dark_theme")
         val IS_LOCATION_VISIBLE = booleanPreferencesKey("is_location_visible")
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Flussi di Stato Preferenze
+    // ------------------------------------------------------------------------------------------------
 
     override val isLoggedIn: Flow<Boolean> = context?.dataStore?.data?.map { preferences ->
         preferences[PreferencesKeys.IS_LOGGED_IN] ?: false
@@ -75,6 +115,11 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
             preferences[key]?.toList()?.sorted() ?: emptyList()
         }
     } ?: emptyFlow()
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Salvataggio e Modifica Preferenze
+    // ------------------------------------------------------------------------------------------------
 
     override suspend fun saveSession(email: String) {
         context?.dataStore?.edit { preferences ->
@@ -113,7 +158,7 @@ class UserPreferencesRepositoryImpl(private val context: Context?) : UserPrefere
                 newHistory.remove(query)
             }
             newHistory.add(query)
-            // Limit to 5 items
+
             if (newHistory.size > 5) {
                 val oldest = newHistory.first()
                 newHistory.remove(oldest)

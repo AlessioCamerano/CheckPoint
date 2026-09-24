@@ -10,21 +10,63 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 /**
- * Repository dedicato alla gestione delle notifiche.
+ * Gestione della creazione, eliminazione e osservazione in tempo reale delle notifiche utente.
  */
 interface NotificationRepository {
-    suspend fun createNotification(recipientEmail: String, title: String, body: String, route: String = "home", type: String = "general", senderEmail: String? = null, targetId: String? = null)
+
+    // ------------------------------------------------------------------------------------------------
+    // Creazione e Gestione Notifiche
+    // ------------------------------------------------------------------------------------------------
+
+    /** Crea e invia una nuova notifica a un utente destinatario. */
+    suspend fun createNotification(
+        recipientEmail: String,
+        title: String,
+        body: String,
+        route: String = "home",
+        type: String = "general",
+        senderEmail: String? = null,
+        targetId: String? = null,
+    )
+
+    /** Elimina una notifica specifica tramite ID. */
     suspend fun deleteNotification(notificationId: String)
+
+    /** Segna una notifica come letta. */
     suspend fun markNotificationAsRead(notificationId: String)
+
+    /** Elimina tutte le notifiche di un utente. */
     suspend fun clearAllNotifications(currentUserEmail: String)
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Osservazione Notifiche
+    // ------------------------------------------------------------------------------------------------
+
+    /** Osserva il flusso in tempo reale delle notifiche destinate all'utente corrente. */
     fun observeNotifications(currentUserEmail: String): Flow<List<AppNotification>>
 }
 
+/**
+ * Implementazione concreta di [NotificationRepository] con Cloud Firestore.
+ */
 class NotificationRepositoryImpl(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : NotificationRepository {
 
-    override suspend fun createNotification(recipientEmail: String, title: String, body: String, route: String, type: String, senderEmail: String?, targetId: String?) {
+    // ------------------------------------------------------------------------------------------------
+    // Creazione e Gestione Notifiche
+    // ------------------------------------------------------------------------------------------------
+
+    override suspend fun createNotification(
+        recipientEmail: String,
+        title: String,
+        body: String,
+        route: String,
+        type: String,
+        senderEmail: String?,
+        targetId: String?,
+    ) {
         if (recipientEmail.isBlank()) return
         try {
             val docRef = firestore.collection("notifications").document()
@@ -38,7 +80,7 @@ class NotificationRepositoryImpl(
                 "senderEmail" to senderEmail,
                 "targetId" to targetId,
                 "timestamp" to System.currentTimeMillis(),
-                "isRead" to false
+                "isRead" to false,
             )
             docRef.set(notificationData).await()
         } catch (e: Exception) {
@@ -67,7 +109,11 @@ class NotificationRepositoryImpl(
     override suspend fun clearAllNotifications(currentUserEmail: String) {
         if (currentUserEmail.isBlank()) return
         try {
-            val snapshot = firestore.collection("notifications").whereEqualTo("recipientEmail", currentUserEmail).get().await()
+            val snapshot = firestore.collection("notifications")
+                .whereEqualTo("recipientEmail", currentUserEmail)
+                .get()
+                .await()
+
             val batch = firestore.batch()
             snapshot.documents.forEach { doc -> batch.delete(doc.reference) }
             batch.commit().await()
@@ -76,12 +122,18 @@ class NotificationRepositoryImpl(
         }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Osservazione Notifiche
+    // ------------------------------------------------------------------------------------------------
+
     override fun observeNotifications(currentUserEmail: String): Flow<List<AppNotification>> = callbackFlow {
         if (currentUserEmail.isBlank()) {
             trySend(emptyList())
             close()
             return@callbackFlow
         }
+
         val listener = firestore.collection("notifications")
             .whereEqualTo("recipientEmail", currentUserEmail)
             .addSnapshotListener { snapshot, error ->
@@ -97,11 +149,13 @@ class NotificationRepositoryImpl(
                         senderEmail = doc.getString("senderEmail"),
                         targetId = doc.getString("targetId"),
                         timestamp = doc.getLong("timestamp") ?: 0L,
-                        isRead = doc.getBoolean("isRead") ?: false
+                        isRead = doc.getBoolean("isRead") ?: false,
                     )
                 }?.sortedByDescending { it.timestamp } ?: emptyList()
+
                 trySend(notifications)
             }
+
         awaitClose { listener.remove() }
     }
 }

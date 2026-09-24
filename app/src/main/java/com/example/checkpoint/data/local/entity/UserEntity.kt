@@ -5,15 +5,17 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Entità Utente
+ * Entità Room che rappresenta un profilo utente.
  */
 @Entity(
     tableName = "users",
-    indices = [Index(value = ["username"])]
+    indices = [
+        Index(value = ["username"]),
+    ],
 )
 data class UserEntity(
     @PrimaryKey val email: String = "",
     val username: String = "",
     val bio: String = "",
-    val profilePictureUri: String? = null
+    val profilePictureUri: String? = null,
 )

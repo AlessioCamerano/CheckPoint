@@ -10,25 +10,34 @@ import com.example.checkpoint.data.local.model.CommentWithAuthor
 import kotlinx.coroutines.flow.Flow
 
 /**
- * DAO per i commenti.
+ * Accesso ai dati per i commenti dei post.
  */
 @Dao
 interface CommentDao {
+
+    // ------------------------------------------------------------------------------------------------
+    // Salvataggio Commenti
+    // ------------------------------------------------------------------------------------------------
+
+    /** Salva un singolo commento. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertComment(comment: CommentEntity)
 
+    /** Salva una lista di commenti. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertComments(comments: List<CommentEntity>)
 
-    // Recupera i commenti di un post in ordine cronologico con l'autore
+
+    // ------------------------------------------------------------------------------------------------
+    // Lettura Commenti
+    // ------------------------------------------------------------------------------------------------
+
+    /** Commenti di un post in ordine cronologico con i dati dell'autore. */
     @Transaction
     @Query("SELECT * FROM comments WHERE postId = :postId ORDER BY timestamp ASC")
     fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>>
 
-    // Conteggio totale commenti
+    /** Numero totale di commenti per un post. */
     @Query("SELECT COUNT(*) FROM comments WHERE postId = :postId")
     fun getCommentCount(postId: String): Flow<Int>
-    @Transaction
-    @Query("SELECT comments.* FROM comments ORDER BY timestamp DESC")
-    fun getAllCommentsFlow(): Flow<List<CommentWithAuthor>>
 }
