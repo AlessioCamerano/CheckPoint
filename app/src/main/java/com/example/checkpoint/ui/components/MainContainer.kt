@@ -20,9 +20,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.checkpoint.R
-import com.example.checkpoint.ui.viewmodel.*
+import com.example.checkpoint.ui.viewmodel.ChatViewModel
+import com.example.checkpoint.ui.viewmodel.FeedViewModel
+import com.example.checkpoint.ui.viewmodel.MainViewModel
+import com.example.checkpoint.ui.viewmodel.ProfileViewModel
+import com.example.checkpoint.ui.viewmodel.SearchViewModel
 import kotlinx.coroutines.launch
 
+/**
+ * Contenitore principale dell'interfaccia utente che gestisce la struttura dello Scaffold e il Pager delle sezioni.
+ */
 @Composable
 fun MainContainer(
     mainViewModel: MainViewModel,
@@ -39,7 +46,7 @@ fun MainContainer(
     onNavigateToPostDetail: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToTag: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -75,15 +82,19 @@ fun MainContainer(
                 onNavigate = { route ->
                     val index = tabs.indexOf(route)
                     if (index != -1) scope.launch { pagerState.animateScrollToPage(index) }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+        ) {
             if (feedState.isLoading && feedState.posts.isEmpty() && !feedState.postSuccess) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             } else {
                 MainTabPager(
@@ -103,7 +114,7 @@ fun MainContainer(
                     onNavigateToPostDetail = onNavigateToPostDetail,
                     onNavigateToChat = onNavigateToChat,
                     onNavigateToTag = onNavigateToTag,
-                    onLogout = onLogout
+                    onLogout = onLogout,
                 )
             }
         }

@@ -7,9 +7,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.checkpoint.ui.screens.*
-import com.example.checkpoint.ui.viewmodel.*
+import com.example.checkpoint.ui.screens.CreatePostScreen
+import com.example.checkpoint.ui.screens.MainScreen
+import com.example.checkpoint.ui.screens.MessagesScreen
+import com.example.checkpoint.ui.screens.ProfileScreen
+import com.example.checkpoint.ui.screens.SearchScreen
+import com.example.checkpoint.ui.viewmodel.ChatViewModel
+import com.example.checkpoint.ui.viewmodel.FeedViewModel
+import com.example.checkpoint.ui.viewmodel.MainViewModel
+import com.example.checkpoint.ui.viewmodel.ProfileViewModel
+import com.example.checkpoint.ui.viewmodel.SearchViewModel
 
+/**
+ * Pager orizzontale per lo scorrimento e la visualizzazione delle schermate principali dell'app.
+ */
 @Composable
 fun MainTabPager(
     pagerState: PagerState,
@@ -28,7 +39,7 @@ fun MainTabPager(
     onNavigateToPostDetail: () -> Unit,
     onNavigateToChat: () -> Unit,
     onNavigateToTag: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
 ) {
     val mainState by mainViewModel.uiState.collectAsStateWithLifecycle()
     val feedState by feedViewModel.uiState.collectAsStateWithLifecycle()
@@ -39,7 +50,7 @@ fun MainTabPager(
     HorizontalPager(
         state = pagerState,
         modifier = Modifier.fillMaxSize(),
-        beyondViewportPageCount = 1
+        beyondViewportPageCount = 1,
     ) { page ->
         when (tabs[page]) {
             "search" -> SearchScreen(
@@ -51,12 +62,16 @@ fun MainTabPager(
                 onUserClick = { mainViewModel.onOpenUserPopup(it) },
                 onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() },
                 onTagClick = { searchViewModel.onSearchByTag(it); onNavigateToTag(it) },
-                onSortChange = { searchViewModel.onSearchSortOrderChange(it) }
+                onSortChange = { searchViewModel.onSearchSortOrderChange(it) },
             )
+
             "add" -> CreatePostScreen(
                 state = feedState,
-                onCreatePost = { title, msg, uri, type, tags -> feedViewModel.onCreatePost(title, msg, uri, type, tags) }
+                onCreatePost = { title, msg, uri, type, tags ->
+                    feedViewModel.onCreatePost(title, msg, uri, type, tags)
+                },
             )
+
             "home_feed" -> MainScreen(
                 state = feedState,
                 isRefreshing = mainState.isRefreshing,
@@ -65,16 +80,18 @@ fun MainTabPager(
                 onToggleLike = { feedViewModel.onToggleLike(it) },
                 onNavigateToNotifications = onNavigateToNotifications,
                 onUserClick = { mainViewModel.onOpenUserPopup(it) },
-                onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() }
+                onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() },
             )
+
             "messages" -> MessagesScreen(
                 chatState = chatState,
                 feedState = feedState,
                 onPartnerClick = { chatViewModel.onOpenChat(it); onNavigateToChat() },
                 onPostClick = { feedViewModel.onOpenPostDetail(it); onNavigateToPostDetail() },
                 onToggleLike = { feedViewModel.onToggleLike(it) },
-                onUserClick = { mainViewModel.onOpenUserPopup(it) }
+                onUserClick = { mainViewModel.onOpenUserPopup(it) },
             )
+
             "profile" -> ProfileScreen(
                 isDarkTheme = mainState.isDarkTheme,
                 isLocationVisible = profileState.isLocationVisible,
@@ -97,7 +114,7 @@ fun MainTabPager(
                         }
                         onResult(result)
                     }
-                }
+                },
             )
         }
     }

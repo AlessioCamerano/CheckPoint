@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -13,33 +12,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.checkpoint.R
 import com.example.checkpoint.ui.theme.CheckPointTheme
 
+/**
+ * Dialog di supporto ed assistenza per gli utenti dell'applicazione.
+ */
 @Composable
 fun SupportDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = stringResource(com.example.checkpoint.R.string.support_title),
+                text = stringResource(R.string.support_title),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
         },
         text = {
             Text(
-                text = stringResource(com.example.checkpoint.R.string.support_message, "example@gmail.com"),
-                color = MaterialTheme.colorScheme.onSurface
+                text = stringResource(R.string.support_message, "example@gmail.com"),
+                color = MaterialTheme.colorScheme.onSurface,
             )
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(com.example.checkpoint.R.string.action_close), color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.action_close), color = MaterialTheme.colorScheme.primary)
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
     )
 }
 

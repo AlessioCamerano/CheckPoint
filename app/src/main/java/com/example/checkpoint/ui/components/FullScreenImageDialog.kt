@@ -3,7 +3,12 @@ package com.example.checkpoint.ui.components
 import android.util.Base64
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -22,12 +27,12 @@ import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 
 /**
- * Dialog a schermo intero per la visualizzazione dettagliata dell'immagine.
+ * Finestra di dialogo a schermo intero per l'ingrandimento e la visualizzazione dettagliata delle immagini.
  */
 @Composable
 fun FullScreenImageDialog(
     imageUri: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val imageModel: Any? = remember(imageUri) {
         if (imageUri.startsWith("data:")) {
@@ -45,15 +50,15 @@ fun FullScreenImageDialog(
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
-            usePlatformDefaultWidth = false
-        )
+            usePlatformDefaultWidth = false,
+        ),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.92f))
                 .clickable { onDismiss() },
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             AsyncImage(
                 model = imageModel,
@@ -62,10 +67,9 @@ fun FullScreenImageDialog(
                     .fillMaxWidth()
                     .fillMaxHeight(0.85f)
                     .padding(16.dp),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Fit,
             )
 
-            // Tasto per la chiusura
             IconButton(
                 onClick = onDismiss,
                 modifier = Modifier
@@ -73,12 +77,12 @@ fun FullScreenImageDialog(
                     .statusBarsPadding()
                     .padding(16.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.2f))
+                    .background(Color.White.copy(alpha = 0.2f)),
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Chiudi",
-                    tint = Color.White
+                    tint = Color.White,
                 )
             }
         }
