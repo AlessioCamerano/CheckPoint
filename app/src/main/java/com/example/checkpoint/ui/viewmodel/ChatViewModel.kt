@@ -12,13 +12,21 @@ import com.example.checkpoint.data.repository.ChatRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.ui.state.ChatUiState
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel per la gestione delle conversazioni di chat in tempo reale.
+ */
 class ChatViewModel(
     private val chatRepository: ChatRepository,
     private val authRepository: AuthRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -33,22 +41,34 @@ class ChatViewModel(
                 return ChatViewModel(
                     chatRepository = application.container.chatRepository,
                     authRepository = application.container.authRepository,
-                    preferencesRepository = application.container.preferencesRepository
+                    preferencesRepository = application.container.preferencesRepository,
                 ) as T
             }
         }
     }
 
-    init { observeChatPartners() }
+    init {
+        observeChatPartners()
+    }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Gestione Conversazioni e Messaggi
+    // ------------------------------------------------------------------------------------------------
 
     private fun observeChatPartners() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
-                if (email != null) chatRepository.getChatPartners(email).collectLatest { p -> _uiState.update { it.copy(chatPartners = p) } }
+                if (email != null) {
+                    chatRepository.getChatPartners(email).collectLatest { partners ->
+                        _uiState.update { it.copy(chatPartners = partners) }
+                    }
+                }
             }
         }
     }
 
+    /** Apre la chat con un determinato utente partner e ne osserva i messaggi. */
     fun onOpenChat(partner: UserEntity) {
         _uiState.update { it.copy(selectedChatPartner = partner) }
         chatJob?.cancel()
@@ -60,6 +80,7 @@ class ChatViewModel(
         }
     }
 
+    /** Apre la chat cercando l'utente per email. */
     fun onOpenChatByEmail(partnerEmail: String) {
         if (partnerEmail.isBlank()) return
         viewModelScope.launch {
@@ -70,6 +91,7 @@ class ChatViewModel(
         }
     }
 
+    /** Invia un nuovo messaggio di testo nella conversazione attiva. */
     fun onSendMessage(content: String) {
         if (content.isBlank()) return
         viewModelScope.launch {
@@ -79,6 +101,7 @@ class ChatViewModel(
         }
     }
 
+    /** Chiude la conversazione attiva. */
     fun onCloseChat() {
         chatJob?.cancel()
         _uiState.update { it.copy(selectedChatPartner = null, currentChatMessages = emptyList()) }

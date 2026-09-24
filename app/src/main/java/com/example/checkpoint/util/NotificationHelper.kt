@@ -10,13 +10,18 @@ import androidx.core.app.NotificationCompat
 import com.example.checkpoint.MainActivity
 import com.example.checkpoint.R
 
+/**
+ * Utility per la creazione e la visualizzazione delle notifiche di sistema Android (NotificationChannel e PendingIntent).
+ */
 object NotificationHelper {
+
     const val EXTRA_TARGET_ROUTE = "extra_target_route"
     const val EXTRA_TARGET_ID = "extra_target_id"
     const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
     const val CHANNEL_ID = "checkpoint_notifications"
     const val CHANNEL_NAME = "CheckPoint notifications"
 
+    /** Garantisce la creazione del canale di notifica su Android 8.0+ (API 26+). */
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = context.getSystemService(NotificationManager::class.java)
@@ -26,7 +31,7 @@ object NotificationHelper {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
                     CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_DEFAULT,
                 )
                 channel.description = "Notifications from CheckPoint"
                 manager.createNotificationChannel(channel)
@@ -34,6 +39,7 @@ object NotificationHelper {
         }
     }
 
+    /** Mostra una notifica di sistema con un Intent che reindirizza la navigazione nell'Activity. */
     fun showSystemNotification(
         context: Context,
         title: String,
@@ -41,7 +47,7 @@ object NotificationHelper {
         route: String = "home",
         targetId: String? = null,
         notificationId: Int = System.currentTimeMillis().toInt() % Int.MAX_VALUE,
-        notificationDocumentId: String? = null
+        notificationDocumentId: String? = null,
     ) {
         ensureChannel(context)
 
@@ -60,7 +66,7 @@ object NotificationHelper {
             context,
             notificationId,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)

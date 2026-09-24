@@ -18,13 +18,15 @@ import java.util.UUID
 import kotlin.math.roundToInt
 
 /**
- * Gestisce l'elaborazione dei file multimediali.
- * Codifica le immagini in Base64 per l'archiviazione diretta su Firestore e Room,
- * applicando un ridimensionamento ottimizzato per rispettare il limite di 1MB per documento
+ * Gestione della persistenza locale dei file multimediali e della codifica/compressione Base64 per Firestore e Room.
  */
 object MediaStorageManager {
+
     private val ALLOWED_IMAGE_EXTENSIONS = listOf("jpg", "jpeg", "png", "webp")
 
+    /**
+     * Salva un file multimediale selezionato nella memoria interna dell'applicazione.
+     */
     fun saveMediaToInternalStorage(context: Context, uri: Uri): Uri? {
         val extension = getFileExtension(context, uri) ?: "jpg"
         if (!isExtensionAllowed(extension)) return null
@@ -61,14 +63,12 @@ object MediaStorageManager {
     }
 
     /**
-     * Comprime un'immagine e la codifica in Base64 eseguendo l'operazione su un thread in background.
-     *
-     * @param isProfilePicture Se true, ridimensiona a max 400px. Altrimenti max 800px.
+     * Comprime un'immagine e la codifica in formato Base64 ridimensionando le dimensioni su un thread I/O.
      */
     suspend fun encodeToOptimizedBase64(
         context: Context,
         uriString: String?,
-        isProfilePicture: Boolean = false
+        isProfilePicture: Boolean = false,
     ): String? = withContext(Dispatchers.IO) {
         if (uriString.isNullOrBlank()) return@withContext null
         if (uriString.startsWith("data:") || uriString.startsWith("http://") || uriString.startsWith("https://")) {
@@ -105,7 +105,6 @@ object MediaStorageManager {
             }
 
             val byteArrayOutputStream = ByteArrayOutputStream()
-            // Compressione bilanciata: 80% di qualità su formato JPEG
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
             val compressedBytes = byteArrayOutputStream.toByteArray()
             val base64String = Base64.encodeToString(compressedBytes, Base64.NO_WRAP)

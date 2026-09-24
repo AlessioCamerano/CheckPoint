@@ -9,30 +9,34 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.checkpoint.ui.navigation.AppNavigation
 import com.example.checkpoint.ui.theme.CheckPointTheme
 import com.example.checkpoint.ui.viewmodel.MainViewModel
 import com.example.checkpoint.util.NotificationHelper
 
+/**
+ * Activity principale di CheckPoint che ospita la gerarchia UI di Jetpack Compose e gestisce gli Intent delle notifiche.
+ */
 class MainActivity : ComponentActivity() {
+
     private var mainViewModel: MainViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val launchRoute = intent?.getStringExtra(com.example.checkpoint.util.NotificationHelper.EXTRA_TARGET_ROUTE)
-        val launchTargetId = intent?.getStringExtra(com.example.checkpoint.util.NotificationHelper.EXTRA_TARGET_ID)
-        val launchNotificationId = intent?.getStringExtra(com.example.checkpoint.util.NotificationHelper.EXTRA_NOTIFICATION_ID)
+        val launchRoute = intent?.getStringExtra(NotificationHelper.EXTRA_TARGET_ROUTE)
+        val launchTargetId = intent?.getStringExtra(NotificationHelper.EXTRA_TARGET_ID)
+        val launchNotificationId = intent?.getStringExtra(NotificationHelper.EXTRA_NOTIFICATION_ID)
 
         setContent {
             val viewModel: MainViewModel = viewModel(factory = MainViewModel.Factory)
@@ -40,13 +44,15 @@ class MainActivity : ComponentActivity() {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val lifecycleOwner = LocalLifecycleOwner.current
 
-            // Aggiornamento GPS ogni volta che l'app torna in primo piano (avvio o ritorno dai permessi)
+            // ------------------------------------------------------------------------------------------------
+            // Osservatore del Ciclo di Vita per la Posizione GPS
+            // ------------------------------------------------------------------------------------------------
             DisposableEffect(lifecycleOwner) {
                 val observer = LifecycleEventObserver { _, event ->
                     if (event == Lifecycle.Event.ON_RESUME) {
                         val isGranted = ContextCompat.checkSelfPermission(
                             this@MainActivity,
-                            Manifest.permission.ACCESS_FINE_LOCATION
+                            Manifest.permission.ACCESS_FINE_LOCATION,
                         ) == PackageManager.PERMISSION_GRANTED
                         viewModel.refreshUserLocation(isGranted)
                     }
@@ -57,18 +63,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+
+            // ------------------------------------------------------------------------------------------------
+            // Tema e Navigazione
+            // ------------------------------------------------------------------------------------------------
             CheckPointTheme(
                 darkTheme = uiState.isDarkTheme,
-                dynamicColor = false
+                dynamicColor = false,
             ) {
                 Surface(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     AppNavigation(
                         viewModel = viewModel,
                         initialRoute = launchRoute,
                         initialTargetId = launchTargetId,
-                        initialNotificationId = launchNotificationId
+                        initialNotificationId = launchNotificationId,
                     )
                 }
             }

@@ -14,10 +14,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel dedicato alla gestione dell'autenticazione utente (Login, Signup e Google Sign-In).
+ */
 class AuthViewModel(
     private val authRepository: AuthRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
@@ -28,12 +32,18 @@ class AuthViewModel(
                 val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as CheckPointApplication
                 return AuthViewModel(
                     authRepository = application.container.authRepository,
-                    preferencesRepository = application.container.preferencesRepository
+                    preferencesRepository = application.container.preferencesRepository,
                 ) as T
             }
         }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Flussi di Autenticazione (Signup & Login)
+    // ------------------------------------------------------------------------------------------------
+
+    /** Registrazione di un nuovo utente tramite email, username e password. */
     fun onSignup(email: String, username: String, password: String, confirmPassword: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -67,6 +77,7 @@ class AuthViewModel(
         }
     }
 
+    /** Accesso utente tramite email/username e password. */
     fun onLogin(identifier: String, password: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -81,7 +92,7 @@ class AuthViewModel(
                     preferencesRepository.saveSession(user.email)
                     _uiState.update { it.copy(isLoading = false, isSuccess = true) }
                 }.onFailure { e ->
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Invalid credentials: ${e.message}") }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Credenziali non valide: ${e.message}") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
@@ -89,6 +100,7 @@ class AuthViewModel(
         }
     }
 
+    /** Accesso o registrazione rapida con account Google. */
     fun onGoogleSignIn(idToken: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -98,7 +110,7 @@ class AuthViewModel(
                     preferencesRepository.saveSession(user.email)
                     _uiState.update { it.copy(isLoading = false, isSuccess = true) }
                 }.onFailure { e ->
-                    _uiState.update { it.copy(isLoading = false, errorMessage = "Google Sign-in failed: ${e.message}") }
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Accesso Google fallito: ${e.message}") }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
@@ -106,6 +118,7 @@ class AuthViewModel(
         }
     }
 
+    /** Disconnessione dell'utente. */
     fun onLogout() {
         viewModelScope.launch {
             try {
@@ -113,11 +126,12 @@ class AuthViewModel(
                 preferencesRepository.clearSession()
                 _uiState.update { it.copy(isSuccess = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Error logging out: ${e.message}") }
+                _uiState.update { it.copy(errorMessage = "Errore durante il logout: ${e.message}") }
             }
         }
     }
 
+    /** Ripristina lo stato dell'UI di autenticazione. */
     fun resetState() {
         _uiState.update { AuthUiState() }
     }

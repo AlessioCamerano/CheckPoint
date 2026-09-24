@@ -5,10 +5,11 @@ import com.example.checkpoint.di.AppContainer
 import com.example.checkpoint.di.DefaultAppContainer
 
 /**
- * Entry point dell'applicazione.
- * Inizializza il contenitore delle dipendenze al lancio dell'app.
+ * Punto di ingresso dell'applicazione (Application class).
+ * Inizializza il contenitore delle dipendenze [AppContainer] all'avvio dell'app.
  */
 class CheckPointApplication : Application() {
+
     lateinit var container: AppContainer
 
     override fun onCreate() {

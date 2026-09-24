@@ -3,6 +3,7 @@ package com.example.checkpoint.ui.viewmodel
 import android.Manifest
 import android.app.Application
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
@@ -11,17 +12,30 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.checkpoint.CheckPointApplication
 import com.example.checkpoint.data.local.entity.UserEntity
-import com.example.checkpoint.data.repository.*
+import com.example.checkpoint.data.repository.AuthRepository
+import com.example.checkpoint.data.repository.ChatRepository
+import com.example.checkpoint.data.repository.NotificationRepository
+import com.example.checkpoint.data.repository.PostRepository
+import com.example.checkpoint.data.repository.UserPreferencesRepository
+import com.example.checkpoint.data.repository.UserRepository
 import com.example.checkpoint.ui.state.AppNotification
 import com.example.checkpoint.ui.state.MainUiState
 import com.example.checkpoint.util.NotificationHelper
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * ViewModel principale dell'applicazione che gestisce la sessione globale, notifiche, navigazione remota e sincronizzazione.
+ */
 class MainViewModel(
     private val application: Application?,
     private val postRepository: PostRepository,
@@ -29,7 +43,7 @@ class MainViewModel(
     private val chatRepository: ChatRepository,
     private val notificationRepository: NotificationRepository,
     private val authRepository: AuthRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MainUiState())
@@ -65,7 +79,7 @@ class MainViewModel(
                     chatRepository = container.chatRepository,
                     notificationRepository = container.notificationRepository,
                     authRepository = container.authRepository,
-                    preferencesRepository = container.preferencesRepository
+                    preferencesRepository = container.preferencesRepository,
                 ) as T
             }
         }
@@ -77,6 +91,11 @@ class MainViewModel(
         observeOnboarding()
         observeNotifications()
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Controllo Sessione e Inizializzazione Utente
+    // ------------------------------------------------------------------------------------------------
 
     private fun checkSession() {
         viewModelScope.launch {
@@ -94,6 +113,7 @@ class MainViewModel(
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun loadUserSession() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
@@ -120,6 +140,11 @@ class MainViewModel(
             }
         }
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Gestione Notifiche e Intent di Navigazione
+    // ------------------------------------------------------------------------------------------------
 
     private fun observeNotifications() {
         viewModelScope.launch {
@@ -153,17 +178,22 @@ class MainViewModel(
         }
     }
 
+    /** Gestisce un intent di notifica push per la navigazione verso la rotta di destinazione. */
     fun handleNotificationIntent(route: String, targetId: String?, notificationId: String?) {
         viewModelScope.launch {
             if (!notificationId.isNullOrBlank()) {
-                try { notificationRepository.deleteNotification(notificationId) } catch (e: Exception) {}
+                try { notificationRepository.deleteNotification(notificationId) } catch (_: Exception) {}
             }
             pendingNavigation.value = Triple(route, targetId, notificationId)
         }
     }
 
-    fun consumePendingNavigation() { pendingNavigation.value = null }
+    /** Consuma l'azione di navigazione pendente. */
+    fun consumePendingNavigation() {
+        pendingNavigation.value = null
+    }
 
+    /** Gestisce la pressione su una notifica nell'elenco. */
     fun onNotificationClicked(notification: AppNotification) {
         if (notification.id.isBlank()) return
         localNotifications.update { it.filterNot { n -> n.id == notification.id } }
@@ -171,6 +201,7 @@ class MainViewModel(
         viewModelScope.launch { notificationRepository.deleteNotification(notification.id) }
     }
 
+    /** Gestisce la pressione su una notifica tramite ID. */
     fun onNotificationClickedById(notificationId: String) {
         if (notificationId.isBlank()) return
         localNotifications.update { it.filterNot { n -> n.id == notificationId } }
@@ -178,12 +209,18 @@ class MainViewModel(
         viewModelScope.launch { notificationRepository.deleteNotification(notificationId) }
     }
 
+    /** Elimina tutte le notifiche dell'utente. */
     fun onClearAllNotifications() {
         val currentEmail = _uiState.value.currentUserEmail ?: return
         localNotifications.value = emptyList()
         notifiedNotificationIds.clear()
         viewModelScope.launch { notificationRepository.clearAllNotifications(currentEmail) }
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Preferenze Tema e Onboarding
+    // ------------------------------------------------------------------------------------------------
 
     private fun observeTheme() {
         viewModelScope.launch {
@@ -201,10 +238,17 @@ class MainViewModel(
         }
     }
 
+    /** Segna l'onboarding come completato nelle preferenze. */
     fun onOnboardingCompleted() {
         viewModelScope.launch { preferencesRepository.setOnboardingCompleted(true) }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Sincronizzazione Dati, Refresh e Posizione GPS
+    // ------------------------------------------------------------------------------------------------
+
+    /** Esegue un refresh manuale di tutti i dati dal server remoto. */
     fun onRefresh() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRefreshing = true) }
@@ -242,6 +286,7 @@ class MainViewModel(
         chatRepository.stopRealtimeSync()
     }
 
+    /** Esegue la disconnessione e la pulizia dei dati locali. */
     fun onLogout() {
         viewModelScope.launch {
             stopPeriodicSync()
@@ -252,11 +297,26 @@ class MainViewModel(
         }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Popup Profilo Utente
+    // ------------------------------------------------------------------------------------------------
+
+    /** Apre il popup delle informazioni rapide dell'utente selezionato. */
     fun onOpenUserPopup(user: UserEntity) {
         val currentEmail = _uiState.value.currentUserEmail
         if (user.email != currentEmail && currentEmail != null) {
             _uiState.update { it.copy(selectedUserForPopup = user) }
             observeFollowStatus(currentEmail, user.email)
+        }
+    }
+
+    /** Apre il popup informazioni utente cercando per email. */
+    fun onOpenUserPopupByEmail(email: String) {
+        if (email.isBlank()) return
+        viewModelScope.launch {
+            val user = authRepository.getUser(email) ?: UserEntity(email = email, username = email.split("@")[0])
+            onOpenUserPopup(user)
         }
     }
 
@@ -269,17 +329,27 @@ class MainViewModel(
         }
     }
 
+    /** Alterna lo stato di follow per l'utente del popup. */
     fun onToggleFollow() {
         val followedUser = _uiState.value.selectedUserForPopup ?: return
         val followerEmail = _uiState.value.currentUserEmail ?: return
         viewModelScope.launch { userRepository.toggleFollow(followerEmail, followedUser.email) }
     }
 
+    /** Chiude il popup profilo utente. */
     fun onDismissUserPopup() {
         followJob?.cancel()
-        _uiState.update { it.copy(selectedUserForPopup = null, isFollowingSelectedUser = false, selectedUserFollowersCount = 0, selectedUserFollowingCount = 0) }
+        _uiState.update {
+            it.copy(
+                selectedUserForPopup = null,
+                isFollowingSelectedUser = false,
+                selectedUserFollowersCount = 0,
+                selectedUserFollowingCount = 0,
+            )
+        }
     }
 
+    /** Aggiorna la posizione GPS dell'utente corrente se il permesso è concesso. */
     fun refreshUserLocation(isPermissionGranted: Boolean) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
@@ -287,22 +357,17 @@ class MainViewModel(
             if (isPermissionGranted && isVisible) {
                 try {
                     if (application != null && ContextCompat.checkSelfPermission(application, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        val locationManager = application.getSystemService(android.location.LocationManager::class.java)
-                        val location = locationManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER) ?: locationManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                        val locationManager = application.getSystemService(LocationManager::class.java)
+                        val location = locationManager?.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                            ?: locationManager?.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
                         if (location != null) userRepository.updateUserLocation(email, location.latitude, location.longitude)
                     }
-                } catch (e: Exception) { Log.e("CheckPointDebug", "GPS Error: ${e.message}") }
+                } catch (e: Exception) {
+                    Log.e("CheckPointDebug", "GPS Error: ${e.message}")
+                }
             } else {
                 userRepository.deleteUserLocation(email)
             }
-        }
-    }
-
-    fun onOpenUserPopupByEmail(email: String) {
-        if (email.isBlank()) return
-        viewModelScope.launch {
-            val user = authRepository.getUser(email) ?: UserEntity(email = email, username = email.split("@")[0])
-            onOpenUserPopup(user)
         }
     }
 }

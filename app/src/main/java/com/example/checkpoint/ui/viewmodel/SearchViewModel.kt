@@ -11,13 +11,21 @@ import com.example.checkpoint.data.repository.UserRepository
 import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.ui.state.SearchUiState
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel per la ricerca di post, utenti e tag con supporto alla cronologia ricerche.
+ */
 class SearchViewModel(
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -32,7 +40,7 @@ class SearchViewModel(
                 return SearchViewModel(
                     postRepository = application.container.postRepository,
                     userRepository = application.container.userRepository,
-                    preferencesRepository = application.container.preferencesRepository
+                    preferencesRepository = application.container.preferencesRepository,
                 ) as T
             }
         }
@@ -44,6 +52,12 @@ class SearchViewModel(
         observeSearchHistory()
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Esecuzione Ricerca e Cronologia
+    // ------------------------------------------------------------------------------------------------
+
+    /** Aggiorna il testo di ricerca e recupera contemporaneamente utenti, post e tag corrispondenti. */
     fun onSearchQueryChange(query: String) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
@@ -54,24 +68,33 @@ class SearchViewModel(
         }
     }
 
+    /** Salva la stringa di ricerca nella cronologia utente. */
     fun onSaveSearchQuery(query: String) {
         if (query.isNotBlank()) viewModelScope.launch { preferencesRepository.saveSearchQuery(query) }
     }
 
+    /** Cancella l'intera cronologia ricerche. */
     fun clearSearchHistory() {
         viewModelScope.launch { preferencesRepository.clearSearchHistory() }
     }
 
+    /** Cambia l'ordine di ordinamento dei risultati di ricerca. */
     fun onSearchSortOrderChange(newOrder: PostSortOrder) {
         _uiState.update { it.copy(searchSortOrder = newOrder) }
     }
 
+    /** Cerca i post associati a uno specifico tag. */
     fun onSearchByTag(tag: String) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
             postRepository.searchPostsByTag(tag, email).collectLatest { posts -> _uiState.update { it.copy(tagResults = posts) } }
         }
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Osservazione Tag e Cronologia
+    // ------------------------------------------------------------------------------------------------
 
     private fun observeTags() {
         viewModelScope.launch { postRepository.getAllUniqueTags().collectLatest { tags -> _uiState.update { it.copy(availableTags = tags) } } }

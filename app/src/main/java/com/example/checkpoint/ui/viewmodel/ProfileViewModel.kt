@@ -12,14 +12,22 @@ import com.example.checkpoint.data.repository.UserRepository
 import com.example.checkpoint.ui.state.ProfileUiState
 import com.example.checkpoint.ui.state.UserStatus
 import com.example.checkpoint.util.MediaStorageManager
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel per la gestione del profilo utente, impostazioni di tema/privacy e ricerca utenti nelle vicinanze.
+ */
 class ProfileViewModel(
     private val application: Application?,
     private val userRepository: UserRepository,
     private val authRepository: AuthRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -34,7 +42,7 @@ class ProfileViewModel(
                     application = application,
                     userRepository = application.container.userRepository,
                     authRepository = application.container.authRepository,
-                    preferencesRepository = application.container.preferencesRepository
+                    preferencesRepository = application.container.preferencesRepository,
                 ) as T
             }
         }
@@ -47,13 +55,25 @@ class ProfileViewModel(
         observeLocationVisibility()
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Caricamento Dati Profilo e Preferenze
+    // ------------------------------------------------------------------------------------------------
+
     private fun loadUserProfile() {
         viewModelScope.launch {
             preferencesRepository.userEmail.collectLatest { email ->
                 if (!email.isNullOrBlank()) {
                     val user = authRepository.getUser(email)
                     if (user != null) {
-                        _uiState.update { it.copy(username = user.username, bio = user.bio, profilePictureUri = user.profilePictureUri, currentUserEmail = email) }
+                        _uiState.update {
+                            it.copy(
+                                username = user.username,
+                                bio = user.bio,
+                                profilePictureUri = user.profilePictureUri,
+                                currentUserEmail = email,
+                            )
+                        }
                     }
                 }
             }
@@ -87,6 +107,12 @@ class ProfileViewModel(
         }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Modifica Profilo e Impostazioni
+    // ------------------------------------------------------------------------------------------------
+
+    /** Aggiorna il profilo utente (username, biografia e foto profilo). */
     fun onUpdateProfile(newUsername: String, newBio: String, newProfilePictureUri: String?) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
@@ -95,17 +121,21 @@ class ProfileViewModel(
 
             val processedPic = if (application != null && !newProfilePictureUri.isNullOrBlank()) {
                 MediaStorageManager.encodeToOptimizedBase64(application, newProfilePictureUri, isProfilePicture = true)
-            } else newProfilePictureUri
+            } else {
+                newProfilePictureUri
+            }
 
             authRepository.updateUser(currentUser.copy(username = newUsername, bio = newBio, profilePictureUri = processedPic))
             _uiState.update { it.copy(username = newUsername, bio = newBio, profilePictureUri = processedPic, isLoading = false) }
         }
     }
 
+    /** Cambia la preferenza del tema chiaro/scuro. */
     fun onThemeChange(isDark: Boolean) {
         viewModelScope.launch { preferencesRepository.setTheme(isDark) }
     }
 
+    /** Cambia la visibilità della posizione geografica. */
     fun onLocationVisibilityChange(visible: Boolean) {
         viewModelScope.launch {
             preferencesRepository.setLocationVisible(visible)
@@ -116,14 +146,22 @@ class ProfileViewModel(
         }
     }
 
+    /** Cambia lo stato di presenza (Online, Occupato, Offline). */
     fun onStatusChange(newStatus: UserStatus) {
         _uiState.update { it.copy(userStatus = newStatus) }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Ricerca Utenti nelle Vicinanze (GPS)
+    // ------------------------------------------------------------------------------------------------
+
+    /** Aggiorna il raggio di ricerca espresso in km. */
     fun onLocalUsersRadiusChange(radiusKm: Int) {
         _uiState.update { it.copy(localUsersRadiusKm = radiusKm) }
     }
 
+    /** Cerca gli utenti nelle vicinanze in base alla posizione GPS. */
     fun onSearchNearbyUsers(latitude: Double, longitude: Double) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
@@ -142,10 +180,17 @@ class ProfileViewModel(
         }
     }
 
+    /** Svuota l'elenco degli utenti locali trovati. */
     fun onClearLocalUsers() {
         _uiState.update { it.copy(localUsers = emptyList(), errorMessage = null, isLocalUsersLoading = false) }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Eliminazione Account e Logout
+    // ------------------------------------------------------------------------------------------------
+
+    /** Elimina definitivamente l'account utente e tutti i dati correlati. */
     fun onDeleteAccount(onResult: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
@@ -163,6 +208,7 @@ class ProfileViewModel(
         }
     }
 
+    /** Disconnette l'utente e pulisce i dati locali. */
     fun onLogout() {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first()

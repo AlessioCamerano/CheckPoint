@@ -17,14 +17,23 @@ import com.example.checkpoint.ui.state.PostSortOrder
 import com.example.checkpoint.util.MediaStorageManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * ViewModel per la gestione del Feed di post, creazione post, like e commenti.
+ */
 class FeedViewModel(
     private val application: Application?,
     private val postRepository: PostRepository,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(FeedUiState())
@@ -40,13 +49,20 @@ class FeedViewModel(
                 return FeedViewModel(
                     application = application,
                     postRepository = application.container.postRepository,
-                    preferencesRepository = application.container.preferencesRepository
+                    preferencesRepository = application.container.preferencesRepository,
                 ) as T
             }
         }
     }
 
-    init { observePosts() }
+    init {
+        observePosts()
+    }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Osservazione e Ordinamento Post
+    // ------------------------------------------------------------------------------------------------
 
     private fun observePosts() {
         viewModelScope.launch {
@@ -63,7 +79,7 @@ class FeedViewModel(
                                     posts = sortedList,
                                     selectedPost = state.selectedPost?.let { current -> result.firstOrNull { it.post.id == current.post.id } ?: current },
                                     sortOrder = sortOrder,
-                                    isLoading = false
+                                    isLoading = false,
                                 )
                             }
                         }
@@ -72,6 +88,7 @@ class FeedViewModel(
         }
     }
 
+    /** Cambia l'ordinamento del feed tra "I più recenti" e "I più popolari". */
     fun onSortOrderChange(newOrder: PostSortOrder) {
         if (_sortOrder.value == newOrder) return
         viewModelScope.launch {
@@ -81,6 +98,12 @@ class FeedViewModel(
         }
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Creazione, Eliminazione e Like dei Post
+    // ------------------------------------------------------------------------------------------------
+
+    /** Alterna lo stato del preferito/like su un determinato post. */
     fun onToggleLike(postId: String) {
         viewModelScope.launch {
             val email = preferencesRepository.userEmail.first() ?: return@launch
@@ -88,6 +111,7 @@ class FeedViewModel(
         }
     }
 
+    /** Crea un nuovo post con eventuale immagine/media elaborata e tag associati. */
     fun onCreatePost(title: String, message: String, mediaUri: String?, mediaType: MediaType, tags: List<String>) {
         viewModelScope.launch {
             try {
@@ -95,10 +119,21 @@ class FeedViewModel(
                 val email = preferencesRepository.userEmail.first() ?: return@launch
                 val processedMediaUri = if (application != null && !mediaUri.isNullOrBlank()) {
                     MediaStorageManager.encodeToOptimizedBase64(application, mediaUri, isProfilePicture = false)
-                } else null
+                } else {
+                    null
+                }
                 val resolvedMediaType = if (!processedMediaUri.isNullOrBlank()) MediaType.IMAGE else MediaType.NONE
 
-                postRepository.createPost(PostEntity(authorEmail = email, title = title, initialMessage = message, mediaUri = processedMediaUri, mediaType = resolvedMediaType), tags)
+                postRepository.createPost(
+                    PostEntity(
+                        authorEmail = email,
+                        title = title,
+                        initialMessage = message,
+                        mediaUri = processedMediaUri,
+                        mediaType = resolvedMediaType,
+                    ),
+                    tags,
+                )
                 _uiState.update { it.copy(isLoading = false, postSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
@@ -106,12 +141,22 @@ class FeedViewModel(
         }
     }
 
+    /** Elimina un post tramite il suo ID. */
     fun onDeletePost(postId: String) {
         viewModelScope.launch { postRepository.deletePost(postId) }
     }
 
-    fun resetPostSuccess() { _uiState.update { it.copy(postSuccess = false) } }
+    /** Reset dello stato di successo dopo la creazione di un post. */
+    fun resetPostSuccess() {
+        _uiState.update { it.copy(postSuccess = false) }
+    }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Schermata Dettaglio e Commenti
+    // ------------------------------------------------------------------------------------------------
+
+    /** Apre la vista dettagli per un determinato post ed imposta l'ascolto dei commenti. */
     fun onOpenPostDetail(post: PostWithAuthor) {
         _uiState.update { it.copy(selectedPost = post) }
         commentJob?.cancel()
@@ -122,11 +167,13 @@ class FeedViewModel(
         }
     }
 
+    /** Chiude la vista dettagli del post. */
     fun onClosePostDetail() {
         commentJob?.cancel()
         _uiState.update { it.copy(selectedPost = null, currentPostComments = emptyList()) }
     }
 
+    /** Aggiunge un commento o una risposta a un commento esistente. */
     fun onAddComment(content: String, parentCommentId: String? = null) {
         if (content.isBlank()) return
         viewModelScope.launch {
@@ -136,6 +183,7 @@ class FeedViewModel(
         }
     }
 
+    /** Apre i dettagli di un post cercando per ID. */
     fun onOpenPostDetailById(postId: String) {
         if (postId.isBlank()) return
         viewModelScope.launch {
