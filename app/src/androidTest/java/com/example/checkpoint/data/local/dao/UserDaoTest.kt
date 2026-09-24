@@ -13,8 +13,12 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * Test strumentati per le operazioni di I/O del database Room in-memory per [UserDao].
+ */
 @RunWith(AndroidJUnit4::class)
 class UserDaoTest {
+
     private lateinit var database: AppDatabase
     private lateinit var userDao: UserDao
 
@@ -22,7 +26,7 @@ class UserDaoTest {
     fun setup() {
         database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
-            AppDatabase::class.java
+            AppDatabase::class.java,
         ).allowMainThreadQueries().build()
         userDao = database.userDao()
     }
@@ -31,6 +35,11 @@ class UserDaoTest {
     fun tearDown() {
         database.close()
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Test Inserimento, Lettura ed Aggiornamento Utenti
+    // ------------------------------------------------------------------------------------------------
 
     @Test
     fun insertAndGetUser() = runBlocking {

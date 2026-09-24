@@ -16,8 +16,12 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * Test strumentati per le operazioni di I/O del database Room in-memory per [PostDao].
+ */
 @RunWith(AndroidJUnit4::class)
 class PostDaoTest {
+
     private lateinit var database: AppDatabase
     private lateinit var postDao: PostDao
     private lateinit var userDao: UserDao
@@ -26,7 +30,7 @@ class PostDaoTest {
     fun setup() {
         database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
-            AppDatabase::class.java
+            AppDatabase::class.java,
         ).allowMainThreadQueries().build()
         postDao = database.postDao()
         userDao = database.userDao()
@@ -37,6 +41,11 @@ class PostDaoTest {
         database.close()
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Test Inserimento, Lettura ed Eliminazione Post
+    // ------------------------------------------------------------------------------------------------
+
     @Test
     fun insertAndGetAllPosts() = runBlocking {
         val user1 = UserEntity("user1@gmail.com", "User1")
@@ -45,19 +54,26 @@ class PostDaoTest {
         userDao.insertUser(user2)
 
         val post1 = PostEntity(
-            authorEmail = "user1@gmail.com", title = "Title 1", initialMessage = "Message 1",
-            timestamp = 1000L, mediaUri = "content://img1", mediaType = MediaType.IMAGE
+            authorEmail = "user1@gmail.com",
+            title = "Title 1",
+            initialMessage = "Message 1",
+            timestamp = 1000L,
+            mediaUri = "content://img1",
+            mediaType = MediaType.IMAGE,
         )
         val post2 = PostEntity(
-            authorEmail = "user2@gmail.com", title = "Title 2", initialMessage = "Message 2",
-            timestamp = 2000L, mediaUri = null, mediaType = MediaType.NONE
+            authorEmail = "user2@gmail.com",
+            title = "Title 2",
+            initialMessage = "Message 2",
+            timestamp = 2000L,
+            mediaUri = null,
+            mediaType = MediaType.NONE,
         )
         postDao.insertPost(post1)
         postDao.insertPost(post2)
 
         val allPosts = postDao.getAllPostsWithAuthor("user1@gmail.com").first()
         assertEquals(2, allPosts.size)
-        // L'ordine deve essere per timestamp decrescente
         assertEquals("Title 2", allPosts[0].post.title)
         assertEquals("Title 1", allPosts[1].post.title)
     }

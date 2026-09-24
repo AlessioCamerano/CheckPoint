@@ -8,14 +8,23 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Unit Test per verificare la logica di business di [AuthViewModel].
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
+
     private lateinit var viewModel: AuthViewModel
     private lateinit var fakeAuthRepository: FakeAuthRepository
     private lateinit var fakePreferencesRepository: FakeUserPreferencesRepository
@@ -33,6 +42,11 @@ class AuthViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Test Registrazione (Signup)
+    // ------------------------------------------------------------------------------------------------
 
     @Test
     fun signup_invalidEmail_showsError() = runTest {
@@ -55,6 +69,24 @@ class AuthViewModelTest {
         assertTrue(state.isSuccess)
         assertNull(state.errorMessage)
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Test Accesso (Login)
+    // ------------------------------------------------------------------------------------------------
+
+    @Test
+    fun login_validCredentials_isSuccess() = runTest {
+        viewModel.onLogin("test@gmail.com", "pass1A")
+        val state = viewModel.uiState.value
+        assertTrue(state.isSuccess)
+        assertNull(state.errorMessage)
+    }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Fake Repositories per il Testing
+    // ------------------------------------------------------------------------------------------------
 
     class FakeAuthRepository : AuthRepository {
         private val users = mutableListOf<UserEntity>()

@@ -2,7 +2,6 @@ package com.example.checkpoint.ui.viewmodel
 
 import com.example.checkpoint.data.local.entity.UserEntity
 import com.example.checkpoint.data.local.model.GeoUser
-import com.example.checkpoint.data.repository.PostRepository
 import com.example.checkpoint.data.repository.UserPreferencesRepository
 import com.example.checkpoint.data.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
@@ -10,14 +9,21 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Unit Test per la logica di ricerca e cronologia in [SearchViewModel].
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelTest {
+
     private lateinit var viewModel: SearchViewModel
     private lateinit var fakePreferencesRepository: FakeUserPreferencesRepository
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -34,12 +40,22 @@ class SearchViewModelTest {
         Dispatchers.resetMain()
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Test Cronologia Ricerche
+    // ------------------------------------------------------------------------------------------------
+
     @Test
     fun saveSearch_addsToHistory() = runTest {
         val query = "new search"
         viewModel.onSaveSearchQuery(query)
         assertTrue(fakePreferencesRepository.historyList.contains(query))
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Fake Repositories per il Testing
+    // ------------------------------------------------------------------------------------------------
 
     class FakeUserRepository : UserRepository {
         override fun searchUsersByUsername(query: String): Flow<List<UserEntity>> = emptyFlow()

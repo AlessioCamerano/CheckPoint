@@ -13,14 +13,22 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.test.*
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Unit Test per verificare la gestione dei post e del feed in [FeedViewModel].
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FeedViewModelTest {
+
     private lateinit var viewModel: FeedViewModel
     private lateinit var fakePostRepository: FakePostRepository
     private lateinit var fakePreferencesRepository: FakeUserPreferencesRepository
@@ -39,14 +47,24 @@ class FeedViewModelTest {
         Dispatchers.resetMain()
     }
 
+
+    // ------------------------------------------------------------------------------------------------
+    // Test Creazione e Gestione Post
+    // ------------------------------------------------------------------------------------------------
+
     @Test
     fun createPost_updatesRepositoryAndState() = runTest {
         viewModel.onCreatePost("Title", "Message", "uri", MediaType.IMAGE, listOf("tag1"))
-        
+
         assertEquals(1, fakePostRepository.posts.size)
         assertEquals("Title", fakePostRepository.posts[0].title)
-        assertEquals(true, viewModel.uiState.value.postSuccess)
+        assertTrue(viewModel.uiState.value.postSuccess)
     }
+
+
+    // ------------------------------------------------------------------------------------------------
+    // Fake Repositories per il Testing
+    // ------------------------------------------------------------------------------------------------
 
     class FakePostRepository : PostRepository {
         val posts = mutableListOf<PostEntity>()
@@ -58,13 +76,13 @@ class FeedViewModelTest {
         override fun searchPostsByTitle(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>> = emptyFlow()
         override fun searchPostsByTag(query: String, currentUserEmail: String): Flow<List<PostWithAuthor>> = emptyFlow()
         override fun searchUniqueTags(query: String): Flow<List<String>> = emptyFlow()
-        
+
         override suspend fun createPost(post: PostEntity, tags: List<String>) {
             posts.add(post)
             val author = UserEntity(post.authorEmail, "user")
             _postsFlow.value = _postsFlow.value + PostWithAuthor(post, author)
         }
-        
+
         override suspend fun deletePost(postId: String) {}
         override suspend fun toggleLike(postId: String, userEmail: String) {}
         override fun getCommentsForPost(postId: String): Flow<List<CommentWithAuthor>> = emptyFlow()
